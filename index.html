@@ -47,6 +47,8 @@
         .main-grid { display: grid; grid-template-columns: 1fr 1.5fr; gap: 25px; height: 100%; overflow: hidden; }
         .card { background: var(--bg-card); border-radius: 16px; padding: 35px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); display: flex; flex-direction: column; position: relative; }
         .section-label { font-size: 16px; font-weight: 500; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; }
+        
+        /* LEFT PANEL */
         .left-panel { align-items: center; justify-content: center; text-align: center; }
         .progress-container { position: relative; width: 300px; height: 300px; margin-bottom: 30px; }
         svg { transform: rotate(-90deg); width: 100%; height: 100%; }
@@ -59,6 +61,8 @@
         .status-btn.active { background: var(--accent-green); box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4); }
         .status-btn.pause { background: #555; color: #ccc; }
         .status-btn.wait { background: var(--accent-yellow); color: #000; }
+
+        /* RIGHT PANEL */
         .right-panel { gap: 30px; }
         .next-block { padding-bottom: 25px; border-bottom: 1px solid #333; }
         .next-id { font-size: 48px; font-weight: 900; margin-bottom: 10px; }
@@ -73,10 +77,13 @@
         .list-item span:nth-child(2) { font-weight: 700; letter-spacing: 1px; font-size: 22px;}
         .list-item span:nth-child(4) { color: var(--text-secondary); text-align: right; }
         .container-img { width: 65px; height: auto; display: block; object-fit: contain; filter: drop-shadow(0 4px 4px rgba(0,0,0,0.5)); }
+        
         .list-item.overdue { border-left: 4px solid var(--accent-red); background: linear-gradient(90deg, rgba(220, 53, 69, 0.15) 0%, transparent 100%); }
         .list-item.overdue .container-img { filter: brightness(0) saturate(100%) invert(27%) sepia(51%) saturate(2878%) hue-rotate(346deg) brightness(104%) contrast(97%) drop-shadow(0 0 5px rgba(255, 0, 0, 0.5)); }
         .list-item.overdue span { color: var(--accent-red) !important; }
         .list-item.overdue span:nth-child(1) { animation: pulseIcon 1.5s infinite; }
+        
+        /* Animations */
         @keyframes pulseIcon { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.7; transform: scale(0.95); } 100% { opacity: 1; transform: scale(1); } }
         @keyframes slideIn { from { opacity: 0; transform: translateX(-50px); } to { opacity: 1; transform: translateX(0); } }
         .new-item { animation: slideIn 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; border-left: 4px solid var(--accent-green); }
@@ -84,7 +91,7 @@
         .remove-item { animation: slideOut 0.8s ease forwards; position: relative; z-index: 0; pointer-events: none; }
         .empty-message { color: var(--text-secondary); padding: 30px; text-align: center; }
         
-        /* Message Bar */
+        /* MESSAGE BAR */
         .message-bar { position: fixed; bottom: -120px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 1200px; height: 70px; background: rgba(30, 30, 30, 0.95); backdrop-filter: blur(10px); border-left: 6px solid var(--accent-yellow); border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 20px rgba(255, 193, 7, 0.2); display: flex; align-items: center; padding: 0 30px; z-index: 1000; transition: bottom 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); color: white; }
         .message-bar.visible { bottom: 30px; } 
         .msg-icon-box { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: rgba(255, 193, 7, 0.2); border-radius: 50%; margin-right: 20px; color: var(--accent-yellow); animation: pulseGlow 2s infinite; }
@@ -98,13 +105,16 @@
         .admin-trigger:hover { opacity: 1; color: var(--accent-green); transform: scale(1.1); }
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; z-index: 3000; backdrop-filter: blur(8px); }
         .modal-overlay.open { display: flex; }
-        .modal-box { background: #1e1e1e; padding: 40px; border-radius: 16px; width: 90%; max-width: 450px; box-shadow: 0 10px 40px rgba(0,0,0,0.8); border: 1px solid #333; text-align: center; }
+        .modal-box { background: #1e1e1e; padding: 40px; border-radius: 16px; width: 90%; max-width: 450px; box-shadow: 0 10px 40px rgba(0,0,0,0.8); border: 1px solid #333; text-align: center; max-height: 90vh; overflow-y: auto; }
         .modal-box h2 { margin-top: 0; color: white; font-weight: 700; margin-bottom: 25px;}
-        .modal-input { width: 100%; padding: 15px; margin: 10px 0; background: #121212; border: 1px solid #444; color: white; border-radius: 8px; font-size: 18px; box-sizing: border-box; outline: none; }
+        .modal-section-title { color: var(--text-secondary); font-size: 14px; text-transform: uppercase; margin-top: 25px; margin-bottom: 10px; text-align: left; font-weight: bold; border-bottom: 1px solid #333; padding-bottom: 5px; }
+        .modal-input { width: 100%; padding: 15px; margin: 5px 0; background: #121212; border: 1px solid #444; color: white; border-radius: 8px; font-size: 18px; box-sizing: border-box; outline: none; }
         .modal-input:focus { border-color: var(--accent-green); }
+        .time-group { display: flex; gap: 10px; }
+        .time-group input { text-align: center; }
         .modal-btn { width: 100%; padding: 15px; margin-top: 15px; background: var(--accent-green); border: none; color: white; font-weight: bold; font-size: 18px; border-radius: 8px; cursor: pointer; transition: 0.2s; }
         .modal-btn:hover { background: #218838; transform: translateY(-2px); }
-        .modal-btn-blue { background: var(--accent-blue); margin-top: 20px; }
+        .modal-btn-blue { background: var(--accent-blue); margin-top: 10px; }
         .modal-btn-blue:hover { background: #0069d9; }
         .modal-close { margin-top: 15px; background: transparent; color: #888; font-size: 14px; }
         .modal-close:hover { color: #fff; }
@@ -122,11 +132,39 @@
         .victory-icon { font-size: 150px; color: var(--accent-yellow); filter: drop-shadow(0 0 30px rgba(255, 193, 7, 0.8)); margin-bottom: 20px; animation: floatTrophy 3s ease-in-out infinite; }
         .victory-title, .lunch-title { font-size: 48px; font-weight: 900; color: #fff; text-transform: uppercase; margin-bottom: 10px; letter-spacing: 2px; }
         .victory-stat { font-size: 36px; color: var(--accent-green); font-weight: 700; }
-        .lunch-icon { font-size: 140px; color: var(--accent-blue); filter: drop-shadow(0 0 30px rgba(0, 123, 255, 0.6)); margin-bottom: 20px; }
+        
+        /* LUNCH STYLES */
+        .lunch-icon { 
+            font-size: 140px; 
+            color: var(--accent-blue); 
+            /* Свечение и пульсация иконки */
+            animation: pulseLunchIcon 3s infinite ease-in-out;
+        }
         .lunch-timer { font-size: 32px; color: var(--accent-blue); font-weight: 500; background: rgba(0, 123, 255, 0.1); padding: 10px 30px; border-radius: 50px; border: 1px solid rgba(0, 123, 255, 0.3); }
 
         @keyframes popIn { 0% { opacity: 0; transform: scale(0.5); } 100% { opacity: 1; transform: scale(1); }}
         @keyframes floatTrophy { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
+        
+        /* Новые анимации для обеда */
+        @keyframes pulseLunchIcon {
+            0% { transform: scale(1); filter: drop-shadow(0 0 10px rgba(0, 123, 255, 0.4)); }
+            50% { transform: scale(1.05); filter: drop-shadow(0 0 30px rgba(0, 123, 255, 0.8)); }
+            100% { transform: scale(1); filter: drop-shadow(0 0 10px rgba(0, 123, 255, 0.4)); }
+        }
+
+        /* АНИМАЦИЯ КОЛЬЦА СЛЕВА ВО ВРЕМЯ ОБЕДА */
+        /* Перекрашиваем кольцо в синий и заставляем "дышать" */
+        body.is-lunch .fg-ring { 
+            stroke: var(--accent-blue) !important; 
+            transition: all 0.5s ease;
+            animation: breatheRing 4s infinite ease-in-out;
+        }
+        
+        @keyframes breatheRing {
+            0% { stroke-width: 20; stroke-opacity: 1; }
+            50% { stroke-width: 28; stroke-opacity: 0.6; } /* Становится толще и прозрачнее */
+            100% { stroke-width: 20; stroke-opacity: 1; }
+        }
 
     </style>
 </head>
@@ -148,7 +186,9 @@
 
     <div class="modal-overlay" id="modalAdmin">
         <div class="modal-box">
-            <h2 style="color: var(--accent-green)">📢 Управление</h2>
+            <h2 style="color: var(--accent-green)">Панель управления</h2>
+            
+            <div class="modal-section-title">📢 Сообщение на экран</div>
             <input type="text" id="msgInput" class="modal-input" placeholder="Текст сообщения...">
             <select id="timeInput" class="modal-input">
                 <option value="5">На 5 минут</option>
@@ -159,7 +199,13 @@
             </select>
             <button class="modal-btn" onclick="sendMessage()">ОПУБЛИКОВАТЬ</button>
             
-            <button class="modal-btn modal-btn-blue" onclick="testLunch()">☕ ТЕСТ ОБЕДА (10 сек)</button>
+            <div class="modal-section-title">☕ Настройка обеда</div>
+            <div class="time-group">
+                <input type="time" id="lunchStartInput" class="modal-input" value="11:30">
+                <input type="time" id="lunchEndInput" class="modal-input" value="12:00">
+            </div>
+            <button class="modal-btn modal-btn-blue" onclick="saveLunchTime()">СОХРАНИТЬ ВРЕМЯ ОБЕДА</button>
+            <button class="modal-btn" style="background:#555; font-size:14px; padding:10px; margin-top:5px" onclick="testLunch()">Протестировать вид (10 сек)</button>
 
             <button class="modal-btn modal-close" onclick="closeModals()">Закрыть</button>
             <div class="status-msg" id="adminStatus"></div>
@@ -227,14 +273,16 @@
     </div>
 
     <script>
-        const scriptUrl = 'https://script.google.com/macros/s/AKfycbzAsT4ldTvyd4RyNsRUtpucmC0UtrYrcUTA_iLQCmhTxOruQucTLSpoSCo9egMxrMsZZQ/exec'; 
-        const CONTAINER_IMG_SRC = 'container.svg'; 
+        const scriptUrl = 'https://script.google.com/macros/s/AKfycbymX0DZlErmYHTiiRVAR6fMy47SLjunZ86TYs-d2FLJzw9LVkjatobXPYuwHKVwt9kHRQ/exec'; 
         
-        // !!! ПАРОЛЬ ТЕПЕРЬ ТУТ. МЕНЯЙТЕ ЕГО ЗДЕСЬ !!!
+        const CONTAINER_IMG_SRC = 'container.svg'; 
         const APP_PASSWORD = "708438"; 
 
         let currentPassword = ""; 
         let isLunchTestMode = false; 
+        
+        let lunchStartStr = "11:30";
+        let lunchEndStr = "12:00";
 
         function openLogin() {
             document.getElementById('modalLogin').classList.add('open');
@@ -249,13 +297,11 @@
             document.getElementById('adminPass').value = ""; 
         }
 
-        // --- НОВАЯ БЫСТРАЯ ПРОВЕРКА ПАРОЛЯ ---
         function checkLogin() {
             const pass = document.getElementById('adminPass').value;
             const statusEl = document.getElementById('loginStatus');
 
             if (pass === APP_PASSWORD) {
-                // Если пароль совпал с тем, что в коде
                 currentPassword = pass;
                 document.getElementById('modalLogin').classList.remove('open');
                 document.getElementById('modalAdmin').classList.add('open');
@@ -265,38 +311,193 @@
             }
         }
 
-        async function sendMessage() {
-            const text = document.getElementById('msgInput').value;
-            const duration = document.getElementById('timeInput').value;
+        async function saveLunchTime() {
+            const start = document.getElementById('lunchStartInput').value;
+            const end = document.getElementById('lunchEndInput').value;
             const statusEl = document.getElementById('adminStatus');
 
-            if (!text) {
-                statusEl.innerText = "Напишите текст!";
+            if (!start || !end) {
+                statusEl.innerText = "Выберите время!";
                 statusEl.className = "status-msg st-err";
                 return;
             }
-            statusEl.innerText = "Отправка...";
+            statusEl.innerText = "Сохранение...";
             statusEl.className = "status-msg";
 
             try {
-                // Отправляем пароль тоже, чтобы скрипт (если там настроена проверка) пропустил
-                const url = `${scriptUrl}?mode=write&text=${encodeURIComponent(text)}&pass=${encodeURIComponent(currentPassword)}&dur=${duration}`;
+                const url = `${scriptUrl}?mode=set_lunch&start=${start}&end=${end}`;
                 const response = await fetch(url);
                 const result = await response.text();
 
-                if (result.includes("SUCCESS")) {
-                    statusEl.innerText = "✅ Опубликовано!";
+                if (result.includes("LUNCH_UPDATED")) {
+                    statusEl.innerText = "✅ Время обеда обновлено!";
                     statusEl.className = "status-msg st-ok";
-                    document.getElementById('msgInput').value = "";
-                    setTimeout(() => { update(); closeModals(); }, 2000);
+                    lunchStartStr = start;
+                    lunchEndStr = end;
+                    setTimeout(() => { update(); }, 1000);
                 } else {
-                    // Если скрипт вернул ошибку (например, там старый пароль)
-                    statusEl.innerText = "⚠️ Ошибка (проверьте скрипт)";
+                    statusEl.innerText = "⚠️ Ошибка сервера";
                 }
             } catch (e) {
                 statusEl.innerText = "❌ Ошибка сети";
                 statusEl.className = "status-msg st-err";
             }
+        }
+
+        async function update() {
+            try {
+                // ИСПРАВЛЕНИЕ: Добавляем '?nocache=' + время, чтобы сбросить память браузера
+                // Теперь данные всегда будут свежими!
+                const res = await fetch(scriptUrl + '?nocache=' + new Date().getTime());
+                const fullText = await res.text();
+                
+                if (!fullText || fullText.includes("DOCTYPE")) return;
+
+                let csvData = fullText;
+                let adminMessage = "";
+                
+                // 1. Парсим ОБЕД
+                if (fullText.includes("###LUNCH###")) {
+                    const parts = fullText.split("###LUNCH###");
+                    const lunchData = parts[1].trim(); 
+                    const mainData = parts[0];
+                    
+                    if (lunchData.includes('|')) {
+                        const times = lunchData.split('|');
+                        
+                        // Проверяем, изменилось ли время, чтобы лишний раз не дергать переменные
+                        if (lunchStartStr !== times[0] || lunchEndStr !== times[1]) {
+                            lunchStartStr = times[0];
+                            lunchEndStr = times[1];
+                            console.log("Время обеда обновлено:", lunchStartStr, "-", lunchEndStr);
+                        }
+                        
+                        // Обновляем поля в админке, если они не в фокусе (чтобы видеть актуальное)
+                        const sInp = document.getElementById('lunchStartInput');
+                        const eInp = document.getElementById('lunchEndInput');
+                        if(document.activeElement !== sInp && document.activeElement !== eInp) {
+                             if(sInp.value !== lunchStartStr) sInp.value = lunchStartStr;
+                             if(eInp.value !== lunchEndStr) eInp.value = lunchEndStr;
+                        }
+                    }
+                    csvData = mainData;
+                }
+
+                // 2. Парсим СООБЩЕНИЕ
+                if (csvData.includes("###MSG###")) {
+                    const parts = csvData.split("###MSG###");
+                    csvData = parts[0];
+                    adminMessage = parts[1] ? parts[1].trim() : "";
+                }
+
+                // Логика отображения сообщения
+                const msgBar = document.getElementById('messageBar');
+                const msgText = document.getElementById('messageText');
+                if (adminMessage && adminMessage.length > 0) {
+                    msgText.innerText = adminMessage;
+                    msgBar.classList.add('visible');
+                    document.body.classList.add('has-message');
+                } else {
+                    msgBar.classList.remove('visible');
+                    document.body.classList.remove('has-message');
+                }
+
+                const rows = csvData.split('\n').map(r => r.split(';')); 
+                const r1 = rows[0]; 
+                if (r1 && r1.length > 2) {
+                    const st = r1[0].trim();
+                    const btn = document.getElementById('sts');
+                    btn.className = 'status-btn';
+                    if (st === "ACTIVE") { btn.innerText = "В РАБОТЕ"; btn.classList.add('active'); } 
+                    else if (st === "PAUSE") { btn.innerText = "ПАУЗА"; btn.classList.add('pause'); } 
+                    else { btn.innerText = "ОЖИДАНИЕ"; btn.classList.add('wait'); }
+
+                    const counts = r1[1].split('|');
+                    const done = parseInt(counts[0]) || 0;
+                    const total = parseInt(counts[1]) || 0;
+                    document.getElementById('cnt').innerText = `${done} из ${total}`;
+                    const p = total > 0 ? Math.round((done/total)*100) : 0;
+                    document.getElementById('pct').innerText = p + '%';
+                    const ring = document.getElementById('ring');
+                    ring.style.strokeDashoffset = 942 - (942 * p / 100);
+                    
+                    // Цвет кольца
+                    if (!document.body.classList.contains('is-lunch')) {
+                        ring.style.stroke = st === "ACTIVE" ? "var(--accent-green)" : (st === "PAUSE" ? "#555" : "var(--accent-yellow)");
+                    }
+
+                    // Логика ПОБЕДЫ (если не обед)
+                    if (total > 0 && done === total && !document.body.classList.contains('is-lunch')) {
+                        if (!document.body.classList.contains('is-victory')) {
+                            document.body.classList.add('is-victory'); 
+                            launchVictoryConfetti(); 
+                            document.getElementById('victoryStat').innerText = `${done} из ${total}`;
+                        }
+                    } else {
+                        if (document.body.classList.contains('is-victory')) {
+                            document.body.classList.remove('is-victory'); 
+                        }
+                    }
+
+                    document.getElementById('nid').innerText = r1[2].trim();
+                    const ninf = r1[3] ? r1[3].trim() : "";
+                    const idiv = document.getElementById('ninfo');
+                    if (ninf.includes("ОПОЗДАНИЕ")) idiv.innerHTML = `⚠️ <span class="warn-text">${ninf.replace('⚠️','').trim()}</span>`;
+                    else if (ninf.includes("ПРИБУДЕТ")) idiv.innerHTML = `⏱ <span class="time-text">${ninf.replace('⏱','').trim()}</span>`;
+                    else idiv.innerHTML = ninf;
+                }
+
+                const listEl = document.getElementById('list');
+                let newDataMap = new Map();
+                for (let i = 1; i < rows.length; i++) {
+                    let parts = rows[i];
+                    if (parts.length >= 1 && parts[0].includes('|')) {
+                         let subParts = parts[0].split('|');
+                         let id = subParts[0].trim();
+                         let time = subParts[1].trim();
+                         let durRaw = subParts[2].trim().replace(/[,"]/g, '');
+                         let dur = parseInt(durRaw); if (isNaN(dur)) dur = 0;
+                         newDataMap.set(id, { time, dur });
+                    }
+                }
+                const currentChildren = Array.from(listEl.querySelectorAll('.list-item:not(.remove-item)'));
+                currentChildren.forEach(el => {
+                    const id = el.getAttribute('data-id');
+                    if (!newDataMap.has(id)) {
+                        el.classList.add('remove-item');
+                        setTimeout(() => { if (el.parentNode) el.remove(); checkEmpty(); }, 750);
+                    }
+                });
+                newDataMap.forEach((data, id) => {
+                    let existingEl = listEl.querySelector(`.list-item[data-id="${id}"]:not(.remove-item)`);
+                    let isOverdue = data.dur > 30;
+                    let overdueClass = isOverdue ? 'overdue' : '';
+                    let iconHtml = isOverdue ? '<span style="font-size:30px">⚠️</span>' : `<img src="${CONTAINER_IMG_SRC}" class="container-img" alt="box">`;
+                    let innerHTML = `<span>${iconHtml}</span><span>${id}</span><span>${data.time}</span><span>${data.dur} мин.</span>`;
+                    if (existingEl) {
+                        if (existingEl.innerHTML !== innerHTML) existingEl.innerHTML = innerHTML;
+                        if (isOverdue) existingEl.classList.add('overdue');
+                        else existingEl.classList.remove('overdue');
+                    } else {
+                        let newEl = document.createElement('div');
+                        newEl.className = `list-item ${overdueClass}`;
+                        if (!isFirstRun) newEl.classList.add('new-item'); 
+                        newEl.setAttribute('data-id', id);
+                        newEl.innerHTML = innerHTML;
+                        const emptyMsg = listEl.querySelector('.empty-message');
+                        if (emptyMsg) emptyMsg.remove();
+                        listEl.prepend(newEl);
+                    }
+                });
+                isFirstRun = false;
+                if (newDataMap.size === 0) checkEmpty();
+                function checkEmpty() {
+                     const alive = listEl.querySelectorAll('.list-item:not(.remove-item)');
+                     if (alive.length === 0 && !listEl.querySelector('.empty-message')) {
+                         listEl.innerHTML = '<div class="empty-message">Нет активных разгрузок</div>';
+                     }
+                }
+            } catch(e) { console.log("Update error:", e); }
         }
 
         function testLunch() {
@@ -328,17 +529,25 @@
         }, 1000);
 
         function checkLunchTime(now) {
-            const hours = now.getHours();
-            const minutes = now.getMinutes();
-            // Обед: 11:30 - 11:59
-            const isLunch = (hours === 11 && minutes >= 30);
+            const [startH, startM] = lunchStartStr.split(':').map(Number);
+            const [endH, endM] = lunchEndStr.split(':').map(Number);
+
+            const nowH = now.getHours();
+            const nowM = now.getMinutes();
+            const nowTotal = nowH * 60 + nowM; 
+            
+            const startTotal = startH * 60 + startM;
+            const endTotal = endH * 60 + endM;
+
+            const isLunch = (nowTotal >= startTotal && nowTotal < endTotal);
             
             if (isLunch || isLunchTestMode) {
                 if (!document.body.classList.contains('is-lunch')) {
                     document.body.classList.add('is-lunch');
                 }
+                
                 let target = new Date();
-                target.setHours(12, 0, 0, 0);
+                target.setHours(endH, endM, 0, 0);
                 let diff = target - now;
                 if (isLunchTestMode) diff = 15 * 60 * 1000;
 
@@ -364,8 +573,29 @@
 
                 let csvData = fullText;
                 let adminMessage = "";
-                if (fullText.includes("###MSG###")) {
-                    const parts = fullText.split("###MSG###");
+                
+                if (fullText.includes("###LUNCH###")) {
+                    const parts = fullText.split("###LUNCH###");
+                    const lunchData = parts[1].trim(); 
+                    const mainData = parts[0];
+                    
+                    if (lunchData.includes('|')) {
+                        const times = lunchData.split('|');
+                        lunchStartStr = times[0];
+                        lunchEndStr = times[1];
+                        
+                        const sInp = document.getElementById('lunchStartInput');
+                        const eInp = document.getElementById('lunchEndInput');
+                        if(document.activeElement !== sInp && document.activeElement !== eInp) {
+                             if(sInp.value !== lunchStartStr) sInp.value = lunchStartStr;
+                             if(eInp.value !== lunchEndStr) eInp.value = lunchEndStr;
+                        }
+                    }
+                    csvData = mainData;
+                }
+
+                if (csvData.includes("###MSG###")) {
+                    const parts = csvData.split("###MSG###");
                     csvData = parts[0];
                     adminMessage = parts[1] ? parts[1].trim() : "";
                 }
@@ -399,7 +629,12 @@
                     document.getElementById('pct').innerText = p + '%';
                     const ring = document.getElementById('ring');
                     ring.style.strokeDashoffset = 942 - (942 * p / 100);
-                    ring.style.stroke = st === "ACTIVE" ? "var(--accent-green)" : (st === "PAUSE" ? "#555" : "var(--accent-yellow)");
+                    
+                    // ЕСЛИ НЕ ОБЕД - КРАСИМ В ЗАВИСИМОСТИ ОТ СТАТУСА
+                    // ЕСЛИ ОБЕД - ЦВЕТ БУДЕТ ПЕРЕОПРЕДЕЛЕН CSS КЛАССОМ body.is-lunch
+                    if (!document.body.classList.contains('is-lunch')) {
+                        ring.style.stroke = st === "ACTIVE" ? "var(--accent-green)" : (st === "PAUSE" ? "#555" : "var(--accent-yellow)");
+                    }
 
                     if (total > 0 && done === total && !document.body.classList.contains('is-lunch')) {
                         if (!document.body.classList.contains('is-victory')) {
