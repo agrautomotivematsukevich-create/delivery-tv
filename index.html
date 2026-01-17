@@ -4,12 +4,13 @@
     <meta charset="UTF-8">
     <title>Панель Доставки</title>
     <style>
-        body { background-color: #0b0c0e; color: white; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .container { display: flex; gap: 20px; width: 90%; }
-        .card { background: #1c1f23; padding: 40px; border-radius: 30px; flex: 1; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .status-badge { background: #2d3136; padding: 10px 20px; border-radius: 20px; display: inline-block; color: #ffcc00; font-size: 24px; margin: 20px 0; }
-        .percent { font-size: 70px; font-weight: bold; color: #00ff88; }
-        .subtext { color: #888; font-size: 18px; text-transform: uppercase; }
+        body { background-color: #0b0c0e; color: white; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; overflow: hidden; }
+        .container { display: flex; gap: 30px; width: 90%; max-width: 1200px; }
+        .card { background: #1c1f23; padding: 50px; border-radius: 40px; flex: 1; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.6); border: 1px solid #333; }
+        .subtext { color: #888; font-size: 20px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; }
+        .status-badge { background: #2d3136; padding: 15px 30px; border-radius: 50px; display: inline-block; color: #ffcc00; font-size: 32px; font-weight: bold; margin: 20px 0; border: 1px solid #444; }
+        .percent { font-size: 100px; font-weight: bold; color: #00ff88; text-shadow: 0 0 20px rgba(0,255,136,0.3); }
+        .progress-val { font-size: 28px; color: #aaa; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -17,38 +18,55 @@
         <div class="card">
             <div class="subtext">Выполнение плана</div>
             <div class="percent" id="percent-val">0%</div>
-            <div id="done-text" style="font-size: 20px;">Загрузка...</div>
+            <div class="progress-val" id="done-text">Загрузка...</div>
         </div>
         <div class="card">
             <div class="subtext">Текущий статус</div>
             <div id="status-container" class="status-badge">Связь...</div>
-            <div style="font-size: 24px; font-weight: bold;">АКТИВНЫЙ РЕЙС</div>
+            <div style="font-size: 30px; font-weight: bold; margin-top: 10px;">АКТИВНЫЙ РЕЙС</div>
         </div>
     </div>
 
     <script src="https://www.gstatic.com/charts/loader.js"></script>
     <script>
+        // Ваш ID из ссылки
         const sheetId = '1vS0kYp4Zp2m9jmTRMTZoamaEUBfZg95n3YN_7f0YByCva_978_452f538CXgKhzveg-etToheOTaVCJ';
+        
         google.charts.load('current', {packages:['corechart']});
         google.charts.setOnLoadCallback(drawChart);
 
         function drawChart() {
-            const query = new google.visualization.Query(`https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&range=B1:B3`);
+            // Запрос с указанием листа "Инфопанель"
+            const query = new google.visualization.Query(`https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&sheet=Инфопанель&range=B1:B3`);
             query.send(handleResponse);
         }
 
         function handleResponse(response) {
-            if (response.isError()) return;
-            const data = response.getDataTable();
-            document.getElementById('status-container').innerText = data.getValue(0, 0); // Ячейка B1
-            const valB3 = data.getValue(2, 0); // Ячейка B3
-            const nums = valB3.match(/\d+/g);
-            if (nums) {
-                const percent = Math.round((nums[0]/nums[1])*100);
-                document.getElementById('percent-val').innerText = percent + '%';
-                document.getElementById('done-text').innerText = valB3;
+            if (response.isError()) {
+                console.error('Ошибка:', response.getMessage());
+                return;
             }
-            setTimeout(drawChart, 10000); // Обновлять каждые 10 сек
+            const data = response.getDataTable();
+            
+            // 1. Статус из B1 (строка 0)
+            const status = data.getValue(0, 0) || "ОЖИДАНИЕ";
+            document.getElementById('status-container').innerText = status;
+
+            // 2. Прогресс из B3 (строка 2)
+            const progress = data.getValue(2, 0) || "0 из 0";
+            document.getElementById('done-text').innerText = progress;
+
+            // Парсим проценты
+            const nums = progress.match(/\d+/g);
+            if (nums && nums.length >= 2) {
+                const done = parseInt(nums[0]);
+                const total = parseInt(nums[1]);
+                const percent = total > 0 ? Math.round((done / total) * 100) : 0;
+                document.getElementById('percent-val').innerText = percent + '%';
+            }
+
+            // Автообновление каждые 10 секунд
+            setTimeout(drawChart, 10000);
         }
     </script>
 </body>
