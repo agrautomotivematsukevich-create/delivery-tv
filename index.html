@@ -43,12 +43,12 @@
         <div class="card">
             <div class="subtext">ПЛАН</div>
             <div class="percent" id="percent-val">0%</div>
-            <div class="progress-val" id="done-text">...</div>
+            <div class="progress-val" id="done-text">Загрузка...</div>
         </div>
 
         <div class="card">
             <div class="subtext">СТАТУС</div>
-            <div id="status-container" class="status-badge">СВЯЗЬ</div>
+            <div id="status-container" class="status-badge">...</div>
             <div style="font-size: 35px; color: #444;">АКТИВНЫЙ РЕЙС</div>
         </div>
     </div>
@@ -56,9 +56,12 @@
     <script>
         const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS0kYp4Zp2m9jmTRMTZoamaEUBfZg95n3YN_7f0YByCva_978_452f538CXgKhzveg-etToheOTaVCJ/pub?gid=1855124971&single=true&output=csv';
 
+        // Переменная для памяти (чтобы не откатываться назад)
+        let maxDone = -1; 
+
         async function updateDashboard() {
             try {
-                // Добавляем t=Timestamp, чтобы обойти кэш браузера
+                // Добавляем случайное число, чтобы пробиться к разным серверам Google
                 const cacheBuster = `&t=${new Date().getTime()}`;
                 const response = await fetch(csvUrl + cacheBuster);
                 const data = await response.text();
@@ -68,20 +71,33 @@
                 const status = (rows[0][1] || "").replace(/"/g, ''); 
                 const progress = (rows[2][1] || "").replace(/"/g, '');
 
-                document.getElementById('status-container').innerText = status;
-                document.getElementById('done-text').innerText = progress;
-
+                // Парсим числа
                 const nums = progress.match(/\d+/g);
                 if (nums && nums.length >= 2) {
-                    const done = parseInt(nums[0]);
+                    const currentDone = parseInt(nums[0]);
                     const total = parseInt(nums[1]);
-                    const percent = total > 0 ? Math.round((done / total) * 100) : 0;
+                    
+                    // --- ЗАЩИТА ОТ МЕРЦАНИЯ ---
+                    // Если новое число меньше старого, И это не сброс в ноль (новый день)
+                    // То мы игнорируем эти данные (считаем их устаревшими)
+                    if (currentDone < maxDone && currentDone !== 0) {
+                        console.log(`Игнорируем устаревшие данные: ${currentDone} < ${maxDone}`);
+                        return; 
+                    }
+                    
+                    // Если данные валидные, запоминаем новый рекорд
+                    maxDone = currentDone;
+
+                    // Обновляем экран
+                    document.getElementById('status-container').innerText = status;
+                    document.getElementById('done-text').innerText = progress;
+                    
+                    const percent = total > 0 ? Math.round((currentDone / total) * 100) : 0;
                     document.getElementById('percent-val').innerText = percent + '%';
                 }
             } catch (e) { console.error(e); }
         }
 
-        // Проверка каждые 5 секунд (быстрее нет смысла из-за ограничений Google)
         setInterval(updateDashboard, 5000);
         updateDashboard();
     </script>
