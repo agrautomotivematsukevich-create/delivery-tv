@@ -2,86 +2,213 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Sklad Dashboard Pro</title>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Roboto:wght@400;700;900&display=swap" rel="stylesheet">
+    <title>Warehouse Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
     <style>
-        :root { --bg: #0d0e12; --card: #1a1c23; --text: #fff; --dim: #8b9bb4; --green: #00ff9d; --yellow: #ffcc00; --red: #ff4757; --blue: #2d98da; }
-        body { background: var(--bg); color: var(--text); font-family: 'Roboto', sans-serif; margin: 0; height: 100vh; overflow: hidden; display: grid; grid-template-rows: 80px 1fr; padding: 20px; box-sizing: border-box; }
-        
-        .header { display: flex; justify-content: space-between; border-bottom: 2px solid #2c303a; padding-bottom: 10px; margin-bottom: 20px; }
-        .header-title { font-size: 32px; font-weight: 900; letter-spacing: 2px; color: var(--dim); }
-        .clock { font-family: 'JetBrains Mono', monospace; font-size: 48px; font-weight: 700; }
-        .date { font-size: 20px; color: var(--dim); text-align: right; }
+        :root {
+            --bg-app: #121212; /* Глубокий черный фон */
+            --bg-card: #1e1e1e; /* Темно-серые карточки */
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --accent-green: #28a745; /* Профессиональный зеленый */
+            --accent-yellow: #ffc107; /* Предупреждающий желтый */
+            --accent-red: #dc3545; /* Красный для ошибок */
+        }
 
-        .grid { display: grid; grid-template-columns: 1fr 1.2fr; grid-template-rows: 1fr 1.5fr; gap: 20px; height: 100%; }
-        .card { background: var(--card); border-radius: 20px; padding: 30px; border: 1px solid #333; display: flex; flex-direction: column; position: relative; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        
-        /* ЛЕВАЯ ПАНЕЛЬ */
-        .status-panel { grid-row: 1 / 3; align-items: center; justify-content: center; text-align: center; }
-        .circle-wrap { width: 320px; height: 320px; position: relative; margin-bottom: 40px; }
+        body {
+            background-color: var(--bg-app);
+            color: var(--text-primary);
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            height: 100vh;
+            overflow: hidden;
+            display: grid;
+            grid-template-rows: 70px 1fr;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        /* --- ШАПКА --- */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #333;
+        }
+        .header-title { font-size: 28px; font-weight: 700; color: var(--text-primary); }
+        .clock-widget { text-align: right; color: var(--text-secondary); }
+        .clock { font-size: 32px; font-weight: 700; color: var(--text-primary); line-height: 1; }
+        .date { font-size: 18px; }
+
+        /* --- ОСНОВНАЯ СЕТКА (2 КОЛОНКИ) --- */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr; /* Левая часть уже, правая шире */
+            gap: 25px;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        /* ОБЩИЕ СТИЛИ КАРТОЧЕК */
+        .card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 35px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            display: flex;
+            flex-direction: column;
+        }
+        .section-label {
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 15px;
+        }
+
+        /* === ЛЕВАЯ ПАНЕЛЬ (ПРОГРЕСС) === */
+        .left-panel {
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        .progress-container {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            margin-bottom: 30px;
+        }
         svg { transform: rotate(-90deg); width: 100%; height: 100%; }
-        circle { fill: none; stroke-width: 25; stroke-linecap: round; }
-        .bg-c { stroke: #2c303a; }
-        .fg-c { stroke: var(--green); transition: stroke-dashoffset 1.5s ease; filter: drop-shadow(0 0 15px rgba(0,255,157,0.4)); }
-        .pct { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 80px; font-weight: 900; }
-        .count { font-size: 36px; color: var(--dim); margin-bottom: 30px; }
-        .badge { padding: 15px 40px; border-radius: 50px; font-size: 40px; font-weight: 700; border: 2px solid #444; }
+        circle { fill: none; stroke-width: 20; stroke-linecap: round; }
+        .bg-ring { stroke: #333; }
+        .fg-ring {
+            stroke: var(--accent-green);
+            transition: stroke-dashoffset 1.5s ease-in-out;
+        }
+        .percent-text {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            font-size: 80px; font-weight: 900; line-height: 1;
+        }
+        .count-text { font-size: 32px; color: var(--text-secondary); margin-bottom: 40px; font-weight: 500; }
+        
+        /* Статус-кнопка */
+        .status-btn {
+            padding: 15px 40px;
+            border-radius: 12px;
+            font-size: 28px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: white;
+            background: #333; /* Цвет по умолчанию */
+            transition: all 0.3s ease;
+        }
+        .status-btn.active { background: var(--accent-green); box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4); }
+        .status-btn.pause { background: #555; color: #ccc; }
+        .status-btn.wait { background: var(--accent-yellow); color: #000; }
 
-        /* ПРАВАЯ ВЕРХНЯЯ */
-        .next-panel { grid-column: 2; justify-content: center; }
-        .label { color: var(--dim); font-size: 20px; text-transform: uppercase; margin-bottom: 10px; }
-        .nid { font-size: 55px; font-weight: 900; font-family: 'JetBrains Mono'; margin-bottom: 10px; }
-        .ninfo { font-size: 28px; }
-        .warn { color: var(--red); animation: pulse 2s infinite; }
-        .arr { color: var(--blue); }
 
-        /* ПРАВАЯ НИЖНЯЯ */
-        .list-panel { grid-column: 2; background: #15171d; }
+        /* === ПРАВАЯ ПАНЕЛЬ (ДЕТАЛИ) === */
+        .right-panel {
+            gap: 30px; /* Отступ между блоками "Следующий" и "Список" */
+        }
+
+        /* Блок "Следующий" */
+        .next-block {
+            padding-bottom: 25px;
+            border-bottom: 1px solid #333;
+        }
+        .next-id { font-size: 48px; font-weight: 900; margin-bottom: 10px; }
+        .next-info { font-size: 24px; font-weight: 500; display: flex; align-items: center; gap: 10px; }
+        .warn-text { color: var(--accent-red); }
+        .time-text { color: var(--accent-green); }
+
+        /* Блок "Список активных" */
+        .list-block {
+            flex: 1; /* Занимает все оставшееся место */
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
         .list-mask { flex: 1; overflow: hidden; position: relative; }
         .list-content { position: absolute; width: 100%; }
-        .item { font-family: 'JetBrains Mono'; font-size: 24px; padding: 20px 0; border-bottom: 1px solid #333; color: #ddd; display: flex; align-items: center; }
-        .item span { margin-right: 15px; }
+        
+        /* Элемент списка */
+        .list-item {
+            display: grid;
+            grid-template-columns: 50px 2fr 1fr 1fr; /* Иконка, ID, Время, Длительность */
+            align-items: center;
+            padding: 15px 10px;
+            border-bottom: 1px solid #333;
+            font-size: 20px;
+            font-weight: 500;
+        }
+        .list-item span:nth-child(1) { font-size: 24px; } /* Иконка контейнера */
+        .list-item span:nth-child(2) { font-weight: 700; } /* ID контейнера */
+        .list-item span:nth-child(4) { color: var(--text-secondary); text-align: right; } /* Минуты */
 
-        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
+        /* Анимации */
         @keyframes scrollUp { 0% { transform: translateY(0); } 15% { transform: translateY(0); } 100% { transform: translateY(-100%); } }
+        /* Анимация появления нового элемента */
+        @keyframes slideIn { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+        .new-item { animation: slideIn 0.5s ease forwards; border-left: 4px solid var(--accent-green); background: rgba(40, 167, 69, 0.1); }
+
     </style>
 </head>
 <body>
+
     <div class="header">
-        <div class="header-title">СКЛАД LIVE</div>
-        <div>
+        <div class="header-title">Мониторинг Склада</div>
+        <div class="clock-widget">
             <div class="clock" id="clock">00:00</div>
             <div class="date" id="date">-- ---</div>
         </div>
     </div>
 
-    <div class="grid">
-        <div class="card status-panel">
-            <div class="circle-wrap">
-                <svg viewBox="0 0 350 350"><circle cx="175" cy="175" r="150" class="bg-c"/><circle cx="175" cy="175" r="150" class="fg-c" id="ring" stroke-dasharray="942" stroke-dashoffset="942"/></svg>
-                <div class="pct" id="pct">0%</div>
+    <div class="main-grid">
+        
+        <div class="card left-panel">
+            <div class="section-label">Общий прогресс</div>
+            <div class="progress-container">
+                <svg viewBox="0 0 350 350">
+                    <circle cx="175" cy="175" r="150" class="bg-ring" />
+                    <circle cx="175" cy="175" r="150" class="fg-ring" id="ring" stroke-dasharray="942" stroke-dashoffset="942" />
+                </svg>
+                <div class="percent-text" id="pct">0%</div>
             </div>
-            <div class="count" id="cnt">-- / --</div>
-            <div class="badge" id="sts">ЗАГРУЗКА</div>
+            <div class="count-text" id="cnt">-- из --</div>
+            <div class="status-btn" id="sts">Загрузка...</div>
         </div>
 
-        <div class="card next-panel">
-            <div class="label">Следующий контейнер</div>
-            <div class="nid" id="nid">—</div>
-            <div class="ninfo" id="ninfo">Нет данных</div>
-        </div>
-
-        <div class="card list-panel">
-            <div class="label" style="color: var(--green);">🚚 АКТИВНЫЕ РАЗГРУЗКИ</div>
-            <div class="list-mask" id="mask">
-                <div class="list-content" id="list"></div>
+        <div class="card right-panel">
+            
+            <div class="next-block">
+                <div class="section-label">Следующий контейнер</div>
+                <div class="next-id" id="nid">---</div>
+                <div class="next-info" id="ninfo" style="color: var(--text-secondary);">Нет данных</div>
             </div>
+
+            <div class="list-block">
+                <div class="section-label">Активные разгрузки</div>
+                <div class="list-mask" id="mask">
+                    <div class="list-content" id="list"></div>
+                </div>
+            </div>
+
         </div>
     </div>
+
 
     <script>
         const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS0kYp4Zp2m9jmTRMTZoamaEUBfZg95n3YN_7f0YByCva_978_452f538CXgKhzveg-etToheOTaVCJ/pub?gid=1966680390&single=true&output=csv'; 
 
+        // Память для отслеживания новых элементов списка
+        let previousActiveIDs = new Set();
+        let isFirstRun = true;
+
+        // Часы
         setInterval(() => {
             const d = new Date();
             document.getElementById('clock').innerText = d.toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'});
@@ -90,40 +217,38 @@
 
         async function update() {
             try {
-                // Запрос данных
                 const res = await fetch(csvUrl + '&t=' + Date.now());
                 const txt = await res.text();
                 
-                // === ЗАЩИТА ОТ ПУСТЫХ ДАННЫХ ===
-                // Если Google вернул ошибку или пустой файл, мы просто выходим (return).
-                // Старые данные остаются на экране! Экран не моргнет.
-                if (!txt || txt.length < 10 || txt.includes("<!DOCTYPE")) {
-                    console.log("Получены некорректные данные, пропускаем обновление");
-                    return;
-                }
+                // Защита от пустых данных
+                if (!txt || txt.length < 10 || txt.includes("<!DOCTYPE")) return;
 
                 // Авто-определение разделителя
                 const firstLine = txt.split('\n')[0];
                 const separator = firstLine.includes(';') ? ';' : ',';
                 const rows = txt.split('\n').map(r => r.split(separator)); 
 
-                // 1. СТРОКА 1 (ГЛАВНЫЕ ДАННЫЕ)
+                // --- 1. ОБНОВЛЕНИЕ ГЛАВНЫХ ДАННЫХ ---
                 const r1 = rows[0]; 
                 if (r1 && r1.length > 2) {
+                    // Статус
                     const st = r1[0].replace(/"/g,'').trim();
-                    const badge = document.getElementById('sts');
+                    const btn = document.getElementById('sts');
+                    // Сброс классов
+                    btn.className = 'status-btn';
                     
                     if (st === "ACTIVE") {
-                        badge.innerText = "🟢 В РАБОТЕ";
-                        badge.style.color = "#00ff9d"; badge.style.borderColor = "#00ff9d";
+                        btn.innerText = "В РАБОТЕ";
+                        btn.classList.add('active');
                     } else if (st === "PAUSE") {
-                        badge.innerText = "⏸ ПАУЗА";
-                        badge.style.color = "#aaa"; badge.style.borderColor = "#555";
+                        btn.innerText = "ПАУЗА";
+                        btn.classList.add('pause');
                     } else {
-                        badge.innerText = "🟡 ОЖИДАНИЕ";
-                        badge.style.color = "#ffcc00"; badge.style.borderColor = "#ffcc00";
+                        btn.innerText = "ОЖИДАНИЕ";
+                        btn.classList.add('wait');
                     }
 
+                    // Прогресс
                     const counts = r1[1].replace(/"/g,'').split('|');
                     const done = parseInt(counts[0]) || 0;
                     const total = parseInt(counts[1]) || 0;
@@ -131,21 +256,26 @@
                     document.getElementById('cnt').innerText = `${done} из ${total}`;
                     const p = total > 0 ? Math.round((done/total)*100) : 0;
                     document.getElementById('pct').innerText = p + '%';
-                    document.getElementById('ring').style.strokeDashoffset = 942 - (942 * p / 100);
+                    // Обновляем цвет кольца в зависимости от статуса
+                    const ring = document.getElementById('ring');
+                    ring.style.strokeDashoffset = 942 - (942 * p / 100);
+                    ring.style.stroke = st === "ACTIVE" ? "var(--accent-green)" : (st === "PAUSE" ? "#555" : "var(--accent-yellow)");
 
+                    // Следующий
                     document.getElementById('nid').innerText = r1[2].replace(/"/g,'').trim();
                     const ninf = r1[3] ? r1[3].replace(/"/g,'').trim() : "";
                     const idiv = document.getElementById('ninfo');
                     
-                    if (ninf.includes("ОПОЗДАНИЕ")) idiv.innerHTML = `<span class="warn">${ninf}</span>`;
-                    else idiv.innerHTML = `<span class="arr">${ninf}</span>`;
+                    if (ninf.includes("ОПОЗДАНИЕ")) idiv.innerHTML = `⚠️ <span class="warn-text">${ninf.replace('⚠️','').trim()}</span>`;
+                    else if (ninf.includes("ПРИБУДЕТ")) idiv.innerHTML = `⏱ <span class="time-text">${ninf.replace('⏱','').trim()}</span>`;
+                    else idiv.innerHTML = ninf;
                 }
 
-                // 2. СПИСОК (С ЗАЩИТОЙ ОТ ПУСТОТЫ)
-                // Сначала собираем новые элементы в память, не трогая экран
+                // --- 2. ОБНОВЛЕНИЕ СПИСКА ---
                 let newItemsHTML = [];
                 const rawLines = txt.split('\n');
                 let foundAny = false;
+                let currentActiveIDs = new Set();
 
                 for (let i = 1; i < rawLines.length; i++) {
                     let line = rawLines[i].replace(/^"|"$/g, '').replace(/^[;,]+/, '');
@@ -158,24 +288,33 @@
                             let durRaw = parts[2].replace(/[,;"]/g, '').trim(); 
                             let dur = parseInt(durRaw); 
                             if (isNaN(dur)) dur = durRaw; 
+
+                            currentActiveIDs.add(id);
+                            let animClass = (!isFirstRun && !previousActiveIDs.has(id)) ? 'new-item' : '';
                             
-                            // Создаем HTML строку
-                            newItemsHTML.push(`<div class="item"><span>📦 ${id}</span> <span>⏱ ${time}</span> <span>🕐 ${dur} мин.</span></div>`);
+                            // Верстка элемента списка в новом дизайне
+                            newItemsHTML.push(`
+                                <div class="list-item ${animClass}">
+                                    <span>📦</span>
+                                    <span>${id}</span>
+                                    <span>${time}</span>
+                                    <span>${dur} мин.</span>
+                                </div>
+                            `);
                         }
                     }
                 }
 
-                // Только теперь обновляем экран списка
+                previousActiveIDs = currentActiveIDs;
+                isFirstRun = false;
+
                 const listEl = document.getElementById('list');
                 
                 if (!foundAny) {
-                    listEl.innerHTML = '<div class="item" style="color:#666; justify-content:center;">Нет активных разгрузок</div>';
+                    listEl.innerHTML = '<div style="color: var(--text-secondary); padding: 20px; text-align: center;">Нет активных разгрузок</div>';
                     listEl.style.animation = 'none';
                 } else {
-                    // Вставляем новые элементы
                     listEl.innerHTML = newItemsHTML.join('');
-                    
-                    // Анимация
                     const mh = document.getElementById('mask').clientHeight;
                     const ch = listEl.clientHeight;
                     if (ch > mh) {
@@ -186,11 +325,11 @@
                     }
                 }
 
-            } catch(e) { console.log("Ошибка обновления:", e); }
+            } catch(e) { console.log("System error:", e); }
         }
 
-        // Запуск раз в 60 секунд (60000 мс)
-        setInterval(update, 60000);
+        // Обновление каждые 10 секунд
+        setInterval(update, 10000);
         update();
     </script>
 </body>
