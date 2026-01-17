@@ -80,7 +80,6 @@
     </div>
 
     <script>
-        // ВАША ССЫЛКА
         const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS0kYp4Zp2m9jmTRMTZoamaEUBfZg95n3YN_7f0YByCva_978_452f538CXgKhzveg-etToheOTaVCJ/pub?gid=1966680390&single=true&output=csv'; 
 
         setInterval(() => {
@@ -91,13 +90,21 @@
 
         async function update() {
             try {
+                // Запрос данных
                 const res = await fetch(csvUrl + '&t=' + Date.now());
                 const txt = await res.text();
                 
+                // === ЗАЩИТА ОТ ПУСТЫХ ДАННЫХ ===
+                // Если Google вернул ошибку или пустой файл, мы просто выходим (return).
+                // Старые данные остаются на экране! Экран не моргнет.
+                if (!txt || txt.length < 10 || txt.includes("<!DOCTYPE")) {
+                    console.log("Получены некорректные данные, пропускаем обновление");
+                    return;
+                }
+
                 // Авто-определение разделителя
                 const firstLine = txt.split('\n')[0];
                 const separator = firstLine.includes(';') ? ';' : ',';
-
                 const rows = txt.split('\n').map(r => r.split(separator)); 
 
                 // 1. СТРОКА 1 (ГЛАВНЫЕ ДАННЫЕ)
@@ -134,44 +141,41 @@
                     else idiv.innerHTML = `<span class="arr">${ninf}</span>`;
                 }
 
-                // 2. СПИСОК (ИСПРАВЛЕННАЯ ЧАСТЬ)
-                const listEl = document.getElementById('list');
+                // 2. СПИСОК (С ЗАЩИТОЙ ОТ ПУСТОТЫ)
+                // Сначала собираем новые элементы в память, не трогая экран
+                let newItemsHTML = [];
                 const rawLines = txt.split('\n');
-                listEl.innerHTML = '';
-                
                 let foundAny = false;
-                for (let i = 1; i < rawLines.length; i++) {
-                    let line = rawLines[i].replace(/^"|"$/g, '');
-                    line = line.replace(/^[;,]+/, '');
 
+                for (let i = 1; i < rawLines.length; i++) {
+                    let line = rawLines[i].replace(/^"|"$/g, '').replace(/^[;,]+/, '');
                     if (line.includes('|')) {
                         let parts = line.split('|');
                         if (parts.length >= 3) {
                             foundAny = true;
                             let id = parts[0].trim();
                             let time = parts[1].trim();
-                            
-                            // !!! ЗДЕСЬ ИСПРАВЛЕНИЕ ЗАПЯТЫХ !!!
-                            // Мы берем текст, и с помощью parseInt принудительно делаем из него число
-                            // "-416,,," превратится просто в "-416"
                             let durRaw = parts[2].replace(/[,;"]/g, '').trim(); 
                             let dur = parseInt(durRaw); 
-
-                            // Проверка на NaN, если вдруг там не число
                             if (isNaN(dur)) dur = durRaw; 
                             
-                            let div = document.createElement('div');
-                            div.className = 'item';
-                            div.innerHTML = `<span>📦 ${id}</span> <span>⏱ ${time}</span> <span>🕐 ${dur} мин.</span>`;
-                            listEl.appendChild(div);
+                            // Создаем HTML строку
+                            newItemsHTML.push(`<div class="item"><span>📦 ${id}</span> <span>⏱ ${time}</span> <span>🕐 ${dur} мин.</span></div>`);
                         }
                     }
                 }
 
+                // Только теперь обновляем экран списка
+                const listEl = document.getElementById('list');
+                
                 if (!foundAny) {
                     listEl.innerHTML = '<div class="item" style="color:#666; justify-content:center;">Нет активных разгрузок</div>';
                     listEl.style.animation = 'none';
                 } else {
+                    // Вставляем новые элементы
+                    listEl.innerHTML = newItemsHTML.join('');
+                    
+                    // Анимация
                     const mh = document.getElementById('mask').clientHeight;
                     const ch = listEl.clientHeight;
                     if (ch > mh) {
@@ -182,10 +186,11 @@
                     }
                 }
 
-            } catch(e) { console.log(e); }
+            } catch(e) { console.log("Ошибка обновления:", e); }
         }
 
-        setInterval(update, 5000);
+        // Запуск раз в 60 секунд (60000 мс)
+        setInterval(update, 60000);
         update();
     </script>
 </body>
