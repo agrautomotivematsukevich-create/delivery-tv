@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Warehouse Dashboard</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -13,6 +14,8 @@
             --accent-green: #28a745; 
             --accent-yellow: #ffc107; 
             --accent-red: #dc3545; 
+            --msg-bg: #ffc107; 
+            --msg-text: #000000; 
         }
 
         body {
@@ -23,53 +26,24 @@
             height: 100vh;
             overflow: hidden;
             display: grid;
-            grid-template-rows: 70px 1fr;
+            grid-template-rows: 70px 1fr 0px; 
             padding: 20px;
+            padding-bottom: 20px; 
             box-sizing: border-box;
+            transition: grid-template-rows 0.5s ease;
         }
 
-        /* ШАПКА */
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #333;
-        }
+        body.has-message { padding-bottom: 90px; }
+
+        /* --- СТАНДАРТНЫЕ СТИЛИ --- */
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #333; }
         .header-title { font-size: 28px; font-weight: 700; color: var(--text-primary); }
         .clock-widget { text-align: right; color: var(--text-secondary); }
         .clock { font-size: 32px; font-weight: 700; color: var(--text-primary); line-height: 1; }
         .date { font-size: 18px; }
-
-        /* СЕТКА */
-        .main-grid {
-            display: grid;
-            grid-template-columns: 1fr 1.5fr;
-            gap: 25px;
-            height: 100%;
-            overflow: hidden;
-        }
-
-        /* КАРТОЧКИ */
-        .card {
-            background: var(--bg-card);
-            border-radius: 16px;
-            padding: 35px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-            display: flex;
-            flex-direction: column;
-        }
-        .section-label {
-            font-size: 16px;
-            font-weight: 500;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 15px;
-        }
-
-        /* ЛЕВАЯ ПАНЕЛЬ */
+        .main-grid { display: grid; grid-template-columns: 1fr 1.5fr; gap: 25px; height: 100%; overflow: hidden; }
+        .card { background: var(--bg-card); border-radius: 16px; padding: 35px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); display: flex; flex-direction: column; }
+        .section-label { font-size: 16px; font-weight: 500; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; }
         .left-panel { align-items: center; justify-content: center; text-align: center; }
         .progress-container { position: relative; width: 300px; height: 300px; margin-bottom: 30px; }
         svg { transform: rotate(-90deg); width: 100%; height: 100%; }
@@ -78,115 +52,179 @@
         .fg-ring { stroke: var(--accent-green); transition: stroke-dashoffset 1.5s ease-in-out; }
         .percent-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 80px; font-weight: 900; line-height: 1; }
         .count-text { font-size: 32px; color: var(--text-secondary); margin-bottom: 40px; font-weight: 500; }
-        
-        .status-btn {
-            padding: 15px 40px;
-            border-radius: 12px;
-            font-size: 28px;
-            font-weight: 700;
-            text-transform: uppercase;
-            color: white;
-            background: #333;
-            transition: all 0.3s ease;
-        }
+        .status-btn { padding: 15px 40px; border-radius: 12px; font-size: 28px; font-weight: 700; text-transform: uppercase; color: white; background: #333; transition: all 0.3s ease; }
         .status-btn.active { background: var(--accent-green); box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4); }
         .status-btn.pause { background: #555; color: #ccc; }
         .status-btn.wait { background: var(--accent-yellow); color: #000; }
-
-        /* ПРАВАЯ ПАНЕЛЬ */
         .right-panel { gap: 30px; }
         .next-block { padding-bottom: 25px; border-bottom: 1px solid #333; }
         .next-id { font-size: 48px; font-weight: 900; margin-bottom: 10px; }
         .next-info { font-size: 24px; font-weight: 500; display: flex; align-items: center; gap: 10px; }
         .warn-text { color: var(--accent-red); }
         .time-text { color: var(--accent-green); }
-
         .list-block { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
         .list-mask { flex: 1; overflow: hidden; position: relative; }
         .list-content { position: absolute; width: 100%; transition: all 0.3s ease; }
+        .list-item { display: grid; grid-template-columns: 80px 2fr 1fr 1fr; align-items: center; padding: 10px; border-bottom: 1px solid #333; font-size: 20px; font-weight: 500; background: var(--bg-card); transition: background 0.3s, border-left 0.3s; position: relative; overflow: hidden; max-height: 80px; }
+        .list-item span:nth-child(1) { display: flex; align-items: center; justify-content: center; }
+        .list-item span:nth-child(2) { font-weight: 700; letter-spacing: 1px; font-size: 22px;}
+        .list-item span:nth-child(4) { color: var(--text-secondary); text-align: right; }
+        .container-img { width: 65px; height: auto; display: block; object-fit: contain; filter: drop-shadow(0 4px 4px rgba(0,0,0,0.5)); }
+        .list-item.overdue { border-left: 4px solid var(--accent-red); background: linear-gradient(90deg, rgba(220, 53, 69, 0.15) 0%, transparent 100%); }
+        .list-item.overdue .container-img { filter: brightness(0) saturate(100%) invert(27%) sepia(51%) saturate(2878%) hue-rotate(346deg) brightness(104%) contrast(97%) drop-shadow(0 0 5px rgba(255, 0, 0, 0.5)); }
+        .list-item.overdue span { color: var(--accent-red) !important; }
+        .list-item.overdue span:nth-child(1) { animation: pulseIcon 1.5s infinite; }
+        @keyframes pulseIcon { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.7; transform: scale(0.95); } 100% { opacity: 1; transform: scale(1); } }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(-50px); } to { opacity: 1; transform: translateX(0); } }
+        .new-item { animation: slideIn 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; border-left: 4px solid var(--accent-green); }
+        @keyframes slideOut { 0% { opacity: 1; transform: translateX(0); max-height: 80px; } 50% { opacity: 0; transform: translateX(100px); max-height: 80px; } 100% { opacity: 0; transform: translateX(100px); max-height: 0; border: none; } }
+        .remove-item { animation: slideOut 0.8s ease forwards; position: relative; z-index: 0; pointer-events: none; }
+        .empty-message { color: var(--text-secondary); padding: 30px; text-align: center; }
         
-        /* ЭЛЕМЕНТ СПИСКА */
-        .list-item {
-            display: grid;
-            grid-template-columns: 80px 2fr 1fr 1fr; /* Место под картинку */
-            align-items: center;
-            padding: 10px;
-            border-bottom: 1px solid #333;
-            font-size: 20px;
-            font-weight: 500;
-            background: var(--bg-card);
-            transition: background 0.3s, border-left 0.3s;
-            position: relative;
-            overflow: hidden;
-            max-height: 80px;
+        /* --- PRO Message Bar Design --- */
+        .message-bar { 
+            position: fixed; 
+            bottom: -120px; 
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%; 
+            max-width: 1200px;
+            height: 70px; 
+            background: rgba(30, 30, 30, 0.95);
+            backdrop-filter: blur(10px);
+            border-left: 6px solid var(--accent-yellow);
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 20px rgba(255, 193, 7, 0.2);
+            display: flex; 
+            align-items: center; 
+            padding: 0 30px;
+            z-index: 1000; 
+            transition: bottom 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            color: white;
         }
-        .list-item span:nth-child(1) { 
+
+        .message-bar.visible { bottom: 30px; } 
+
+        .msg-icon-box {
             display: flex;
             align-items: center;
             justify-content: center;
-        }
-        .list-item span:nth-child(2) { font-weight: 700; letter-spacing: 1px; font-size: 22px;}
-        .list-item span:nth-child(4) { color: var(--text-secondary); text-align: right; }
-
-        /* СТИЛЬ ВАШЕЙ SVG КАРТИНКИ */
-        .container-img {
-            width: 65px; /* SVG можно сделать чуть крупнее, он не "поплывет" */
-            height: auto;
-            display: block;
-            object-fit: contain;
-            /* Тень для объема (для SVG работает идеально) */
-            filter: drop-shadow(0 4px 4px rgba(0,0,0,0.5));
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 193, 7, 0.2);
+            border-radius: 50%;
+            margin-right: 20px;
+            color: var(--accent-yellow);
+            animation: pulseGlow 2s infinite;
         }
 
-        /* ПРОСРОЧКА */
-        .list-item.overdue {
-            border-left: 4px solid var(--accent-red);
-            background: linear-gradient(90deg, rgba(220, 53, 69, 0.15) 0%, transparent 100%);
-        }
-        /* При просрочке делаем SVG красным */
-        .list-item.overdue .container-img {
-            /* Этот фильтр перекрасит любой цветной SVG в ярко-красный */
-            filter: brightness(0) saturate(100%) invert(27%) sepia(51%) saturate(2878%) hue-rotate(346deg) brightness(104%) contrast(97%) drop-shadow(0 0 5px rgba(255, 0, 0, 0.5));
-        }
-        .list-item.overdue span {
-            color: var(--accent-red) !important;
-        }
-        .list-item.overdue span:nth-child(1) {
-            animation: pulseIcon 1.5s infinite;
-        }
-        @keyframes pulseIcon {
-            0% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.7; transform: scale(0.95); }
-            100% { opacity: 1; transform: scale(1); }
+        .msg-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
 
-        /* АНИМАЦИИ */
-        @keyframes slideIn { 
-            from { opacity: 0; transform: translateX(-50px); } 
-            to { opacity: 1; transform: translateX(0); } 
-        }
-        .new-item { 
-            animation: slideIn 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; 
-            border-left: 4px solid var(--accent-green);
-        }
-
-        @keyframes slideOut {
-            0% { opacity: 1; transform: translateX(0); max-height: 80px; margin-bottom: 0; }
-            50% { opacity: 0; transform: translateX(100px); max-height: 80px; margin-bottom: 0; }
-            100% { opacity: 0; transform: translateX(100px); max-height: 0; margin-bottom: 0; padding-top: 0; padding-bottom: 0; border: none; }
-        }
-        .remove-item {
-            animation: slideOut 0.8s ease forwards;
-            position: relative;
-            z-index: 0;
-            pointer-events: none;
+        .msg-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--accent-yellow);
+            font-weight: 700;
+            margin-bottom: 4px;
         }
 
-        .empty-message { color: var(--text-secondary); padding: 30px; text-align: center; }
+        .msg-text {
+            font-size: 24px;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        @keyframes pulseGlow {
+            0% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 193, 7, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0); }
+        }
+
+        /* КНОПКА ЗАМКА И МОДАЛЬНЫЕ ОКНА */
+        .admin-trigger { 
+            position: fixed; top: 20px; right: 20px; 
+            color: #444; font-size: 24px; cursor: pointer; 
+            opacity: 0.3; transition: all 0.3s; z-index: 2000; 
+        }
+        .admin-trigger:hover { opacity: 1; color: var(--accent-green); transform: scale(1.1); }
+        
+        .modal-overlay { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.9); display: none; 
+            align-items: center; justify-content: center; z-index: 3000; 
+            backdrop-filter: blur(8px); 
+        }
+        .modal-overlay.open { display: flex; }
+        
+        .modal-box { 
+            background: #1e1e1e; padding: 40px; border-radius: 16px; 
+            width: 90%; max-width: 450px; 
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8); 
+            border: 1px solid #333; text-align: center; 
+        }
+        .modal-box h2 { margin-top: 0; color: white; font-weight: 700; margin-bottom: 25px;}
+        .modal-input { 
+            width: 100%; padding: 15px; margin: 10px 0; 
+            background: #121212; border: 1px solid #444; 
+            color: white; border-radius: 8px; font-size: 18px; 
+            box-sizing: border-box; outline: none;
+        }
+        .modal-input:focus { border-color: var(--accent-green); }
+        .modal-btn { 
+            width: 100%; padding: 15px; margin-top: 15px; 
+            background: var(--accent-green); border: none; 
+            color: white; font-weight: bold; font-size: 18px; 
+            border-radius: 8px; cursor: pointer; transition: 0.2s;
+        }
+        .modal-btn:hover { background: #218838; transform: translateY(-2px); }
+        .modal-close { margin-top: 15px; background: transparent; color: #888; font-size: 14px; }
+        .modal-close:hover { color: #fff; }
+        .status-msg { margin-top: 15px; font-size: 16px; min-height: 24px; font-weight: 500; }
+        .st-ok { color: var(--accent-green); }
+        .st-err { color: var(--accent-red); }
 
     </style>
 </head>
 <body>
+
+    <div class="admin-trigger" onclick="openLogin()">
+        <span class="material-icons">lock</span>
+    </div>
+
+    <div class="modal-overlay" id="modalLogin">
+        <div class="modal-box">
+            <h2>Вход Администратора</h2>
+            <input type="password" id="adminPass" class="modal-input" placeholder="Введите пароль" onkeydown="if(event.key === 'Enter') checkLogin()">
+            <button class="modal-btn" onclick="checkLogin()">ВОЙТИ</button>
+            <button class="modal-btn modal-close" onclick="closeModals()">Отмена</button>
+            <div class="status-msg" id="loginStatus"></div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalAdmin">
+        <div class="modal-box">
+            <h2 style="color: var(--accent-green)">📢 Сообщение на экран</h2>
+            <input type="text" id="msgInput" class="modal-input" placeholder="Текст сообщения...">
+            <select id="timeInput" class="modal-input">
+                <option value="5">На 5 минут</option>
+                <option value="15">На 15 минут</option>
+                <option value="30">На 30 минут</option>
+                <option value="60">На 1 час</option>
+                <option value="480">На всю смену</option>
+            </select>
+            <button class="modal-btn" onclick="sendMessage()">ОПУБЛИКОВАТЬ</button>
+            <button class="modal-btn modal-close" onclick="closeModals()">Закрыть</button>
+            <div class="status-msg" id="adminStatus"></div>
+        </div>
+    </div>
 
     <div class="header">
         <div class="header-title">Мониторинг Склада</div>
@@ -226,13 +264,113 @@
         </div>
     </div>
 
+    <div class="message-bar" id="messageBar">
+        <div class="msg-icon-box">
+            <span class="material-icons">campaign</span>
+        </div>
+        <div class="msg-content">
+            <div class="msg-label">Внимание / Info</div>
+            <div class="msg-text" id="messageText"></div>
+        </div>
+    </div>
+
     <script>
-        // ВАША ТУРБО-ССЫЛКА
-        const scriptUrl = 'https://script.google.com/macros/s/AKfycbxZrTj6S372XhmEwyxdPgBeLGzALbImLABjMNE0pG9a5Cnlu11NRPw487hP64bsVRtzdw/exec'; 
+        // НОВАЯ ССЫЛКА
+        const scriptUrl = 'https://script.google.com/macros/s/AKfycbzFiBJIdEoT8nNFGvv3oN2bvxeAfXNEfC4XEMrS5s16FOa3DZ5lQ4fPfYDM0Sl_rpK6rA/exec'; 
 
-        // ИМЯ ВАШЕГО НОВОГО ФАЙЛА (.svg)
         const CONTAINER_IMG_SRC = 'container.svg'; 
+        let currentPassword = ""; 
 
+        // Логика Админки
+        function openLogin() {
+            document.getElementById('modalLogin').classList.add('open');
+            document.getElementById('adminPass').focus();
+        }
+
+        function closeModals() {
+            document.getElementById('modalLogin').classList.remove('open');
+            document.getElementById('modalAdmin').classList.remove('open');
+            document.getElementById('loginStatus').innerText = "";
+            document.getElementById('adminStatus').innerText = "";
+            document.getElementById('adminPass').value = ""; // Очистка пароля при закрытии
+        }
+
+        // --- ПРОВЕРКА ПАРОЛЯ ---
+        async function checkLogin() {
+            const pass = document.getElementById('adminPass').value;
+            const statusEl = document.getElementById('loginStatus');
+
+            if (!pass) {
+                statusEl.innerText = "Введите пароль";
+                statusEl.className = "status-msg st-err";
+                return;
+            }
+
+            statusEl.innerText = "Проверка...";
+            statusEl.className = "status-msg";
+
+            try {
+                // Запрашиваем проверку пароля у сервера
+                const url = `${scriptUrl}?mode=login&pass=${encodeURIComponent(pass)}`;
+                const response = await fetch(url);
+                const result = await response.text();
+
+                if (result.includes("CORRECT")) {
+                    // Пароль верный!
+                    currentPassword = pass;
+                    document.getElementById('modalLogin').classList.remove('open');
+                    document.getElementById('modalAdmin').classList.add('open');
+                } else {
+                    // Пароль неверный!
+                    statusEl.innerText = "❌ Неверный пароль";
+                    statusEl.className = "status-msg st-err";
+                }
+            } catch (e) {
+                statusEl.innerText = "Ошибка сети";
+                statusEl.className = "status-msg st-err";
+            }
+        }
+
+        async function sendMessage() {
+            const text = document.getElementById('msgInput').value;
+            const duration = document.getElementById('timeInput').value;
+            const statusEl = document.getElementById('adminStatus');
+
+            if (!text) {
+                statusEl.innerText = "Напишите текст!";
+                statusEl.className = "status-msg st-err";
+                return;
+            }
+
+            statusEl.innerText = "Отправка...";
+            statusEl.className = "status-msg";
+
+            try {
+                // Здесь пароль уже проверен, просто отправляем
+                const url = `${scriptUrl}?mode=write&text=${encodeURIComponent(text)}&pass=${encodeURIComponent(currentPassword)}&dur=${duration}`;
+                
+                const response = await fetch(url);
+                const result = await response.text();
+
+                if (result.includes("SUCCESS")) {
+                    statusEl.innerText = "✅ Опубликовано!";
+                    statusEl.className = "status-msg st-ok";
+                    document.getElementById('msgInput').value = "";
+                    setTimeout(() => {
+                        update(); // Обновляем экран сразу
+                        closeModals();
+                    }, 2000);
+                } else {
+                    statusEl.innerText = "⚠️ Ошибка: " + result;
+                }
+
+            } catch (e) {
+                statusEl.innerText = "❌ Ошибка сети: " + e;
+                statusEl.className = "status-msg st-err";
+            }
+        }
+
+        // --- ЛОГИКА ДАШБОРДА ---
         let previousActiveIDs = new Set();
         let isFirstRun = true;
 
@@ -245,12 +383,32 @@
         async function update() {
             try {
                 const res = await fetch(scriptUrl);
-                const txt = await res.text();
+                const fullText = await res.text();
                 
-                if (!txt || txt.includes("DOCTYPE") || txt.length < 5) return;
-                const rows = txt.split('\n').map(r => r.split(';')); 
+                if (!fullText || fullText.includes("DOCTYPE")) return;
 
-                // 1. ГЛАВНЫЕ ДАННЫЕ
+                let csvData = fullText;
+                let adminMessage = "";
+                
+                if (fullText.includes("###MSG###")) {
+                    const parts = fullText.split("###MSG###");
+                    csvData = parts[0];
+                    adminMessage = parts[1] ? parts[1].trim() : "";
+                }
+
+                const msgBar = document.getElementById('messageBar');
+                const msgText = document.getElementById('messageText');
+                
+                if (adminMessage && adminMessage.length > 0) {
+                    msgText.innerText = adminMessage;
+                    msgBar.classList.add('visible');
+                    document.body.classList.add('has-message');
+                } else {
+                    msgBar.classList.remove('visible');
+                    document.body.classList.remove('has-message');
+                }
+
+                const rows = csvData.split('\n').map(r => r.split(';')); 
                 const r1 = rows[0]; 
                 if (r1 && r1.length > 2) {
                     const st = r1[0].trim();
@@ -278,9 +436,7 @@
                     else idiv.innerHTML = ninf;
                 }
 
-                // 2. СПИСОК
                 const listEl = document.getElementById('list');
-                
                 let newDataMap = new Map();
                 for (let i = 1; i < rows.length; i++) {
                     let parts = rows[i];
@@ -290,70 +446,46 @@
                          let time = subParts[1].trim();
                          let durRaw = subParts[2].trim().replace(/[,"]/g, '');
                          let dur = parseInt(durRaw); if (isNaN(dur)) dur = 0;
-                         
                          newDataMap.set(id, { time, dur });
                     }
                 }
-
                 const currentChildren = Array.from(listEl.querySelectorAll('.list-item:not(.remove-item)'));
-                
                 currentChildren.forEach(el => {
                     const id = el.getAttribute('data-id');
                     if (!newDataMap.has(id)) {
                         el.classList.add('remove-item');
-                        setTimeout(() => {
-                            if (el.parentNode) el.remove();
-                            checkEmpty();
-                        }, 750);
+                        setTimeout(() => { if (el.parentNode) el.remove(); checkEmpty(); }, 750);
                     }
                 });
-
                 newDataMap.forEach((data, id) => {
                     let existingEl = listEl.querySelector(`.list-item[data-id="${id}"]:not(.remove-item)`);
-                    
                     let isOverdue = data.dur > 30;
                     let overdueClass = isOverdue ? 'overdue' : '';
-                    
-                    // Если просрочка - ⚠️, если нет - ВАШ SVG
                     let iconHtml = isOverdue ? '<span style="font-size:30px">⚠️</span>' : `<img src="${CONTAINER_IMG_SRC}" class="container-img" alt="box">`;
-
-                    let innerHTML = `
-                        <span>${iconHtml}</span>
-                        <span>${id}</span>
-                        <span>${data.time}</span>
-                        <span>${data.dur} мин.</span>
-                    `;
-
+                    let innerHTML = `<span>${iconHtml}</span><span>${id}</span><span>${data.time}</span><span>${data.dur} мин.</span>`;
                     if (existingEl) {
                         if (existingEl.innerHTML !== innerHTML) existingEl.innerHTML = innerHTML;
-                        
                         if (isOverdue) existingEl.classList.add('overdue');
                         else existingEl.classList.remove('overdue');
-
                     } else {
                         let newEl = document.createElement('div');
                         newEl.className = `list-item ${overdueClass}`;
                         if (!isFirstRun) newEl.classList.add('new-item'); 
                         newEl.setAttribute('data-id', id);
                         newEl.innerHTML = innerHTML;
-
                         const emptyMsg = listEl.querySelector('.empty-message');
                         if (emptyMsg) emptyMsg.remove();
-                        
                         listEl.prepend(newEl);
                     }
                 });
-
                 isFirstRun = false;
                 if (newDataMap.size === 0) checkEmpty();
-
                 function checkEmpty() {
                      const alive = listEl.querySelectorAll('.list-item:not(.remove-item)');
                      if (alive.length === 0 && !listEl.querySelector('.empty-message')) {
                          listEl.innerHTML = '<div class="empty-message">Нет активных разгрузок</div>';
                      }
                 }
-
             } catch(e) { console.log("Update error:", e); }
         }
 
