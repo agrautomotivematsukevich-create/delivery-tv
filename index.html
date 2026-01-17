@@ -6,13 +6,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-app: #121212; /* Глубокий черный фон */
-            --bg-card: #1e1e1e; /* Темно-серые карточки */
+            --bg-app: #121212; 
+            --bg-card: #1e1e1e;
             --text-primary: #ffffff;
             --text-secondary: #a0a0a0;
-            --accent-green: #28a745; /* Профессиональный зеленый */
-            --accent-yellow: #ffc107; /* Предупреждающий желтый */
-            --accent-red: #dc3545; /* Красный для ошибок */
+            --accent-green: #28a745; 
+            --accent-yellow: #ffc107; 
+            --accent-red: #dc3545; 
         }
 
         body {
@@ -28,7 +28,7 @@
             box-sizing: border-box;
         }
 
-        /* --- ШАПКА --- */
+        /* ШАПКА */
         .header {
             display: flex;
             justify-content: space-between;
@@ -42,16 +42,16 @@
         .clock { font-size: 32px; font-weight: 700; color: var(--text-primary); line-height: 1; }
         .date { font-size: 18px; }
 
-        /* --- ОСНОВНАЯ СЕТКА (2 КОЛОНКИ) --- */
+        /* СЕТКА */
         .main-grid {
             display: grid;
-            grid-template-columns: 1fr 1.5fr; /* Левая часть уже, правая шире */
+            grid-template-columns: 1fr 1.5fr;
             gap: 25px;
             height: 100%;
             overflow: hidden;
         }
 
-        /* ОБЩИЕ СТИЛИ КАРТОЧЕК */
+        /* КАРТОЧКИ */
         .card {
             background: var(--bg-card);
             border-radius: 16px;
@@ -69,32 +69,16 @@
             margin-bottom: 15px;
         }
 
-        /* === ЛЕВАЯ ПАНЕЛЬ (ПРОГРЕСС) === */
-        .left-panel {
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-        }
-        .progress-container {
-            position: relative;
-            width: 300px;
-            height: 300px;
-            margin-bottom: 30px;
-        }
+        /* ЛЕВАЯ ПАНЕЛЬ */
+        .left-panel { align-items: center; justify-content: center; text-align: center; }
+        .progress-container { position: relative; width: 300px; height: 300px; margin-bottom: 30px; }
         svg { transform: rotate(-90deg); width: 100%; height: 100%; }
         circle { fill: none; stroke-width: 20; stroke-linecap: round; }
         .bg-ring { stroke: #333; }
-        .fg-ring {
-            stroke: var(--accent-green);
-            transition: stroke-dashoffset 1.5s ease-in-out;
-        }
-        .percent-text {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            font-size: 80px; font-weight: 900; line-height: 1;
-        }
+        .fg-ring { stroke: var(--accent-green); transition: stroke-dashoffset 1.5s ease-in-out; }
+        .percent-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 80px; font-weight: 900; line-height: 1; }
         .count-text { font-size: 32px; color: var(--text-secondary); margin-bottom: 40px; font-weight: 500; }
         
-        /* Статус-кнопка */
         .status-btn {
             padding: 15px 40px;
             border-radius: 12px;
@@ -102,58 +86,51 @@
             font-weight: 700;
             text-transform: uppercase;
             color: white;
-            background: #333; /* Цвет по умолчанию */
+            background: #333;
             transition: all 0.3s ease;
         }
         .status-btn.active { background: var(--accent-green); box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4); }
         .status-btn.pause { background: #555; color: #ccc; }
         .status-btn.wait { background: var(--accent-yellow); color: #000; }
 
-
-        /* === ПРАВАЯ ПАНЕЛЬ (ДЕТАЛИ) === */
-        .right-panel {
-            gap: 30px; /* Отступ между блоками "Следующий" и "Список" */
-        }
-
-        /* Блок "Следующий" */
-        .next-block {
-            padding-bottom: 25px;
-            border-bottom: 1px solid #333;
-        }
+        /* ПРАВАЯ ПАНЕЛЬ */
+        .right-panel { gap: 30px; }
+        .next-block { padding-bottom: 25px; border-bottom: 1px solid #333; }
         .next-id { font-size: 48px; font-weight: 900; margin-bottom: 10px; }
         .next-info { font-size: 24px; font-weight: 500; display: flex; align-items: center; gap: 10px; }
         .warn-text { color: var(--accent-red); }
         .time-text { color: var(--accent-green); }
 
-        /* Блок "Список активных" */
-        .list-block {
-            flex: 1; /* Занимает все оставшееся место */
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
+        .list-block { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
         .list-mask { flex: 1; overflow: hidden; position: relative; }
         .list-content { position: absolute; width: 100%; }
         
-        /* Элемент списка */
         .list-item {
             display: grid;
-            grid-template-columns: 50px 2fr 1fr 1fr; /* Иконка, ID, Время, Длительность */
+            grid-template-columns: 50px 2fr 1fr 1fr;
             align-items: center;
             padding: 15px 10px;
             border-bottom: 1px solid #333;
             font-size: 20px;
             font-weight: 500;
         }
-        .list-item span:nth-child(1) { font-size: 24px; } /* Иконка контейнера */
-        .list-item span:nth-child(2) { font-weight: 700; } /* ID контейнера */
-        .list-item span:nth-child(4) { color: var(--text-secondary); text-align: right; } /* Минуты */
+        .list-item span:nth-child(1) { font-size: 24px; }
+        .list-item span:nth-child(2) { font-weight: 700; }
+        .list-item span:nth-child(4) { color: var(--text-secondary); text-align: right; }
 
-        /* Анимации */
+        /* АНИМАЦИИ */
         @keyframes scrollUp { 0% { transform: translateY(0); } 15% { transform: translateY(0); } 100% { transform: translateY(-100%); } }
-        /* Анимация появления нового элемента */
-        @keyframes slideIn { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
-        .new-item { animation: slideIn 0.5s ease forwards; border-left: 4px solid var(--accent-green); background: rgba(40, 167, 69, 0.1); }
+        
+        /* Анимация плавного появления нового элемента */
+        @keyframes slideIn { 
+            from { opacity: 0; transform: translateX(-30px); border-left-width: 0px; } 
+            to { opacity: 1; transform: translateX(0); border-left-width: 4px; } 
+        }
+        .new-item { 
+            animation: slideIn 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; 
+            border-left: 4px solid var(--accent-green); 
+            background: linear-gradient(90deg, rgba(40, 167, 69, 0.15) 0%, transparent 100%);
+        }
 
     </style>
 </head>
@@ -168,7 +145,6 @@
     </div>
 
     <div class="main-grid">
-        
         <div class="card left-panel">
             <div class="section-label">Общий прогресс</div>
             <div class="progress-container">
@@ -183,7 +159,6 @@
         </div>
 
         <div class="card right-panel">
-            
             <div class="next-block">
                 <div class="section-label">Следующий контейнер</div>
                 <div class="next-id" id="nid">---</div>
@@ -196,15 +171,13 @@
                     <div class="list-content" id="list"></div>
                 </div>
             </div>
-
         </div>
     </div>
 
-
     <script>
-        const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS0kYp4Zp2m9jmTRMTZoamaEUBfZg95n3YN_7f0YByCva_978_452f538CXgKhzveg-etToheOTaVCJ/pub?gid=1966680390&single=true&output=csv'; 
+        // ВАША ТУРБО-ССЫЛКА
+        const scriptUrl = 'https://script.google.com/macros/s/AKfycbxZrTj6S372XhmEwyxdPgBeLGzALbImLABjMNE0pG9a5Cnlu11NRPw487hP64bsVRtzdw/exec'; 
 
-        // Память для отслеживания новых элементов списка
         let previousActiveIDs = new Set();
         let isFirstRun = true;
 
@@ -217,24 +190,21 @@
 
         async function update() {
             try {
-                const res = await fetch(csvUrl + '&t=' + Date.now());
+                // Запрашиваем данные у Apps Script
+                const res = await fetch(scriptUrl);
                 const txt = await res.text();
                 
-                // Защита от пустых данных
-                if (!txt || txt.length < 10 || txt.includes("<!DOCTYPE")) return;
+                // Проверка на ошибки или пустой ответ
+                if (!txt || txt.includes("DOCTYPE") || txt.length < 5) return;
 
-                // Авто-определение разделителя
-                const firstLine = txt.split('\n')[0];
-                const separator = firstLine.includes(';') ? ';' : ',';
-                const rows = txt.split('\n').map(r => r.split(separator)); 
+                // Скрипт отдает данные, разделенные ";" (мы так настроили в Google Script)
+                const rows = txt.split('\n').map(r => r.split(';')); 
 
-                // --- 1. ОБНОВЛЕНИЕ ГЛАВНЫХ ДАННЫХ ---
+                // --- 1. ГЛАВНЫЕ ДАННЫЕ (A1:E1) ---
                 const r1 = rows[0]; 
                 if (r1 && r1.length > 2) {
-                    // Статус
-                    const st = r1[0].replace(/"/g,'').trim();
+                    const st = r1[0].trim();
                     const btn = document.getElementById('sts');
-                    // Сброс классов
                     btn.className = 'status-btn';
                     
                     if (st === "ACTIVE") {
@@ -248,22 +218,19 @@
                         btn.classList.add('wait');
                     }
 
-                    // Прогресс
-                    const counts = r1[1].replace(/"/g,'').split('|');
+                    const counts = r1[1].split('|');
                     const done = parseInt(counts[0]) || 0;
                     const total = parseInt(counts[1]) || 0;
                     
                     document.getElementById('cnt').innerText = `${done} из ${total}`;
                     const p = total > 0 ? Math.round((done/total)*100) : 0;
                     document.getElementById('pct').innerText = p + '%';
-                    // Обновляем цвет кольца в зависимости от статуса
                     const ring = document.getElementById('ring');
                     ring.style.strokeDashoffset = 942 - (942 * p / 100);
                     ring.style.stroke = st === "ACTIVE" ? "var(--accent-green)" : (st === "PAUSE" ? "#555" : "var(--accent-yellow)");
 
-                    // Следующий
-                    document.getElementById('nid').innerText = r1[2].replace(/"/g,'').trim();
-                    const ninf = r1[3] ? r1[3].replace(/"/g,'').trim() : "";
+                    document.getElementById('nid').innerText = r1[2].trim();
+                    const ninf = r1[3] ? r1[3].trim() : "";
                     const idiv = document.getElementById('ninfo');
                     
                     if (ninf.includes("ОПОЗДАНИЕ")) idiv.innerHTML = `⚠️ <span class="warn-text">${ninf.replace('⚠️','').trim()}</span>`;
@@ -271,29 +238,35 @@
                     else idiv.innerHTML = ninf;
                 }
 
-                // --- 2. ОБНОВЛЕНИЕ СПИСКА ---
+                // --- 2. СПИСОК (A2:A...) ---
                 let newItemsHTML = [];
-                const rawLines = txt.split('\n');
                 let foundAny = false;
                 let currentActiveIDs = new Set();
 
-                for (let i = 1; i < rawLines.length; i++) {
-                    let line = rawLines[i].replace(/^"|"$/g, '').replace(/^[;,]+/, '');
-                    if (line.includes('|')) {
-                        let parts = line.split('|');
-                        if (parts.length >= 3) {
-                            foundAny = true;
-                            let id = parts[0].trim();
-                            let time = parts[1].trim();
-                            let durRaw = parts[2].replace(/[,;"]/g, '').trim(); 
-                            let dur = parseInt(durRaw); 
-                            if (isNaN(dur)) dur = durRaw; 
+                for (let i = 1; i < rows.length; i++) {
+                    // Берем ячейку списка (она одна в строке, содержит ID|Time|Dur)
+                    // Но так как мы разбили по ";", она будет в parts[0]
+                    let parts = rows[i];
+                    if (parts.length >= 1) {
+                         let raw = parts[0]; 
+                         if(raw.includes('|')) {
+                             let subParts = raw.split('|');
+                             foundAny = true;
+                             
+                             let id = subParts[0].trim();
+                             let time = subParts[1].trim();
+                             let durRaw = subParts[2].trim();
+                             
+                             // Чистим минуты от возможного мусора (кавычки, запятые)
+                             let dur = parseInt(durRaw.replace(/[,"]/g, ''));
+                             if (isNaN(dur)) dur = durRaw;
 
-                            currentActiveIDs.add(id);
-                            let animClass = (!isFirstRun && !previousActiveIDs.has(id)) ? 'new-item' : '';
-                            
-                            // Верстка элемента списка в новом дизайне
-                            newItemsHTML.push(`
+                             currentActiveIDs.add(id);
+                             
+                             // Если ID новый и это не первый запуск -> добавляем класс анимации
+                             let animClass = (!isFirstRun && !previousActiveIDs.has(id)) ? 'new-item' : '';
+                             
+                             newItemsHTML.push(`
                                 <div class="list-item ${animClass}">
                                     <span>📦</span>
                                     <span>${id}</span>
@@ -301,7 +274,7 @@
                                     <span>${dur} мин.</span>
                                 </div>
                             `);
-                        }
+                         }
                     }
                 }
 
@@ -315,6 +288,8 @@
                     listEl.style.animation = 'none';
                 } else {
                     listEl.innerHTML = newItemsHTML.join('');
+                    
+                    // Анимация прокрутки, если не влезает
                     const mh = document.getElementById('mask').clientHeight;
                     const ch = listEl.clientHeight;
                     if (ch > mh) {
@@ -325,11 +300,11 @@
                     }
                 }
 
-            } catch(e) { console.log("System error:", e); }
+            } catch(e) { console.log("Update error:", e); }
         }
 
-        // Обновление каждые 10 секунд
-        setInterval(update, 10000);
+        // Обновляем каждые 3 секунды (можно и чаще, Apps Script выдержит)
+        setInterval(update, 3000);
         update();
     </script>
 </body>
