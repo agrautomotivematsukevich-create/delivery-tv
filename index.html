@@ -83,57 +83,48 @@
         .msg-text { font-size: 24px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         @keyframes pulseGlow { 0% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(255, 193, 7, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0); } }
 
-        /* TOAST NOTIFICATION (СВЕРХУ) */
+        /* TOAST NOTIFICATION */
         .admin-toast {
-            position: fixed;
-            top: -100px; /* Спрятан сверху */
-            left: 50%;
-            transform: translateX(-50%);
-            background: #333;
-            color: white;
-            padding: 15px 30px;
-            border-radius: 50px;
-            font-size: 20px;
-            font-weight: 700;
-            z-index: 6000;
+            position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
+            background: #333; color: white; padding: 2vh 4vh; border-radius: 50px;
+            font-size: 2.5vh; font-weight: 700; z-index: 6000;
             transition: top 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            display: flex;
-            align-items: center;
-            gap: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: flex; align-items: center; gap: 2vh;
         }
-        .admin-toast.show { top: 30px; } /* Показываем */
-        .admin-toast.success { background: var(--accent-green); }
-        .admin-toast.error { background: var(--accent-red); }
-        .toast-icon { font-size: 24px; }
+        .admin-toast.show { top: 5vh; }
+        .admin-toast.success { background: #28a745; border: 2px solid #20c997; }
+        .admin-toast.error { background: #dc3545; border: 2px solid #ff6b6b; }
+        .toast-icon { font-size: 3vh; }
 
         /* MODAL */
         .admin-trigger { position: fixed; top: 20px; right: 20px; color: #444; font-size: 24px; cursor: pointer; opacity: 0.3; transition: all 0.3s; z-index: 2000; }
         .admin-trigger:hover { opacity: 1; color: var(--accent-green); transform: scale(1.1); }
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; z-index: 3000; backdrop-filter: blur(8px); }
         .modal-overlay.open { display: flex; }
-        .modal-box { background: #1e1e1e; padding: 40px; border-radius: 16px; width: 90%; max-width: 450px; box-shadow: 0 10px 40px rgba(0,0,0,0.8); border: 1px solid #333; text-align: center; max-height: 90vh; overflow-y: auto; }
-        .modal-box h2 { margin-top: 0; color: white; font-weight: 700; margin-bottom: 25px;}
+        .modal-box { background: #1e1e1e; padding: 40px; border-radius: 16px; width: 500px; box-shadow: 0 10px 40px rgba(0,0,0,0.8); border: 1px solid #333; text-align: center; max-height: 90vh; overflow-y: auto; }
+        .modal-box h2 { margin-top: 0; color: white; font-weight: 700; margin-bottom: 25px; font-size: 3vh;}
         .modal-section-title { color: var(--text-secondary); font-size: 14px; text-transform: uppercase; margin-top: 25px; margin-bottom: 10px; text-align: left; font-weight: bold; border-bottom: 1px solid #333; padding-bottom: 5px; }
-        .modal-input { width: 100%; padding: 15px; margin: 5px 0; background: #121212; border: 1px solid #444; color: white; border-radius: 8px; font-size: 18px; box-sizing: border-box; outline: none; }
+        .modal-input { width: 100%; padding: 15px; margin: 5px 0; background: #121212; border: 1px solid #444; color: white; border-radius: 8px; font-size: 2.2vh; box-sizing: border-box; outline: none; }
         .modal-input:focus { border-color: var(--accent-green); }
         .time-group { display: flex; gap: 10px; }
         .time-group input { text-align: center; }
         
-        /* Language Buttons */
         .lang-group { display: flex; gap: 10px; justify-content: center; margin-bottom: 10px; }
-        .lang-btn { flex: 1; padding: 12px; background: #333; border: 1px solid #555; color: #aaa; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .lang-btn { flex: 1; padding: 12px; background: #333; border: 1px solid #555; color: #aaa; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; font-size: 2vh; }
         .lang-btn:hover { background: #444; color: white; }
         .lang-btn.active { background: var(--accent-green); color: white; border-color: var(--accent-green); box-shadow: 0 0 10px rgba(40, 167, 69, 0.4); }
 
-        .modal-btn { width: 100%; padding: 15px; margin-top: 15px; background: var(--accent-green); border: none; color: white; font-weight: bold; font-size: 18px; border-radius: 8px; cursor: pointer; transition: 0.2s; }
+        .modal-btn { width: 100%; padding: 15px; margin-top: 15px; background: var(--accent-green); border: none; color: white; font-weight: bold; font-size: 2.2vh; border-radius: 8px; cursor: pointer; transition: 0.2s; }
         .modal-btn:hover { background: #218838; transform: translateY(-2px); }
         .modal-btn-blue { background: var(--accent-blue); margin-top: 10px; }
         .modal-btn-blue:hover { background: #0069d9; }
+        .modal-btn-red { background: var(--accent-red); margin-top: 0; } 
+        .modal-btn-red:hover { background: #c82333; }
+        .modal-btn.grey { background: #444; margin-top: 10px; }
         .modal-close { margin-top: 15px; background: transparent; color: #888; font-size: 14px; }
         .modal-close:hover { color: #fff; }
 
-        /* SPEC. MODES */
+        /* SPEC MODES */
         body.is-victory .next-block, body.is-victory .list-block,
         body.is-lunch .next-block, body.is-lunch .list-block { display: none !important; }
         body.is-victory .victory-block { display: flex !important; }
@@ -171,7 +162,7 @@
             <input type="text" id="adminUser" class="modal-input" placeholder="Логин">
             <input type="password" id="adminPass" class="modal-input" placeholder="Пароль" onkeydown="if(event.key === 'Enter') checkLogin()">
             <button class="modal-btn" onclick="checkLogin()">ВОЙТИ</button>
-            <button class="modal-btn modal-close" onclick="closeModals()">Отмена</button>
+            <button class="modal-btn grey" onclick="closeModals()">Отмена</button>
         </div>
     </div>
 
@@ -194,7 +185,11 @@
                 <option value="60">1 час</option>
                 <option value="480">Смена</option>
             </select>
-            <button class="modal-btn" onclick="sendMessage()">ОПУБЛИКОВАТЬ</button>
+            
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button class="modal-btn" style="flex: 2;" onclick="sendMessage()">ОПУБЛИКОВАТЬ</button>
+                <button class="modal-btn modal-btn-red" style="flex: 1;" onclick="clearMessage()">УДАЛИТЬ</button>
+            </div>
             
             <div class="modal-section-title">☕ Обед</div>
             <div class="time-group">
@@ -202,9 +197,9 @@
                 <input type="time" id="lunchEndInput" class="modal-input" value="12:00">
             </div>
             <button class="modal-btn modal-btn-blue" onclick="saveLunchTime()">СОХРАНИТЬ ВРЕМЯ</button>
-            <button class="modal-btn" style="background:#555; font-size:14px; padding:10px; margin-top:5px" onclick="testLunch()">Тест обеда (10 сек)</button>
+            <button class="modal-btn grey" onclick="testLunch()">Тест обеда (10 сек)</button>
 
-            <button class="modal-btn modal-close" onclick="closeModals()">Закрыть</button>
+            <button class="modal-btn grey" onclick="closeModals()">Закрыть</button>
         </div>
     </div>
 

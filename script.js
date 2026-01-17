@@ -1,16 +1,15 @@
 // === НАСТРОЙКИ ===
-// ВАША РАБОЧАЯ ССЫЛКА
 const scriptUrl = 'https://script.google.com/macros/s/AKfycbwTJjS5ROp2Q12a57o2LLHj3TVdDMpcDunmp_GibynfbtugNBFPSH1AwyAgh2acZQp3pQ/exec'; 
 const CONTAINER_IMG_SRC = 'container.svg'; 
 
 let currentUser = ""; 
 let currentPassword = ""; 
-let currentLang = "RU"; // По умолчанию
+let currentLang = "RU"; 
 let isLunchTestMode = false; 
 let lunchStartStr = "11:30";
 let lunchEndStr = "12:00";
 
-// === СЛОВАРЬ (С ИСПРАВЛЕНИЯМИ ПЕРЕВОДА ФРАЗ) ===
+// === СЛОВАРЬ ===
 const TRANSLATIONS = {
     RU: {
         title: "Мониторинг Склада",
@@ -30,7 +29,6 @@ const TRANSLATIONS = {
         eta_prefix: "ПРИБУДЕТ: ", 
         delay_prefix: "ОПОЗДАНИЕ: "
     },
-    // ОБЪЕДИНЕННЫЙ ЯЗЫК
     EN_CN: {
         title: "Warehouse / 仓库监控",
         progress: "Progress / 总体进度",
@@ -60,16 +58,10 @@ function showToast(text, type) {
     txt.innerText = text;
     icon.innerText = type === 'success' ? 'check_circle' : 'error';
     
-    // Показать
     toast.className = `admin-toast show ${type}`; 
-    
-    // Скрыть через 3 секунды
-    setTimeout(() => {
-        toast.className = 'admin-toast';
-    }, 3000);
+    setTimeout(() => { toast.className = 'admin-toast'; }, 3000);
 }
 
-// --- ПРИМЕНЕНИЕ ЯЗЫКА ---
 function applyLanguage(lang) {
     if (!TRANSLATIONS[lang]) return;
     currentLang = lang;
@@ -82,14 +74,12 @@ function applyLanguage(lang) {
     document.getElementById('txt_lunch').innerText = t.lunch;
     document.getElementById('txt_victory').innerText = t.victory;
     
-    // Обновляем текст "Нет задач", если он есть
     const emptyMsg = document.querySelector('.empty-message');
     if (emptyMsg) emptyMsg.innerText = t.empty;
     
-    // Подсветка активной кнопки
     document.querySelectorAll('.lang-btn').forEach(btn => {
         if (btn.innerText.includes("RU") && lang === "RU") btn.classList.add('active');
-        else if (btn.innerText.includes("EN") && lang === "EN_CN") btn.classList.add('active');
+        else if (btn.innerText.includes("CN") && lang === "EN_CN") btn.classList.add('active');
         else btn.classList.remove('active');
     });
 }
@@ -105,7 +95,7 @@ function closeModals() {
     document.getElementById('adminPass').value = ""; 
 }
 
-// --- ЛОГИН (С УВЕДОМЛЕНИЕМ) ---
+// --- ЛОГИН ---
 async function checkLogin() {
     const user = document.getElementById('adminUser').value.trim();
     const pass = document.getElementById('adminPass').value.trim();
@@ -136,85 +126,79 @@ async function checkLogin() {
     }
 }
 
-// --- СМЕНА ЯЗЫКА ---
+// --- НАСТРОЙКИ ---
 async function setLang(lang) {
-    applyLanguage(lang); // Визуально сразу
+    applyLanguage(lang); 
     showToast("Сохранение...", "success");
     try {
         await fetch(`${scriptUrl}?nocache=${Date.now()}&mode=set_lang&lang=${lang}&user=${currentUser}&pass=${currentPassword}`);
         showToast("Язык сохранен!", "success");
-    } catch(e) { 
-        showToast("Ошибка", "error");
-    }
+    } catch(e) { showToast("Ошибка", "error"); }
 }
 
 async function saveLunchTime() {
     const start = document.getElementById('lunchStartInput').value;
     const end = document.getElementById('lunchEndInput').value;
-
     if (!start || !end) return;
     showToast("Сохранение...", "success");
-
     try {
         const url = `${scriptUrl}?nocache=${Date.now()}&mode=set_lunch&start=${start}&end=${end}&user=${currentUser}&pass=${currentPassword}`;
         const response = await fetch(url);
-        const result = await response.text();
-
-        if (result.includes("LUNCH_UPDATED")) {
-            showToast("Время обеда обновлено!", "success");
-            lunchStartStr = start;
-            lunchEndStr = end;
+        if ((await response.text()).includes("LUNCH_UPDATED")) {
+            showToast("Обед обновлен!", "success");
+            lunchStartStr = start; lunchEndStr = end;
             setTimeout(() => { update(); }, 1000);
-        } else {
-            showToast("Ошибка сервера", "error");
-        }
-    } catch (e) {
-        showToast("Ошибка сети", "error");
-    }
+        } else { showToast("Ошибка", "error"); }
+    } catch (e) { showToast("Ошибка сети", "error"); }
 }
 
 async function sendMessage() {
     const text = document.getElementById('msgInput').value;
     const duration = document.getElementById('timeInput').value;
-
-    if (!text) {
-        showToast("Введите текст", "error");
-        return;
-    }
-    
+    if (!text) { showToast("Введите текст", "error"); return; }
     showToast("Отправка...", "success");
-
     try {
         const url = `${scriptUrl}?nocache=${Date.now()}&mode=write&text=${encodeURIComponent(text)}&pass=${encodeURIComponent(currentPassword)}&user=${encodeURIComponent(currentUser)}&dur=${duration}`;
         const response = await fetch(url);
-        const result = await response.text();
-
-        if (result.includes("SUCCESS")) {
+        if ((await response.text()).includes("SUCCESS")) {
             showToast("Опубликовано!", "success");
             document.getElementById('msgInput').value = "";
             setTimeout(() => { update(); closeModals(); }, 2000);
-        } else {
-            showToast("Ошибка доступа", "error");
-        }
-    } catch (e) {
-        showToast("Ошибка сети", "error");
-    }
+        } else { showToast("Ошибка", "error"); }
+    } catch (e) { showToast("Ошибка сети", "error"); }
 }
 
+// --- НОВАЯ ФУНКЦИЯ: УДАЛЕНИЕ СООБЩЕНИЯ ---
+async function clearMessage() {
+    showToast("Удаление...", "success");
+    try {
+        // Отправляем пустой текст чтобы очистить ячейку
+        const url = `${scriptUrl}?nocache=${Date.now()}&mode=write&text=&pass=${encodeURIComponent(currentPassword)}&user=${encodeURIComponent(currentUser)}&dur=0`;
+        const response = await fetch(url);
+        if ((await response.text()).includes("SUCCESS")) {
+            showToast("Сообщение удалено!", "success");
+            document.getElementById('msgInput').value = "";
+            setTimeout(() => { update(); closeModals(); }, 2000);
+        } else { showToast("Ошибка", "error"); }
+    } catch (e) { showToast("Ошибка сети", "error"); }
+}
+
+// --- ИСПРАВЛЕННЫЙ ТЕСТ ОБЕДА ---
 function testLunch() {
     isLunchTestMode = true;
-    checkLunchTime(new Date()); 
+    checkLunchTime(new Date()); // Применяем сразу
     closeModals();
     showToast("Тест запущен (10с)", "success");
+    
+    // Гарантированное выключение через 10 сек
     setTimeout(() => { 
         isLunchTestMode = false; 
-        checkLunchTime(new Date()); 
+        checkLunchTime(new Date()); // Принудительный сброс
+        showToast("Тест завершен", "success");
     }, 10000);
 }
 
-// === КОНФЕТТИ (5 МИНУТ) ===
 function launchVictoryConfetti() {
-     // ИЗМЕНЕНО: 5 минут = 5 * 60 * 1000
      var duration = 5 * 60 * 1000; 
      var end = Date.now() + duration;
      (function frame() {
@@ -230,11 +214,9 @@ let isFirstRun = true;
 setInterval(() => {
     const d = new Date();
     document.getElementById('clock').innerText = d.toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'});
-    
     const t = TRANSLATIONS[currentLang] || TRANSLATIONS["RU"];
     const locale = t.locale || 'ru-RU';
     document.getElementById('date').innerText = d.toLocaleDateString(locale, {weekday:'long', day:'numeric', month:'long'});
-    
     checkLunchTime(d);
 }, 1000);
 
@@ -254,12 +236,7 @@ function checkLunchTime(now) {
         let target = new Date(); target.setHours(endH, endM, 0, 0);
         if (isLunchTestMode) diff = 15 * 60 * 1000;
         let diff = target - now;
-        if (diff > 0) {
-            let minLeft = Math.ceil(diff / 60000);
-            document.getElementById('lunchTimer').innerText = `${t.lunch_left} ${minLeft} ${t.min}`;
-        } else {
-            document.getElementById('lunchTimer').innerText = t.lunch_soon;
-        }
+        document.getElementById('lunchTimer').innerText = diff > 0 ? `${t.lunch_left} ${Math.ceil(diff / 60000)} ${t.min}` : t.lunch_soon;
     } else {
         if (document.body.classList.contains('is-lunch')) document.body.classList.remove('is-lunch');
     }
@@ -269,47 +246,31 @@ async function update() {
     try {
         const res = await fetch(scriptUrl + '?nocache=' + new Date().getTime());
         const fullText = await res.text();
-        
         if (!fullText || fullText.includes("DOCTYPE")) return;
 
         let csvData = fullText;
         let adminMessage = "";
         
-        // 1. LANG Parsing
         if (fullText.includes("###LANG###")) {
             const parts = fullText.split("###LANG###");
             const sLang = parts[1].trim(); 
-            const rest = parts[0];
-            if (sLang && TRANSLATIONS[sLang] && sLang !== currentLang) {
-                applyLanguage(sLang);
-            }
-            csvData = rest;
-        } else {
-            if (!currentLang) applyLanguage("RU");
-        }
+            if (sLang && TRANSLATIONS[sLang] && sLang !== currentLang) applyLanguage(sLang);
+            csvData = parts[0];
+        } else if (!currentLang) applyLanguage("RU");
 
-        // 2. LUNCH Parsing
         if (csvData.includes("###LUNCH###")) {
             const parts = csvData.split("###LUNCH###");
-            const lunchData = parts[1].trim(); 
-            const mainData = parts[0];
-            if (lunchData.includes('|')) {
-                const times = lunchData.split('|');
-                if (lunchStartStr !== times[0] || lunchEndStr !== times[1]) {
-                    lunchStartStr = times[0];
-                    lunchEndStr = times[1];
-                }
+            const times = parts[1].trim().split('|');
+            if (times.length == 2 && (lunchStartStr !== times[0] || lunchEndStr !== times[1])) {
+                lunchStartStr = times[0]; lunchEndStr = times[1];
                 const sInp = document.getElementById('lunchStartInput');
                 const eInp = document.getElementById('lunchEndInput');
-                if(document.activeElement !== sInp && document.activeElement !== eInp) {
-                     if(sInp.value !== lunchStartStr) sInp.value = lunchStartStr;
-                     if(eInp.value !== lunchEndStr) eInp.value = lunchEndStr;
-                }
+                if(document.activeElement !== sInp) sInp.value = lunchStartStr;
+                if(document.activeElement !== eInp) eInp.value = lunchEndStr;
             }
-            csvData = mainData;
+            csvData = parts[0];
         }
 
-        // 3. MSG Parsing
         if (csvData.includes("###MSG###")) {
             const parts = csvData.split("###MSG###");
             csvData = parts[0];
@@ -318,7 +279,7 @@ async function update() {
 
         const msgBar = document.getElementById('messageBar');
         const msgText = document.getElementById('messageText');
-        if (adminMessage && adminMessage.length > 0) {
+        if (adminMessage.length > 0) {
             msgText.innerText = adminMessage;
             msgBar.classList.add('visible');
             document.body.classList.add('has-message');
@@ -336,7 +297,6 @@ async function update() {
             const btn = document.getElementById('sts');
             btn.className = 'status-btn';
             
-            // Translate status
             if (st === "ACTIVE") { btn.innerText = t.status_active; btn.classList.add('active'); } 
             else if (st === "PAUSE") { btn.innerText = t.status_pause; btn.classList.add('pause'); } 
             else { btn.innerText = t.status_wait; btn.classList.add('wait'); }
@@ -369,16 +329,11 @@ async function update() {
             const ninf = r1[3] ? r1[3].trim() : "";
             const idiv = document.getElementById('ninfo');
             
-            // === ПАРСИНГ ФРАЗ И ПЕРЕВОД ===
             if (ninf.includes("ОПОЗДАНИЕ") || ninf.includes("DELAY")) {
-                let timeVal = ninf.replace(/[^0-9]/g, ''); 
-                idiv.innerHTML = `⚠️ <span class="warn-text">${t.delay_prefix} ${timeVal} ${t.min}</span>`;
-            } 
-            else if (ninf.includes("ПРИБУДЕТ") || ninf.includes("ETA")) {
-                let timeVal = ninf.replace(/[^0-9]/g, ''); 
-                idiv.innerHTML = `⏱ <span class="time-text">${t.eta_prefix} ${timeVal} ${t.min}</span>`;
-            } 
-            else {
+                idiv.innerHTML = `⚠️ <span class="warn-text">${t.delay_prefix} ${ninf.replace(/[^0-9]/g, '')} ${t.min}</span>`;
+            } else if (ninf.includes("ПРИБУДЕТ") || ninf.includes("ETA")) {
+                idiv.innerHTML = `⏱ <span class="time-text">${t.eta_prefix} ${ninf.replace(/[^0-9]/g, '')} ${t.min}</span>`;
+            } else {
                 idiv.innerHTML = ninf;
             }
         }
