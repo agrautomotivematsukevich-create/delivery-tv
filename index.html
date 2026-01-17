@@ -5,6 +5,8 @@
     <title>Warehouse Dashboard</title>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    
     <style>
         :root {
             --bg-app: #121212; 
@@ -14,6 +16,7 @@
             --accent-green: #28a745; 
             --accent-yellow: #ffc107; 
             --accent-red: #dc3545; 
+            --accent-blue: #007bff; 
             --msg-bg: #ffc107; 
             --msg-text: #000000; 
         }
@@ -42,7 +45,7 @@
         .clock { font-size: 32px; font-weight: 700; color: var(--text-primary); line-height: 1; }
         .date { font-size: 18px; }
         .main-grid { display: grid; grid-template-columns: 1fr 1.5fr; gap: 25px; height: 100%; overflow: hidden; }
-        .card { background: var(--bg-card); border-radius: 16px; padding: 35px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); display: flex; flex-direction: column; }
+        .card { background: var(--bg-card); border-radius: 16px; padding: 35px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); display: flex; flex-direction: column; position: relative; }
         .section-label { font-size: 16px; font-weight: 500; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; }
         .left-panel { align-items: center; justify-content: center; text-align: center; }
         .progress-container { position: relative; width: 300px; height: 300px; margin-bottom: 30px; }
@@ -81,115 +84,49 @@
         .remove-item { animation: slideOut 0.8s ease forwards; position: relative; z-index: 0; pointer-events: none; }
         .empty-message { color: var(--text-secondary); padding: 30px; text-align: center; }
         
-        /* --- PRO Message Bar Design --- */
-        .message-bar { 
-            position: fixed; 
-            bottom: -120px; 
-            left: 50%;
-            transform: translateX(-50%);
-            width: 90%; 
-            max-width: 1200px;
-            height: 70px; 
-            background: rgba(30, 30, 30, 0.95);
-            backdrop-filter: blur(10px);
-            border-left: 6px solid var(--accent-yellow);
-            border-radius: 8px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 20px rgba(255, 193, 7, 0.2);
-            display: flex; 
-            align-items: center; 
-            padding: 0 30px;
-            z-index: 1000; 
-            transition: bottom 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            color: white;
-        }
-
+        /* Message Bar */
+        .message-bar { position: fixed; bottom: -120px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 1200px; height: 70px; background: rgba(30, 30, 30, 0.95); backdrop-filter: blur(10px); border-left: 6px solid var(--accent-yellow); border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 20px rgba(255, 193, 7, 0.2); display: flex; align-items: center; padding: 0 30px; z-index: 1000; transition: bottom 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); color: white; }
         .message-bar.visible { bottom: 30px; } 
+        .msg-icon-box { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: rgba(255, 193, 7, 0.2); border-radius: 50%; margin-right: 20px; color: var(--accent-yellow); animation: pulseGlow 2s infinite; }
+        .msg-content { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+        .msg-label { font-size: 12px; text-transform: uppercase; letter-spacing: 2px; color: var(--accent-yellow); font-weight: 700; margin-bottom: 4px; }
+        .msg-text { font-size: 24px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        @keyframes pulseGlow { 0% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(255, 193, 7, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0); } }
 
-        .msg-icon-box {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 40px;
-            height: 40px;
-            background: rgba(255, 193, 7, 0.2);
-            border-radius: 50%;
-            margin-right: 20px;
-            color: var(--accent-yellow);
-            animation: pulseGlow 2s infinite;
-        }
-
-        .msg-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-
-        .msg-label {
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            color: var(--accent-yellow);
-            font-weight: 700;
-            margin-bottom: 4px;
-        }
-
-        .msg-text {
-            font-size: 24px;
-            font-weight: 500;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        @keyframes pulseGlow {
-            0% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.4); }
-            70% { box-shadow: 0 0 0 10px rgba(255, 193, 7, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0); }
-        }
-
-        /* КНОПКА ЗАМКА И МОДАЛЬНЫЕ ОКНА */
-        .admin-trigger { 
-            position: fixed; top: 20px; right: 20px; 
-            color: #444; font-size: 24px; cursor: pointer; 
-            opacity: 0.3; transition: all 0.3s; z-index: 2000; 
-        }
+        /* MODAL */
+        .admin-trigger { position: fixed; top: 20px; right: 20px; color: #444; font-size: 24px; cursor: pointer; opacity: 0.3; transition: all 0.3s; z-index: 2000; }
         .admin-trigger:hover { opacity: 1; color: var(--accent-green); transform: scale(1.1); }
-        
-        .modal-overlay { 
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(0,0,0,0.9); display: none; 
-            align-items: center; justify-content: center; z-index: 3000; 
-            backdrop-filter: blur(8px); 
-        }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; z-index: 3000; backdrop-filter: blur(8px); }
         .modal-overlay.open { display: flex; }
-        
-        .modal-box { 
-            background: #1e1e1e; padding: 40px; border-radius: 16px; 
-            width: 90%; max-width: 450px; 
-            box-shadow: 0 10px 40px rgba(0,0,0,0.8); 
-            border: 1px solid #333; text-align: center; 
-        }
+        .modal-box { background: #1e1e1e; padding: 40px; border-radius: 16px; width: 90%; max-width: 450px; box-shadow: 0 10px 40px rgba(0,0,0,0.8); border: 1px solid #333; text-align: center; }
         .modal-box h2 { margin-top: 0; color: white; font-weight: 700; margin-bottom: 25px;}
-        .modal-input { 
-            width: 100%; padding: 15px; margin: 10px 0; 
-            background: #121212; border: 1px solid #444; 
-            color: white; border-radius: 8px; font-size: 18px; 
-            box-sizing: border-box; outline: none;
-        }
+        .modal-input { width: 100%; padding: 15px; margin: 10px 0; background: #121212; border: 1px solid #444; color: white; border-radius: 8px; font-size: 18px; box-sizing: border-box; outline: none; }
         .modal-input:focus { border-color: var(--accent-green); }
-        .modal-btn { 
-            width: 100%; padding: 15px; margin-top: 15px; 
-            background: var(--accent-green); border: none; 
-            color: white; font-weight: bold; font-size: 18px; 
-            border-radius: 8px; cursor: pointer; transition: 0.2s;
-        }
+        .modal-btn { width: 100%; padding: 15px; margin-top: 15px; background: var(--accent-green); border: none; color: white; font-weight: bold; font-size: 18px; border-radius: 8px; cursor: pointer; transition: 0.2s; }
         .modal-btn:hover { background: #218838; transform: translateY(-2px); }
+        .modal-btn-blue { background: var(--accent-blue); margin-top: 20px; }
+        .modal-btn-blue:hover { background: #0069d9; }
         .modal-close { margin-top: 15px; background: transparent; color: #888; font-size: 14px; }
         .modal-close:hover { color: #fff; }
         .status-msg { margin-top: 15px; font-size: 16px; min-height: 24px; font-weight: 500; }
         .st-ok { color: var(--accent-green); }
         .st-err { color: var(--accent-red); }
+
+        /* СПЕЦ. РЕЖИМЫ */
+        body.is-victory .next-block, body.is-victory .list-block,
+        body.is-lunch .next-block, body.is-lunch .list-block { display: none !important; }
+        body.is-victory .victory-block { display: flex !important; }
+        body.is-lunch .lunch-block { display: flex !important; }
+
+        .victory-block, .lunch-block { display: none; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; animation: popIn 0.8s; }
+        .victory-icon { font-size: 150px; color: var(--accent-yellow); filter: drop-shadow(0 0 30px rgba(255, 193, 7, 0.8)); margin-bottom: 20px; animation: floatTrophy 3s ease-in-out infinite; }
+        .victory-title, .lunch-title { font-size: 48px; font-weight: 900; color: #fff; text-transform: uppercase; margin-bottom: 10px; letter-spacing: 2px; }
+        .victory-stat { font-size: 36px; color: var(--accent-green); font-weight: 700; }
+        .lunch-icon { font-size: 140px; color: var(--accent-blue); filter: drop-shadow(0 0 30px rgba(0, 123, 255, 0.6)); margin-bottom: 20px; }
+        .lunch-timer { font-size: 32px; color: var(--accent-blue); font-weight: 500; background: rgba(0, 123, 255, 0.1); padding: 10px 30px; border-radius: 50px; border: 1px solid rgba(0, 123, 255, 0.3); }
+
+        @keyframes popIn { 0% { opacity: 0; transform: scale(0.5); } 100% { opacity: 1; transform: scale(1); }}
+        @keyframes floatTrophy { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
 
     </style>
 </head>
@@ -211,7 +148,7 @@
 
     <div class="modal-overlay" id="modalAdmin">
         <div class="modal-box">
-            <h2 style="color: var(--accent-green)">📢 Сообщение на экран</h2>
+            <h2 style="color: var(--accent-green)">📢 Управление</h2>
             <input type="text" id="msgInput" class="modal-input" placeholder="Текст сообщения...">
             <select id="timeInput" class="modal-input">
                 <option value="5">На 5 минут</option>
@@ -221,6 +158,9 @@
                 <option value="480">На всю смену</option>
             </select>
             <button class="modal-btn" onclick="sendMessage()">ОПУБЛИКОВАТЬ</button>
+            
+            <button class="modal-btn modal-btn-blue" onclick="testLunch()">☕ ТЕСТ ОБЕДА (10 сек)</button>
+
             <button class="modal-btn modal-close" onclick="closeModals()">Закрыть</button>
             <div class="status-msg" id="adminStatus"></div>
         </div>
@@ -261,6 +201,18 @@
                     <div class="list-content" id="list"></div>
                 </div>
             </div>
+
+            <div class="victory-block" id="victoryBlock">
+                <span class="material-icons victory-icon">emoji_events</span>
+                <div class="victory-title">ПЛАН ВЫПОЛНЕН!</div>
+                <div class="victory-stat" id="victoryStat">-- из --</div>
+            </div>
+
+            <div class="lunch-block" id="lunchBlock">
+                <span class="material-icons lunch-icon">coffee</span>
+                <div class="lunch-title">ОБЕДЕННЫЙ ПЕРЕРЫВ</div>
+                <div class="lunch-timer" id="lunchTimer">До конца: -- мин</div>
+            </div>
         </div>
     </div>
 
@@ -275,13 +227,15 @@
     </div>
 
     <script>
-        // НОВАЯ ССЫЛКА
-        const scriptUrl = 'https://script.google.com/macros/s/AKfycbzFiBJIdEoT8nNFGvv3oN2bvxeAfXNEfC4XEMrS5s16FOa3DZ5lQ4fPfYDM0Sl_rpK6rA/exec'; 
-
+        const scriptUrl = 'https://script.google.com/macros/s/AKfycbzAsT4ldTvyd4RyNsRUtpucmC0UtrYrcUTA_iLQCmhTxOruQucTLSpoSCo9egMxrMsZZQ/exec'; 
         const CONTAINER_IMG_SRC = 'container.svg'; 
-        let currentPassword = ""; 
+        
+        // !!! ПАРОЛЬ ТЕПЕРЬ ТУТ. МЕНЯЙТЕ ЕГО ЗДЕСЬ !!!
+        const APP_PASSWORD = "708438"; 
 
-        // Логика Админки
+        let currentPassword = ""; 
+        let isLunchTestMode = false; 
+
         function openLogin() {
             document.getElementById('modalLogin').classList.add('open');
             document.getElementById('adminPass').focus();
@@ -292,41 +246,21 @@
             document.getElementById('modalAdmin').classList.remove('open');
             document.getElementById('loginStatus').innerText = "";
             document.getElementById('adminStatus').innerText = "";
-            document.getElementById('adminPass').value = ""; // Очистка пароля при закрытии
+            document.getElementById('adminPass').value = ""; 
         }
 
-        // --- ПРОВЕРКА ПАРОЛЯ ---
-        async function checkLogin() {
+        // --- НОВАЯ БЫСТРАЯ ПРОВЕРКА ПАРОЛЯ ---
+        function checkLogin() {
             const pass = document.getElementById('adminPass').value;
             const statusEl = document.getElementById('loginStatus');
 
-            if (!pass) {
-                statusEl.innerText = "Введите пароль";
-                statusEl.className = "status-msg st-err";
-                return;
-            }
-
-            statusEl.innerText = "Проверка...";
-            statusEl.className = "status-msg";
-
-            try {
-                // Запрашиваем проверку пароля у сервера
-                const url = `${scriptUrl}?mode=login&pass=${encodeURIComponent(pass)}`;
-                const response = await fetch(url);
-                const result = await response.text();
-
-                if (result.includes("CORRECT")) {
-                    // Пароль верный!
-                    currentPassword = pass;
-                    document.getElementById('modalLogin').classList.remove('open');
-                    document.getElementById('modalAdmin').classList.add('open');
-                } else {
-                    // Пароль неверный!
-                    statusEl.innerText = "❌ Неверный пароль";
-                    statusEl.className = "status-msg st-err";
-                }
-            } catch (e) {
-                statusEl.innerText = "Ошибка сети";
+            if (pass === APP_PASSWORD) {
+                // Если пароль совпал с тем, что в коде
+                currentPassword = pass;
+                document.getElementById('modalLogin').classList.remove('open');
+                document.getElementById('modalAdmin').classList.add('open');
+            } else {
+                statusEl.innerText = "❌ Неверный пароль";
                 statusEl.className = "status-msg st-err";
             }
         }
@@ -341,14 +275,12 @@
                 statusEl.className = "status-msg st-err";
                 return;
             }
-
             statusEl.innerText = "Отправка...";
             statusEl.className = "status-msg";
 
             try {
-                // Здесь пароль уже проверен, просто отправляем
+                // Отправляем пароль тоже, чтобы скрипт (если там настроена проверка) пропустил
                 const url = `${scriptUrl}?mode=write&text=${encodeURIComponent(text)}&pass=${encodeURIComponent(currentPassword)}&dur=${duration}`;
-                
                 const response = await fetch(url);
                 const result = await response.text();
 
@@ -356,21 +288,35 @@
                     statusEl.innerText = "✅ Опубликовано!";
                     statusEl.className = "status-msg st-ok";
                     document.getElementById('msgInput').value = "";
-                    setTimeout(() => {
-                        update(); // Обновляем экран сразу
-                        closeModals();
-                    }, 2000);
+                    setTimeout(() => { update(); closeModals(); }, 2000);
                 } else {
-                    statusEl.innerText = "⚠️ Ошибка: " + result;
+                    // Если скрипт вернул ошибку (например, там старый пароль)
+                    statusEl.innerText = "⚠️ Ошибка (проверьте скрипт)";
                 }
-
             } catch (e) {
-                statusEl.innerText = "❌ Ошибка сети: " + e;
+                statusEl.innerText = "❌ Ошибка сети";
                 statusEl.className = "status-msg st-err";
             }
         }
 
-        // --- ЛОГИКА ДАШБОРДА ---
+        function testLunch() {
+            isLunchTestMode = true;
+            document.getElementById('adminStatus').innerText = "✅ Тест запущен";
+            document.getElementById('adminStatus').className = "status-msg st-ok";
+            setTimeout(() => { isLunchTestMode = false; }, 10000);
+            closeModals();
+        }
+
+        function launchVictoryConfetti() {
+             var duration = 3 * 1000; 
+             var end = Date.now() + duration;
+             (function frame() {
+                 confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#ffc107', '#28a745', '#ffffff'] });
+                 confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#ffc107', '#28a745', '#ffffff'] });
+                 if (Date.now() < end) requestAnimationFrame(frame);
+             }());
+        }
+
         let previousActiveIDs = new Set();
         let isFirstRun = true;
 
@@ -378,7 +324,36 @@
             const d = new Date();
             document.getElementById('clock').innerText = d.toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'});
             document.getElementById('date').innerText = d.toLocaleDateString('ru-RU', {weekday:'long', day:'numeric', month:'long'});
+            checkLunchTime(d);
         }, 1000);
+
+        function checkLunchTime(now) {
+            const hours = now.getHours();
+            const minutes = now.getMinutes();
+            // Обед: 11:30 - 11:59
+            const isLunch = (hours === 11 && minutes >= 30);
+            
+            if (isLunch || isLunchTestMode) {
+                if (!document.body.classList.contains('is-lunch')) {
+                    document.body.classList.add('is-lunch');
+                }
+                let target = new Date();
+                target.setHours(12, 0, 0, 0);
+                let diff = target - now;
+                if (isLunchTestMode) diff = 15 * 60 * 1000;
+
+                if (diff > 0) {
+                    let minLeft = Math.ceil(diff / 60000);
+                    document.getElementById('lunchTimer').innerText = `До конца: ${minLeft} мин`;
+                } else {
+                    document.getElementById('lunchTimer').innerText = `Скоро работа`;
+                }
+            } else {
+                if (document.body.classList.contains('is-lunch')) {
+                    document.body.classList.remove('is-lunch');
+                }
+            }
+        }
 
         async function update() {
             try {
@@ -389,7 +364,6 @@
 
                 let csvData = fullText;
                 let adminMessage = "";
-                
                 if (fullText.includes("###MSG###")) {
                     const parts = fullText.split("###MSG###");
                     csvData = parts[0];
@@ -398,7 +372,6 @@
 
                 const msgBar = document.getElementById('messageBar');
                 const msgText = document.getElementById('messageText');
-                
                 if (adminMessage && adminMessage.length > 0) {
                     msgText.innerText = adminMessage;
                     msgBar.classList.add('visible');
@@ -427,6 +400,18 @@
                     const ring = document.getElementById('ring');
                     ring.style.strokeDashoffset = 942 - (942 * p / 100);
                     ring.style.stroke = st === "ACTIVE" ? "var(--accent-green)" : (st === "PAUSE" ? "#555" : "var(--accent-yellow)");
+
+                    if (total > 0 && done === total && !document.body.classList.contains('is-lunch')) {
+                        if (!document.body.classList.contains('is-victory')) {
+                            document.body.classList.add('is-victory'); 
+                            launchVictoryConfetti(); 
+                            document.getElementById('victoryStat').innerText = `${done} из ${total}`;
+                        }
+                    } else {
+                        if (document.body.classList.contains('is-victory')) {
+                            document.body.classList.remove('is-victory'); 
+                        }
+                    }
 
                     document.getElementById('nid').innerText = r1[2].trim();
                     const ninf = r1[3] ? r1[3].trim() : "";
