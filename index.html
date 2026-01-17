@@ -108,9 +108,9 @@
         /* ЭЛЕМЕНТ СПИСКА */
         .list-item {
             display: grid;
-            grid-template-columns: 50px 2fr 1fr 1fr;
+            grid-template-columns: 80px 2fr 1fr 1fr; /* Место под картинку */
             align-items: center;
-            padding: 15px 10px;
+            padding: 10px;
             border-bottom: 1px solid #333;
             font-size: 20px;
             font-weight: 500;
@@ -118,16 +118,35 @@
             transition: background 0.3s, border-left 0.3s;
             position: relative;
             overflow: hidden;
-            max-height: 80px; /* Фикс высоты для анимации удаления */
+            max-height: 80px;
         }
-        .list-item span:nth-child(1) { font-size: 24px; }
-        .list-item span:nth-child(2) { font-weight: 700; }
+        .list-item span:nth-child(1) { 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .list-item span:nth-child(2) { font-weight: 700; letter-spacing: 1px; font-size: 22px;}
         .list-item span:nth-child(4) { color: var(--text-secondary); text-align: right; }
 
-        /* --- СТИЛЬ ДЛЯ ПРОСРОЧКИ (>30 мин) --- */
+        /* СТИЛЬ ВАШЕЙ SVG КАРТИНКИ */
+        .container-img {
+            width: 65px; /* SVG можно сделать чуть крупнее, он не "поплывет" */
+            height: auto;
+            display: block;
+            object-fit: contain;
+            /* Тень для объема (для SVG работает идеально) */
+            filter: drop-shadow(0 4px 4px rgba(0,0,0,0.5));
+        }
+
+        /* ПРОСРОЧКА */
         .list-item.overdue {
             border-left: 4px solid var(--accent-red);
             background: linear-gradient(90deg, rgba(220, 53, 69, 0.15) 0%, transparent 100%);
+        }
+        /* При просрочке делаем SVG красным */
+        .list-item.overdue .container-img {
+            /* Этот фильтр перекрасит любой цветной SVG в ярко-красный */
+            filter: brightness(0) saturate(100%) invert(27%) sepia(51%) saturate(2878%) hue-rotate(346deg) brightness(104%) contrast(97%) drop-shadow(0 0 5px rgba(255, 0, 0, 0.5));
         }
         .list-item.overdue span {
             color: var(--accent-red) !important;
@@ -137,24 +156,20 @@
         }
         @keyframes pulseIcon {
             0% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.6; transform: scale(0.9); }
+            50% { opacity: 0.7; transform: scale(0.95); }
             100% { opacity: 1; transform: scale(1); }
         }
 
-
-        /* --- АНИМАЦИИ ПОЯВЛЕНИЯ И УДАЛЕНИЯ --- */
-        
-        /* 1. Появление (Въезд слева) */
+        /* АНИМАЦИИ */
         @keyframes slideIn { 
             from { opacity: 0; transform: translateX(-50px); } 
             to { opacity: 1; transform: translateX(0); } 
         }
         .new-item { 
             animation: slideIn 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; 
-            border-left: 4px solid var(--accent-green); /* Зеленый маркер для новых */
+            border-left: 4px solid var(--accent-green);
         }
 
-        /* 2. Удаление (Выезд вправо и схлопывание) */
         @keyframes slideOut {
             0% { opacity: 1; transform: translateX(0); max-height: 80px; margin-bottom: 0; }
             50% { opacity: 0; transform: translateX(100px); max-height: 80px; margin-bottom: 0; }
@@ -164,7 +179,7 @@
             animation: slideOut 0.8s ease forwards;
             position: relative;
             z-index: 0;
-            pointer-events: none; /* Чтобы нельзя было выделить улетающий текст */
+            pointer-events: none;
         }
 
         .empty-message { color: var(--text-secondary); padding: 30px; text-align: center; }
@@ -212,8 +227,11 @@
     </div>
 
     <script>
-        // ТУРБО-ССЫЛКА
+        // ВАША ТУРБО-ССЫЛКА
         const scriptUrl = 'https://script.google.com/macros/s/AKfycbxZrTj6S372XhmEwyxdPgBeLGzALbImLABjMNE0pG9a5Cnlu11NRPw487hP64bsVRtzdw/exec'; 
+
+        // ИМЯ ВАШЕГО НОВОГО ФАЙЛА (.svg)
+        const CONTAINER_IMG_SRC = 'container.svg'; 
 
         let previousActiveIDs = new Set();
         let isFirstRun = true;
@@ -232,7 +250,7 @@
                 if (!txt || txt.includes("DOCTYPE") || txt.length < 5) return;
                 const rows = txt.split('\n').map(r => r.split(';')); 
 
-                // --- 1. ГЛАВНЫЕ ДАННЫЕ ---
+                // 1. ГЛАВНЫЕ ДАННЫЕ
                 const r1 = rows[0]; 
                 if (r1 && r1.length > 2) {
                     const st = r1[0].trim();
@@ -260,10 +278,9 @@
                     else idiv.innerHTML = ninf;
                 }
 
-                // --- 2. СПИСОК (УЛУЧШЕННАЯ ЛОГИКА) ---
+                // 2. СПИСОК
                 const listEl = document.getElementById('list');
                 
-                // 1. Парсим новые данные в Map
                 let newDataMap = new Map();
                 for (let i = 1; i < rows.length; i++) {
                     let parts = rows[i];
@@ -278,17 +295,12 @@
                     }
                 }
 
-                // 2. УДАЛЕНИЕ: Ищем элементы в DOM, которых нет в новых данных
-                // Важно: работаем только с "живыми" элементами (у которых нет класса remove-item)
                 const currentChildren = Array.from(listEl.querySelectorAll('.list-item:not(.remove-item)'));
                 
                 currentChildren.forEach(el => {
                     const id = el.getAttribute('data-id');
                     if (!newDataMap.has(id)) {
-                        // Элемента нет в данных -> запускаем анимацию удаления
                         el.classList.add('remove-item');
-                        
-                        // Удаляем из DOM через 0.8 сек (когда анимация закончится)
                         setTimeout(() => {
                             if (el.parentNode) el.remove();
                             checkEmpty();
@@ -296,51 +308,43 @@
                     }
                 });
 
-                // 3. ДОБАВЛЕНИЕ И ОБНОВЛЕНИЕ
                 newDataMap.forEach((data, id) => {
                     let existingEl = listEl.querySelector(`.list-item[data-id="${id}"]:not(.remove-item)`);
                     
-                    // Логика просрочки (>30 мин)
                     let isOverdue = data.dur > 30;
                     let overdueClass = isOverdue ? 'overdue' : '';
-                    let icon = isOverdue ? '⚠️' : '📦';
+                    
+                    // Если просрочка - ⚠️, если нет - ВАШ SVG
+                    let iconHtml = isOverdue ? '<span style="font-size:30px">⚠️</span>' : `<img src="${CONTAINER_IMG_SRC}" class="container-img" alt="box">`;
 
-                    // HTML шаблон содержимого
                     let innerHTML = `
-                        <span>${icon}</span>
+                        <span>${iconHtml}</span>
                         <span>${id}</span>
                         <span>${data.time}</span>
                         <span>${data.dur} мин.</span>
                     `;
 
                     if (existingEl) {
-                        // Обновляем существующий (если изменилось время или статус просрочки)
                         if (existingEl.innerHTML !== innerHTML) existingEl.innerHTML = innerHTML;
                         
-                        // Управление классом overdue
                         if (isOverdue) existingEl.classList.add('overdue');
                         else existingEl.classList.remove('overdue');
 
                     } else {
-                        // Создаем новый
                         let newEl = document.createElement('div');
                         newEl.className = `list-item ${overdueClass}`;
-                        if (!isFirstRun) newEl.classList.add('new-item'); // Анимация только для новых во время работы
+                        if (!isFirstRun) newEl.classList.add('new-item'); 
                         newEl.setAttribute('data-id', id);
                         newEl.innerHTML = innerHTML;
 
-                        // Удаляем заглушку "Нет данных", если есть
                         const emptyMsg = listEl.querySelector('.empty-message');
                         if (emptyMsg) emptyMsg.remove();
                         
-                        // Вставляем в начало
                         listEl.prepend(newEl);
                     }
                 });
 
                 isFirstRun = false;
-                
-                // Проверка на пустоту (если в данных 0 записей)
                 if (newDataMap.size === 0) checkEmpty();
 
                 function checkEmpty() {
