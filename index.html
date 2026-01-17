@@ -1,73 +1,47 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <title>Панель Доставки</title>
-    <style>
-        body { background-color: #0b0c0e; color: white; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; overflow: hidden; }
-        .container { display: flex; gap: 30px; width: 90%; max-width: 1200px; }
-        .card { background: #1c1f23; padding: 50px; border-radius: 40px; flex: 1; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.6); border: 1px solid #333; }
-        .subtext { color: #888; font-size: 20px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; }
-        .status-badge { background: #2d3136; padding: 15px 30px; border-radius: 50px; display: inline-block; color: #ffcc00; font-size: 32px; font-weight: bold; margin: 20px 0; border: 1px solid #444; }
-        .percent { font-size: 100px; font-weight: bold; color: #00ff88; text-shadow: 0 0 20px rgba(0,255,136,0.3); }
-        .progress-val { font-size: 28px; color: #aaa; margin-top: 10px; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="card">
-            <div class="subtext">Выполнение плана</div>
-            <div class="percent" id="percent-val">0%</div>
-            <div class="progress-val" id="done-text">Загрузка...</div>
-        </div>
-        <div class="card">
-            <div class="subtext">Текущий статус</div>
-            <div id="status-container" class="status-badge">Связь...</div>
-            <div style="font-size: 30px; font-weight: bold; margin-top: 10px;">АКТИВНЫЙ РЕЙС</div>
-        </div>
-    </div>
+<script>
+    // Ваша новая ссылка на CSV (Лист Инфопанель)
+    const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS0kYp4Zp2m9jmTRMTZoamaEUBfZg95n3YN_7f0YByCva_978_452f538CXgKhzveg-etToheOTaVCJ/pub?gid=1855124971&single=true&output=csv';
 
-    <script src="https://www.gstatic.com/charts/loader.js"></script>
-    <script>
-        // Ваш ID из ссылки
-        const sheetId = '1vS0kYp4Zp2m9jmTRMTZoamaEUBfZg95n3YN_7f0YByCva_978_452f538CXgKhzveg-etToheOTaVCJ';
-        
-        google.charts.load('current', {packages:['corechart']});
-        google.charts.setOnLoadCallback(drawChart);
-
-        function drawChart() {
-            // Запрос с указанием листа "Инфопанель"
-            const query = new google.visualization.Query(`https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&sheet=Инфопанель&range=B1:B3`);
-            query.send(handleResponse);
-        }
-
-        function handleResponse(response) {
-            if (response.isError()) {
-                console.error('Ошибка:', response.getMessage());
-                return;
-            }
-            const data = response.getDataTable();
+    async function updateDashboard() {
+        try {
+            const response = await fetch(csvUrl);
+            const data = await response.text();
             
-            // 1. Статус из B1 (строка 0)
-            const status = data.getValue(0, 0) || "ОЖИДАНИЕ";
-            document.getElementById('status-container').innerText = status;
+            // Разбиваем CSV на строки и ячейки
+            const rows = data.split('\n').map(row => row.split(','));
 
-            // 2. Прогресс из B3 (строка 2)
-            const progress = data.getValue(2, 0) || "0 из 0";
+            // В CSV ячейка B1 — это [0][1], B3 — это [2][1]
+            // (Индексы начинаются с нуля: A=0, B=1; Строка 1=0, Строка 3=2)
+            
+            const status = rows[0][1]?.replace(/"/g, '') || "ОЖИДАНИЕ";
+            const progress = rows[2][1]?.replace(/"/g, '') || "0 из 0";
+
+            // Обновляем текст
+            document.getElementById('status-container').innerText = status;
             document.getElementById('done-text').innerText = progress;
 
-            // Парсим проценты
+            // Считаем проценты для круга и текста
             const nums = progress.match(/\d+/g);
             if (nums && nums.length >= 2) {
                 const done = parseInt(nums[0]);
                 const total = parseInt(nums[1]);
-                const percent = total > 0 ? Math.round((done / total) * 100) : 0;
+                const percent = Math.min(Math.round((done / total) * 100), 100);
+                
                 document.getElementById('percent-val').innerText = percent + '%';
+                
+                // Если у вас есть элемент с id "circle-bar", обновляем его
+                const circle = document.getElementById('circle-bar');
+                if (circle) {
+                    const offset = 628 - (628 * percent / 100);
+                    circle.style.strokeDashoffset = offset;
+                }
             }
-
-            // Автообновление каждые 10 секунд
-            setTimeout(drawChart, 10000);
+        } catch (error) {
+            console.error('Ошибка загрузки данных:', error);
         }
-    </script>
-</body>
-</html>
+    }
+
+    // Обновление каждые 10 секунд
+    setInterval(updateDashboard, 10000);
+    updateDashboard(); // Первый запуск
+</script>
