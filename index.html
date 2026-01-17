@@ -2,101 +2,88 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Инфопанель Доставки</title>
+    <title>Инфопанель LIVE</title>
     <style>
-        /* Стиль фона и шрифтов */
         body { 
-            background-color: #0b0c0e; 
+            background-color: #050505; 
             color: white; 
-            font-family: 'Segoe UI', Arial, sans-serif; 
+            font-family: 'Arial Black', sans-serif; 
             display: flex; 
             justify-content: center; 
             align-items: center; 
             height: 100vh; 
             margin: 0; 
         }
-        .container { display: flex; gap: 30px; width: 90%; max-width: 1200px; }
+        .container { display: flex; gap: 20px; width: 95%; }
         .card { 
-            background: #1c1f23; 
-            padding: 50px; 
-            border-radius: 40px; 
+            background: #111; 
+            padding: 60px 20px; 
+            border-radius: 50px; 
             flex: 1; 
             text-align: center; 
-            box-shadow: 0 20px 50px rgba(0,0,0,0.6); 
-            border: 1px solid #333; 
+            border: 2px solid #222; 
         }
-        .subtext { color: #888; font-size: 20px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; }
+        .subtext { color: #666; font-size: 24px; text-transform: uppercase; margin-bottom: 10px; }
         .status-badge { 
-            background: #2d3136; 
-            padding: 15px 30px; 
-            border-radius: 50px; 
+            background: #222; 
+            padding: 20px; 
+            border-radius: 100px; 
             display: inline-block; 
             color: #ffcc00; 
-            font-size: 32px; 
-            font-weight: bold; 
+            font-size: 45px; 
             margin: 20px 0; 
-            border: 1px solid #444; 
         }
-        .percent { font-size: 100px; font-weight: bold; color: #00ff88; }
-        .progress-val { font-size: 28px; color: #aaa; margin-top: 10px; }
+        .percent { font-size: 160px; line-height: 1; color: #00ff88; margin: 10px 0; }
+        .progress-val { font-size: 40px; color: #fff; }
     </style>
 </head>
 <body>
 
     <div class="container">
         <div class="card">
-            <div class="subtext">Выполнение плана</div>
+            <div class="subtext">ПЛАН</div>
             <div class="percent" id="percent-val">0%</div>
-            <div class="progress-val" id="done-text">Загрузка...</div>
+            <div class="progress-val" id="done-text">...</div>
         </div>
 
         <div class="card">
-            <div class="subtext">Текущий статус</div>
-            <div id="status-container" class="status-badge">Связь...</div>
-            <div style="font-size: 30px; font-weight: bold; margin-top: 10px;">АКТИВНЫЙ РЕЙС</div>
+            <div class="subtext">СТАТУС</div>
+            <div id="status-container" class="status-badge">СВЯЗЬ</div>
+            <div style="font-size: 35px; color: #444;">АКТИВНЫЙ РЕЙС</div>
         </div>
     </div>
 
     <script>
-        // Ваша ссылка на CSV (Лист Инфопанель)
         const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS0kYp4Zp2m9jmTRMTZoamaEUBfZg95n3YN_7f0YByCva_978_452f538CXgKhzveg-etToheOTaVCJ/pub?gid=1855124971&single=true&output=csv';
 
         async function updateDashboard() {
             try {
-                const response = await fetch(csvUrl);
+                // Добавляем t=Timestamp, чтобы обойти кэш браузера
+                const cacheBuster = `&t=${new Date().getTime()}`;
+                const response = await fetch(csvUrl + cacheBuster);
                 const data = await response.text();
                 
-                // Разбиваем CSV на строки и ячейки
                 const rows = data.split('\n').map(row => row.split(','));
 
-                // В CSV от Google ячейки могут быть обернуты в кавычки. Убираем их.
-                const status = (rows[0][1] || "ОЖИДАНИЕ").replace(/"/g, ''); 
-                const progress = (rows[2][1] || "0 из 0").replace(/"/g, '');
+                const status = (rows[0][1] || "").replace(/"/g, ''); 
+                const progress = (rows[2][1] || "").replace(/"/g, '');
 
-                // Находим элементы на странице и обновляем их
-                const statusElem = document.getElementById('status-container');
-                const progressElem = document.getElementById('done-text');
-                const percentElem = document.getElementById('percent-val');
+                document.getElementById('status-container').innerText = status;
+                document.getElementById('done-text').innerText = progress;
 
-                if (statusElem) statusElem.innerText = status;
-                if (progressElem) progressElem.innerText = progress;
-
-                // Считаем проценты из строки "X из Y"
                 const nums = progress.match(/\d+/g);
-                if (nums && nums.length >= 2 && percentElem) {
+                if (nums && nums.length >= 2) {
                     const done = parseInt(nums[0]);
                     const total = parseInt(nums[1]);
                     const percent = total > 0 ? Math.round((done / total) * 100) : 0;
-                    percentElem.innerText = percent + '%';
+                    document.getElementById('percent-val').innerText = percent + '%';
                 }
-            } catch (error) {
-                console.error('Ошибка загрузки данных:', error);
-            }
+            } catch (e) { console.error(e); }
         }
 
-        // Обновление каждые 15 секунд
-        setInterval(updateDashboard, 15000);
-        updateDashboard(); // Запуск при открытии
+        // Проверка каждые 5 секунд (быстрее нет смысла из-за ограничений Google)
+        setInterval(updateDashboard, 5000);
+        updateDashboard();
     </script>
 </body>
 </html>
