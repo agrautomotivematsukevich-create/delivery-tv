@@ -2,135 +2,53 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Инфопанель Доставки</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <title>Панель Доставки</title>
     <style>
-        body {
-            background-color: #0b0c0e;
-            color: white;
-            font-family: 'Roboto', sans-serif;
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            overflow: hidden;
-        }
-        .container { display: flex; gap: 30px; width: 95%; max-width: 1200px; }
-        .card {
-            background-color: #1c1f23;
-            padding: 40px;
-            border-radius: 40px;
-            flex: 1;
-            text-align: center;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            min-height: 450px;
-        }
-        p { color: #888; font-size: 18px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; }
-        
-        /* Стили кольца */
-        .progress-wrapper { position: relative; width: 280px; height: 280px; }
-        svg { transform: rotate(-90deg); width: 280px; height: 280px; }
-        circle { fill: none; stroke-width: 22; stroke-linecap: round; }
-        .bg-circle { stroke: #2d3136; }
-        .fg-circle {
-            stroke: #00ff88;
-            stroke-dasharray: 628;
-            stroke-dashoffset: 628;
-            transition: stroke-dashoffset 1.5s ease-out;
-            filter: drop-shadow(0 0 10px #00ff88);
-        }
-        .progress-info {
-            position: absolute; top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            width: 100%;
-        }
-        .percent-text { font-size: 80px; font-weight: bold; display: block; }
-        .sub-text { font-size: 24px; color: #aaa; }
-
-        /* Правая карточка */
-        .status-badge {
-            background-color: #2d3136;
-            padding: 15px 30px;
-            border-radius: 50px;
-            font-size: 28px;
-            color: #ffcc00;
-            border: 1px solid #444;
-            margin-bottom: 20px;
-        }
-        .main-val { font-size: 50px; font-weight: bold; }
+        body { background-color: #0b0c0e; color: white; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .container { display: flex; gap: 20px; width: 90%; }
+        .card { background: #1c1f23; padding: 40px; border-radius: 30px; flex: 1; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .status-badge { background: #2d3136; padding: 10px 20px; border-radius: 20px; display: inline-block; color: #ffcc00; font-size: 24px; margin: 20px 0; }
+        .percent { font-size: 70px; font-weight: bold; color: #00ff88; }
+        .subtext { color: #888; font-size: 18px; text-transform: uppercase; }
     </style>
 </head>
 <body>
-
     <div class="container">
         <div class="card">
-            <p>Выполнение плана</p>
-            <div class="progress-wrapper">
-                <svg>
-                    <circle cx="140" cy="140" r="100" class="bg-circle" />
-                    <circle cx="140" cy="140" r="100" class="fg-circle" id="circle-bar" />
-                </svg>
-                <div class="progress-info">
-                    <span class="percent-text" id="percent-val">0%</span>
-                    <span class="sub-text" id="done-text">0 из 0</span>
-                </div>
-            </div>
+            <div class="subtext">Выполнение плана</div>
+            <div class="percent" id="percent-val">0%</div>
+            <div id="done-text" style="font-size: 20px;">Загрузка...</div>
         </div>
-
         <div class="card">
-            <p>Текущий статус</p>
+            <div class="subtext">Текущий статус</div>
             <div id="status-container" class="status-badge">Связь...</div>
-            <div class="main-val">АКТИВНЫЙ РЕЙС</div>
+            <div style="font-size: 24px; font-weight: bold;">АКТИВНЫЙ РЕЙС</div>
         </div>
     </div>
 
     <script src="https://www.gstatic.com/charts/loader.js"></script>
     <script>
         const sheetId = '1vS0kYp4Zp2m9jmTRMTZoamaEUBfZg95n3YN_7f0YByCva_978_452f538CXgKhzveg-etToheOTaVCJ';
+        google.charts.load('current', {packages:['corechart']});
+        google.charts.setOnLoadCallback(drawChart);
 
-        google.charts.load('current', { 'packages': ['corechart'] });
-        google.charts.setOnLoadCallback(() => {
-            updateDashboard();
-            setInterval(updateDashboard, 15000); 
-        });
-
-        function updateDashboard() {
-            // Запрос конкретно ячеек B1 (статус) и B3 (прогресс)
-            const query = new google.visualization.Query(
-                `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&range=B1:B3`
-            );
+        function drawChart() {
+            const query = new google.visualization.Query(`https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&range=B1:B3`);
             query.send(handleResponse);
         }
 
         function handleResponse(response) {
-            if (response.isError()) {
-                console.error('Ошибка:', response.getMessage());
-                return;
-            }
+            if (response.isError()) return;
             const data = response.getDataTable();
-            
-            // Ячейка B1 (строка 0)
-            document.getElementById('status-container').innerText = data.getValue(0, 0) || "---";
-
-            // Ячейка B3 (строка 2)
-            const valB3 = data.getValue(2, 0) || "0 из 0";
-            const nums = valB3.toString().match(/\d+/g);
-            
-            if (nums && nums.length >= 2) {
-                const done = parseInt(nums[0]);
-                const total = parseInt(nums[1]);
-                const percent = Math.min(Math.round((done / total) * 100), 100);
-                
+            document.getElementById('status-container').innerText = data.getValue(0, 0); // Ячейка B1
+            const valB3 = data.getValue(2, 0); // Ячейка B3
+            const nums = valB3.match(/\d+/g);
+            if (nums) {
+                const percent = Math.round((nums[0]/nums[1])*100);
                 document.getElementById('percent-val').innerText = percent + '%';
-                document.getElementById('done-text').innerText = `${done} из ${total}`;
-                document.getElementById('circle-bar').style.strokeDashoffset = 628 - (628 * percent / 100);
+                document.getElementById('done-text').innerText = valB3;
             }
+            setTimeout(drawChart, 10000); // Обновлять каждые 10 сек
         }
     </script>
 </body>
