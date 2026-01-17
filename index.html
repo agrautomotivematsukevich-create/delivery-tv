@@ -2,330 +2,191 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Sklad Flight Board</title>
+    <title>Sklad Dashboard Pro</title>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Roboto:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --bg-color: #0d0e12;
-            --card-bg: #1a1c23;
-            --text-main: #ffffff;
-            --text-dim: #8b9bb4;
-            --accent-green: #00ff9d;
-            --accent-yellow: #ffcc00;
-            --accent-red: #ff4757;
-            --accent-blue: #2d98da;
-        }
+        :root { --bg: #0d0e12; --card: #1a1c23; --text: #fff; --dim: #8b9bb4; --green: #00ff9d; --yellow: #ffcc00; --red: #ff4757; --blue: #2d98da; }
+        body { background: var(--bg); color: var(--text); font-family: 'Roboto', sans-serif; margin: 0; height: 100vh; overflow: hidden; display: grid; grid-template-rows: 80px 1fr; padding: 20px; box-sizing: border-box; }
+        
+        .header { display: flex; justify-content: space-between; border-bottom: 2px solid #2c303a; padding-bottom: 10px; margin-bottom: 20px; }
+        .header-title { font-size: 32px; font-weight: 900; letter-spacing: 2px; color: var(--dim); }
+        .clock { font-family: 'JetBrains Mono', monospace; font-size: 48px; font-weight: 700; }
+        .date { font-size: 20px; color: var(--dim); text-align: right; }
 
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            font-family: 'Roboto', sans-serif;
-            margin: 0;
-            height: 100vh;
-            overflow: hidden; /* Полный запрет прокрутки страницы */
-            display: grid;
-            grid-template-rows: 80px 1fr; /* Шапка и контент */
-            padding: 20px;
-            box-sizing: border-box;
-        }
-
-        /* --- ШАПКА --- */
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 2px solid #2c303a;
-            padding-bottom: 10px;
-            margin-bottom: 20px;
-        }
-        .header-title { font-size: 32px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; color: var(--text-dim); }
-        .clock { font-family: 'JetBrains Mono', monospace; font-size: 48px; font-weight: 700; color: var(--text-main); }
-        .date { font-size: 20px; color: var(--text-dim); text-align: right; }
-
-        /* --- СЕТКА КОНТЕНТА --- */
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: 1fr 1.2fr; /* Левая часть чуть уже правой */
-            grid-template-rows: 1fr 1.5fr; /* Правая часть делится на верх (Следующий) и низ (Список) */
-            gap: 20px;
-            height: 100%;
-        }
-
-        /* Карточки */
-        .card {
-            background: var(--card-bg);
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            overflow: hidden;
-            border: 1px solid #333;
-        }
-
-        /* --- ЛЕВАЯ ПАНЕЛЬ: ОБЩИЙ СТАТУС (Занимает всю высоту слева) --- */
-        .status-panel {
-            grid-row: 1 / 3; /* Объединяем две строки */
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-        }
-        .progress-circle { width: 320px; height: 320px; position: relative; margin-bottom: 40px; }
+        .grid { display: grid; grid-template-columns: 1fr 1.2fr; grid-template-rows: 1fr 1.5fr; gap: 20px; height: 100%; }
+        .card { background: var(--card); border-radius: 20px; padding: 30px; border: 1px solid #333; display: flex; flex-direction: column; position: relative; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        
+        /* ЛЕВАЯ ПАНЕЛЬ */
+        .status-panel { grid-row: 1 / 3; align-items: center; justify-content: center; text-align: center; }
+        .circle-wrap { width: 320px; height: 320px; position: relative; margin-bottom: 40px; }
         svg { transform: rotate(-90deg); width: 100%; height: 100%; }
         circle { fill: none; stroke-width: 25; stroke-linecap: round; }
-        .bg-circle { stroke: #2c303a; }
-        .fg-circle { stroke: var(--accent-green); transition: stroke-dashoffset 1.5s ease; filter: drop-shadow(0 0 15px rgba(0,255,157,0.4)); }
-        
-        .percent-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 80px; font-weight: 900; }
-        .count-text { font-size: 36px; color: var(--text-dim); margin-bottom: 30px; }
-        
-        .main-status-badge {
-            background: #2d3436;
-            padding: 15px 40px;
-            border-radius: 50px;
-            font-size: 40px;
-            font-weight: 700;
-            color: var(--accent-yellow);
-            border: 2px solid #444;
-            display: inline-block;
-        }
+        .bg-c { stroke: #2c303a; }
+        .fg-c { stroke: var(--green); transition: stroke-dashoffset 1.5s ease; filter: drop-shadow(0 0 15px rgba(0,255,157,0.4)); }
+        .pct { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 80px; font-weight: 900; }
+        .count { font-size: 36px; color: var(--dim); margin-bottom: 30px; }
+        .badge { padding: 15px 40px; border-radius: 50px; font-size: 40px; font-weight: 700; border: 2px solid #444; }
 
-        /* --- ПРАВАЯ ВЕРХНЯЯ: СЛЕДУЮЩИЙ --- */
-        .next-panel {
-            grid-column: 2;
-            justify-content: center;
-        }
-        .panel-label { color: var(--text-dim); font-size: 20px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
-        .next-id { font-size: 55px; font-weight: 900; color: #fff; font-family: 'JetBrains Mono', monospace; margin-bottom: 10px;}
-        .next-info { font-size: 28px; display: flex; align-items: center; gap: 15px; }
-        .warning-text { color: var(--accent-red); font-weight: bold; animation: pulse 2s infinite; }
-        .arrival-text { color: var(--accent-blue); }
+        /* ПРАВАЯ ВЕРХНЯЯ */
+        .next-panel { grid-column: 2; justify-content: center; }
+        .label { color: var(--dim); font-size: 20px; text-transform: uppercase; margin-bottom: 10px; }
+        .nid { font-size: 55px; font-weight: 900; font-family: 'JetBrains Mono'; margin-bottom: 10px; }
+        .ninfo { font-size: 28px; }
+        .warn { color: var(--red); animation: pulse 2s infinite; }
+        .arr { color: var(--blue); }
 
-        /* --- ПРАВАЯ НИЖНЯЯ: АКТИВНЫЕ (СПИСОК) --- */
-        .active-panel {
-            grid-column: 2;
-            background: #15171d; /* Чуть темнее */
-            border: 1px solid #444;
-        }
-        .active-list-container {
-            flex: 1;
-            overflow: hidden; /* Скрываем вылезающий текст */
-            position: relative;
-        }
-        /* Анимация прокрутки, если список длинный */
-        .scrolling-content {
-            position: absolute;
-            width: 100%;
-            /* animation: scrollUp 20s linear infinite; - Включим это через JS если нужно */ 
-        }
+        /* ПРАВАЯ НИЖНЯЯ */
+        .list-panel { grid-column: 2; background: #15171d; }
+        .list-mask { flex: 1; overflow: hidden; position: relative; }
+        .list-content { position: absolute; width: 100%; }
+        .item { font-family: 'JetBrains Mono'; font-size: 24px; padding: 20px 0; border-bottom: 1px solid #333; color: #ddd; display: flex; align-items: center; }
+        .item span { margin-right: 15px; }
 
-        .list-item {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 24px;
-            padding: 15px 0;
-            border-bottom: 1px solid #333;
-            color: #ddd;
-            display: flex;
-            align-items: center;
-        }
-        .list-item:first-child { border-top: 1px solid #333; }
-        .icon { margin-right: 15px; font-size: 28px; }
-
-        /* Анимации */
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
-        @keyframes scrollUp { 
-            0% { transform: translateY(0); } 
-            15% { transform: translateY(0); } /* Пауза в начале */
-            100% { transform: translateY(-100%); } 
-        }
-
+        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
+        @keyframes scrollUp { 0% { transform: translateY(0); } 15% { transform: translateY(0); } 100% { transform: translateY(-100%); } }
     </style>
 </head>
 <body>
-
     <div class="header">
-        <div class="header-title">ПАНЕЛЬ УПРАВЛЕНИЯ СКЛАДОМ</div>
-        <div style="text-align: right;">
+        <div class="header-title">СКЛАД LIVE</div>
+        <div>
             <div class="clock" id="clock">00:00</div>
             <div class="date" id="date">-- ---</div>
         </div>
     </div>
 
-    <div class="dashboard-grid">
+    <div class="grid">
         <div class="card status-panel">
-            <div class="progress-circle">
-                <svg viewBox="0 0 350 350">
-                    <circle cx="175" cy="175" r="150" class="bg-circle" />
-                    <circle cx="175" cy="175" r="150" class="fg-circle" id="main-circle" stroke-dasharray="942" stroke-dashoffset="942" />
-                </svg>
-                <div class="percent-text" id="percent">0%</div>
+            <div class="circle-wrap">
+                <svg viewBox="0 0 350 350"><circle cx="175" cy="175" r="150" class="bg-c"/><circle cx="175" cy="175" r="150" class="fg-c" id="ring" stroke-dasharray="942" stroke-dashoffset="942"/></svg>
+                <div class="pct" id="pct">0%</div>
             </div>
-            <div class="count-text" id="count-text">-- из --</div>
-            <div class="main-status-badge" id="main-status">ЗАГРУЗКА</div>
+            <div class="count" id="cnt">-- / --</div>
+            <div class="badge" id="sts">ЗАГРУЗКА</div>
         </div>
 
         <div class="card next-panel">
-            <div class="panel-label">Следующий контейнер</div>
-            <div class="next-id" id="next-id">—</div>
-            <div class="next-info" id="next-info">Нет данных</div>
+            <div class="label">Следующий контейнер</div>
+            <div class="nid" id="nid">—</div>
+            <div class="ninfo" id="ninfo">Нет данных</div>
         </div>
 
-        <div class="card active-panel">
-            <div class="panel-label" style="color: var(--accent-green);">🚚 Активные разгрузки</div>
-            <div class="active-list-container" id="list-mask">
-                <div class="scrolling-content" id="active-list">
-                    </div>
+        <div class="card list-panel">
+            <div class="label" style="color: var(--green);">🚚 АКТИВНЫЕ РАЗГРУЗКИ</div>
+            <div class="list-mask" id="mask">
+                <div class="list-content" id="list"></div>
             </div>
         </div>
     </div>
 
     <script>
-        // --- ЧАСЫ ---
+        // ВАША ССЫЛКА
+        const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS0kYp4Zp2m9jmTRMTZoamaEUBfZg95n3YN_7f0YByCva_978_452f538CXgKhzveg-etToheOTaVCJ/pub?gid=1966680390&single=true&output=csv'; 
+
         setInterval(() => {
-            const now = new Date();
-            document.getElementById('clock').innerText = now.toLocaleTimeString('ru-RU', {hour: '2-digit', minute:'2-digit'});
-            document.getElementById('date').innerText = now.toLocaleDateString('ru-RU', {weekday: 'long', day: 'numeric', month: 'long'});
+            const d = new Date();
+            document.getElementById('clock').innerText = d.toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'});
+            document.getElementById('date').innerText = d.toLocaleDateString('ru-RU', {weekday:'long', day:'numeric', month:'long'});
         }, 1000);
 
-        // --- ДАННЫЕ ---
-        const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS0kYp4Zp2m9jmTRMTZoamaEUBfZg95n3YN_7f0YByCva_978_452f538CXgKhzveg-etToheOTaVCJ/pub?gid=1855124971&single=true&output=csv';
-
-        async function updateData() {
+        async function update() {
             try {
-                const response = await fetch(csvUrl + '&t=' + Date.now());
-                const text = await response.text();
+                const res = await fetch(csvUrl + '&t=' + Date.now());
+                const txt = await res.text();
                 
-                // Простой парсер CSV (учитываем, что Google может брать строки в кавычки)
-                // Режем по переводу строки, но аккуратно
-                const rows = text.split('\n').map(row => {
-                    // Очень грубо: берем всё, что между первой и второй запятой (ячейка B)
-                    // CSV формат: A1, B1, C1...
-                    // Нам нужен индекс 1 (Column B)
-                    let parts = row.split(','); 
-                    // Если запятые внутри текста, логика сложнее, но для вашей таблицы B обычно в начале
-                    // Берем вторую ячейку (B) и чистим кавычки
-                    let cell = parts[1] || "";
-                    // Если строка была разбита лишними запятыми, склеиваем обратно (для B12)
-                    if (parts.length > 2 && row.includes('"')) {
-                        // Это костыль для сложных строк, но для вашей задачи может хватить простого сплита
-                        // Лучше найдем B по индексу
+                // Авто-определение разделителя
+                const firstLine = txt.split('\n')[0];
+                const separator = firstLine.includes(';') ? ';' : ',';
+
+                const rows = txt.split('\n').map(r => r.split(separator)); 
+
+                // 1. СТРОКА 1 (ГЛАВНЫЕ ДАННЫЕ)
+                const r1 = rows[0]; 
+                if (r1 && r1.length > 2) {
+                    const st = r1[0].replace(/"/g,'').trim();
+                    const badge = document.getElementById('sts');
+                    
+                    if (st === "ACTIVE") {
+                        badge.innerText = "🟢 В РАБОТЕ";
+                        badge.style.color = "#00ff9d"; badge.style.borderColor = "#00ff9d";
+                    } else if (st === "PAUSE") {
+                        badge.innerText = "⏸ ПАУЗА";
+                        badge.style.color = "#aaa"; badge.style.borderColor = "#555";
+                    } else {
+                        badge.innerText = "🟡 ОЖИДАНИЕ";
+                        badge.style.color = "#ffcc00"; badge.style.borderColor = "#ffcc00";
                     }
-                    return cell.replace(/^"|"$/g, '').replace(/""/g, '"'); 
-                });
 
-                // --- 1. ЛЕВАЯ ПАНЕЛЬ (B1, B3) ---
-                // Ячейка B1 - Статус (row 0)
-                const b1 = rows[0] || ""; 
-                const statusText = b1.split('|')[0].trim(); // Берем текст до черты
-                document.getElementById('main-status').innerText = statusText || "СВЯЗЬ...";
-                
-                // Ячейка B3 - Счетчик (row 2)
-                const b3 = rows[2] || "0 из 0";
-                document.getElementById('count-text').innerText = b3;
-                
-                // Проценты
-                const nums = b3.match(/\d+/g);
-                if (nums && nums.length >= 2) {
-                    const done = parseInt(nums[0]);
-                    const total = parseInt(nums[1]);
-                    const percent = total > 0 ? Math.round((done/total)*100) : 0;
+                    const counts = r1[1].replace(/"/g,'').split('|');
+                    const done = parseInt(counts[0]) || 0;
+                    const total = parseInt(counts[1]) || 0;
                     
-                    document.getElementById('percent').innerText = percent + '%';
-                    const offset = 942 - (942 * percent / 100);
-                    document.getElementById('main-circle').style.strokeDashoffset = offset;
+                    document.getElementById('cnt').innerText = `${done} из ${total}`;
+                    const p = total > 0 ? Math.round((done/total)*100) : 0;
+                    document.getElementById('pct').innerText = p + '%';
+                    document.getElementById('ring').style.strokeDashoffset = 942 - (942 * p / 100);
+
+                    document.getElementById('nid').innerText = r1[2].replace(/"/g,'').trim();
+                    const ninf = r1[3] ? r1[3].replace(/"/g,'').trim() : "";
+                    const idiv = document.getElementById('ninfo');
                     
-                    // Цвет статуса
-                    const badge = document.getElementById('main-status');
-                    if (statusText.includes("В РАБОТЕ")) { badge.style.color = "#00ff9d"; badge.style.borderColor = "#00ff9d"; }
-                    else if (statusText.includes("ПАУЗА")) { badge.style.color = "#aaa"; badge.style.borderColor = "#555"; }
-                    else { badge.style.color = "#ffcc00"; badge.style.borderColor = "#ffcc00"; }
+                    if (ninf.includes("ОПОЗДАНИЕ")) idiv.innerHTML = `<span class="warn">${ninf}</span>`;
+                    else idiv.innerHTML = `<span class="arr">${ninf}</span>`;
                 }
 
-                // --- 2. СЛЕДУЮЩИЙ (B6, B7, B8, R7) ---
-                // B7 (row 6) - ID контейнера
-                const nextID = (rows[6] || "—").trim();
-                document.getElementById('next-id').innerText = nextID;
-
-                // B8 (row 7) - Инфо об опоздании
-                const delayInfo = (rows[7] || "").trim();
-                const infoDiv = document.getElementById('next-info');
-                
-                if (delayInfo.includes("ОПОЗДАНИЕ")) {
-                    infoDiv.innerHTML = `<span class="warning-text">⚠️ ${delayInfo}</span>`;
-                } else if (delayInfo.includes("ПРИБУДЕТ")) {
-                    infoDiv.innerHTML = `<span class="arrival-text">⏱ ${delayInfo}</span>`;
-                } else {
-                    infoDiv.innerHTML = `<span style="color:#666">Нет данных о прибытии</span>`;
-                }
-
-                // --- 3. АКТИВНЫЕ (B12) ---
-                // B12 (row 11) - Список
-                // Важно: Ваша формула B12 объединяет все через CHAR(10) - это \n
-                // Но CSV может "склеить" это в одну строку. Нам нужно разбить её обратно.
-                
-                // В CSV Google Sheets переносы строк внутри ячейки остаются переносами.
-                // Нам нужно найти строку 11.
-                // В массиве rows, который мы сделали простым split('\n'), строка с переносами разобьется на куски!
-                // Это проблема простого парсера.
-                
-                // ДАВАЙТЕ ПОПРОБУЕМ ВЗЯТЬ B12 ИНАЧЕ. 
-                // Мы найдем кусок текста, который начинается с "🚚" или "📦" в сыром тексте
-                
-                // Более надежный способ для B12:
-                // В вашем CSV B12 - это огромная строка в кавычках.
-                // Найдем её в исходном response.text()
-                
-                // Очистка списка
-                const listEl = document.getElementById('active-list');
+                // 2. СПИСОК (ИСПРАВЛЕННАЯ ЧАСТЬ)
+                const listEl = document.getElementById('list');
+                const rawLines = txt.split('\n');
                 listEl.innerHTML = '';
                 
-                // Так как простой парсинг B12 сложен, давайте распарсим то, что попало в массив.
-                // Если B12 был разбит на несколько строк массива rows (из-за \n), соберем их.
-                // Ищем строки, содержащие "📦"
-                
-                let activeItems = [];
-                // Проходим по ВСЕМ строкам CSV и ищем маркеры контейнеров
-                rows.forEach(r => {
-                    if (r.includes('📦') && r.includes('•')) {
-                        activeItems.push(r.trim());
+                let foundAny = false;
+                for (let i = 1; i < rawLines.length; i++) {
+                    let line = rawLines[i].replace(/^"|"$/g, '');
+                    line = line.replace(/^[;,]+/, '');
+
+                    if (line.includes('|')) {
+                        let parts = line.split('|');
+                        if (parts.length >= 3) {
+                            foundAny = true;
+                            let id = parts[0].trim();
+                            let time = parts[1].trim();
+                            
+                            // !!! ЗДЕСЬ ИСПРАВЛЕНИЕ ЗАПЯТЫХ !!!
+                            // Мы берем текст, и с помощью parseInt принудительно делаем из него число
+                            // "-416,,," превратится просто в "-416"
+                            let durRaw = parts[2].replace(/[,;"]/g, '').trim(); 
+                            let dur = parseInt(durRaw); 
+
+                            // Проверка на NaN, если вдруг там не число
+                            if (isNaN(dur)) dur = durRaw; 
+                            
+                            let div = document.createElement('div');
+                            div.className = 'item';
+                            div.innerHTML = `<span>📦 ${id}</span> <span>⏱ ${time}</span> <span>🕐 ${dur} мин.</span>`;
+                            listEl.appendChild(div);
+                        }
                     }
-                });
-
-                if (activeItems.length === 0) {
-                     listEl.innerHTML = '<div class="list-item" style="color:#666">Нет активных разгрузок</div>';
-                } else {
-                    activeItems.forEach(item => {
-                        const div = document.createElement('div');
-                        div.className = 'list-item';
-                        // Красиво форматируем
-                        // Удаляем лишние кавычки
-                        let cleanItem = item.replace(/"/g, '').trim();
-                        div.innerText = cleanItem;
-                        listEl.appendChild(div);
-                    });
                 }
 
-                // Логика прокрутки: если высота списка больше высоты контейнера
-                const containerHeight = document.getElementById('list-mask').clientHeight;
-                const contentHeight = listEl.clientHeight;
-                
-                if (contentHeight > containerHeight) {
-                    // Включаем анимацию
-                    listEl.style.animation = `scrollUp ${contentHeight / 20}s linear infinite`; // Скорость зависит от длины
-                    // Дублируем контент для плавности
-                    listEl.innerHTML += listEl.innerHTML;
-                } else {
+                if (!foundAny) {
+                    listEl.innerHTML = '<div class="item" style="color:#666; justify-content:center;">Нет активных разгрузок</div>';
                     listEl.style.animation = 'none';
+                } else {
+                    const mh = document.getElementById('mask').clientHeight;
+                    const ch = listEl.clientHeight;
+                    if (ch > mh) {
+                        listEl.style.animation = `scrollUp ${ch/5}s linear infinite`;
+                        listEl.innerHTML += listEl.innerHTML; 
+                    } else {
+                        listEl.style.animation = 'none';
+                    }
                 }
 
-            } catch (e) {
-                console.error(e);
-            }
+            } catch(e) { console.log(e); }
         }
 
-        setInterval(updateData, 5000);
-        updateData();
+        setInterval(update, 5000);
+        update();
     </script>
 </body>
 </html>
