@@ -1,6 +1,6 @@
 // ================================================================
 // ВСТАВЬТЕ ВАШУ ССЫЛКУ НИЖЕ:
-const scriptUrl = 'https://script.google.com/macros/s/AKfycbzl59vrkl1zGDrV4ANnvIUDTimV_qbFWxuMYI1kKCoDSPW4Q2fZ7wQcooCBK7kp4kiujQ/exec'; 
+const scriptUrl = 'https://script.google.com/macros/s/AKfycbyOqLhDtXG9gL9Qes0QX0SNMeoEqvafHG416bnN1umyTz8haiHeFohKxuRX2MBYpMUgzw/exec'; 
 // ================================================================
 
 const CONTAINER_IMG_SRC = 'container.svg'; 
@@ -15,19 +15,22 @@ const TRANSLATIONS = {
         title: "Мониторинг Склада", progress: "Общий прогресс", next: "Следующий контейнер", list: "Активные разгрузки",
         lunch: "ОБЕДЕННЫЙ ПЕРЕРЫВ", victory: "ПЛАН ВЫПОЛНЕН!", status_active: "В РАБОТЕ", status_pause: "ПАУЗА", status_wait: "ОЖИДАНИЕ",
         lunch_left: "До конца:", lunch_soon: "Скоро работа", empty: "Нет активных разгрузок", min: "мин.", locale: "ru-RU", 
-        eta_prefix: "ПРИБУДЕТ: ", delay_prefix: "ОПОЗДАНИЕ: ",
-        lbl_start: "НАЧАЛО", lbl_dur: "В РАБОТЕ"
+        eta_prefix: "ПРИБУДЕТ ЧЕРЕЗ: ", delay_prefix: "ОПОЗДАНИЕ: ",
+        lbl_start: "НАЧАЛО", lbl_dur: "В РАБОТЕ",
+        stat_title: "Статистика смены", stat_done: "Выгружено", stat_wait: "В очереди", menu_stat: "Статистика выгрузки",
+        type_bs: "КУЗОВНОЙ", type_as: "СБОРКА", type_ps: "ПОКРАСКА"
     },
     EN_CN: {
         title: "Warehouse / 仓库监控", progress: "Progress / 总体进度", next: "Next / 下一个集装箱", list: "Active / 正在卸货",
         lunch: "LUNCH / 午休时间", victory: "COMPLETED / 计划完成", status_active: "ACTIVE / 进行中", status_pause: "PAUSED / 暂停", status_wait: "WAITING / 等待中",
         lunch_left: "Left / 剩余:", lunch_soon: "Back soon / 即将开始", empty: "No Tasks / 无活动任务", min: "min / 分", locale: "zh-CN", 
         eta_prefix: "ETA / 预计: ", delay_prefix: "DELAY / 延迟: ",
-        lbl_start: "START / 开始", lbl_dur: "DURATION / 持续"
+        lbl_start: "START / 开始", lbl_dur: "DURATION / 持续",
+        stat_title: "Shift Statistics / 班次统计", stat_done: "Unloaded / 已卸载", stat_wait: "Queue / 排队", menu_stat: "Statistics / 统计",
+        type_bs: "BODY SHOP", type_as: "ASSEMBLY", type_ps: "PAINT SHOP"
     }
 };
 
-// Функция умного форматирования времени
 function formatFriendlyTime(minutes) {
     if (isNaN(minutes)) return "0 мин";
     if (minutes < 60) {
@@ -85,6 +88,12 @@ function applyLanguage(lang) {
     const safeSet = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val; };
     safeSet('txt_title', t.title); safeSet('txt_progress', t.progress); safeSet('txt_next', t.next);
     safeSet('txt_list', t.list); safeSet('txt_lunch', t.lunch); safeSet('txt_victory', t.victory);
+    
+    safeSet('txt_stat_title', t.stat_title);
+    safeSet('txt_stat_done', t.stat_done);
+    safeSet('txt_stat_wait', t.stat_wait);
+    safeSet('txt_menu_stat', t.menu_stat);
+
     const emptyMsg = document.querySelector('.empty-message');
     if (emptyMsg) emptyMsg.innerText = t.empty;
 }
@@ -118,6 +127,79 @@ function openRegister() {
 function backToLogin() {
     document.getElementById('modalRegister').classList.remove('open');
     document.getElementById('modalLogin').classList.add('open');
+}
+
+// === УПРАВЛЕНИЕ СТАТИСТИКОЙ ===
+function openStats() {
+    document.getElementById('statsModal').classList.add('open');
+    loadStatistics();
+}
+function closeStats() {
+    document.getElementById('statsModal').classList.remove('open');
+}
+
+async function loadStatistics() {
+    const doneList = document.getElementById('statDoneList');
+    const waitList = document.getElementById('statWaitList');
+    const doneCount = document.getElementById('statDoneCount');
+    const waitCount = document.getElementById('statWaitCount');
+    
+    doneList.innerHTML = '<div style="color:#777; text-align:center;">Загрузка...</div>';
+    waitList.innerHTML = '<div style="color:#777; text-align:center;">Загрузка...</div>';
+    
+    try {
+        const response = await fetch(`${scriptUrl}?nocache=${Date.now()}&mode=get_stats`);
+        const data = await response.json();
+        
+        // Получаем текущие переводы
+        const t = TRANSLATIONS[determineEffectiveLang()] || TRANSLATIONS["RU"];
+        
+        let doneHtml = "";
+        let waitHtml = "";
+        let dCount = 0;
+        let wCount = 0;
+        
+        data.forEach(item => {
+            // ОПРЕДЕЛЕНИЕ ТИПА РАБОТ (С ПЕРЕВОДОМ)
+            let typeBadge = "";
+            let rawType = item.type ? item.type.trim() : "";
+            
+            if (rawType === "BS") typeBadge = `<span class="mini-badge bs">${t.type_bs}</span>`;
+            else if (rawType === "AS") typeBadge = `<span class="mini-badge as">${t.type_as}</span>`;
+            else if (rawType === "PS") typeBadge = `<span class="mini-badge ps">${t.type_ps}</span>`;
+            
+            if (item.status === "DONE") {
+                dCount++;
+                doneHtml += `
+                    <div class="stats-item done-item">
+                        <div class="stats-item-left">
+                            <div class="stats-item-id">${item.id} ${typeBadge}</div>
+                        </div>
+                        <div class="stats-item-time">🏁 ${item.time}</div>
+                    </div>`;
+            } else if (item.status === "WAIT") {
+                wCount++;
+                waitHtml += `
+                    <div class="stats-item wait-item">
+                        <div class="stats-item-left">
+                            <div class="stats-item-id">${item.id} ${typeBadge}</div>
+                        </div>
+                        <div class="stats-item-time">⏱ ${item.time}</div>
+                    </div>`;
+            }
+        });
+        
+        doneCount.innerText = dCount;
+        waitCount.innerText = wCount;
+        
+        doneList.innerHTML = dCount > 0 ? doneHtml : '<div style="color:#555; text-align:center;">Пусто</div>';
+        waitList.innerHTML = wCount > 0 ? waitHtml : '<div style="color:#555; text-align:center;">Всё готово</div>';
+        
+    } catch(e) {
+        doneList.innerHTML = '<div style="color:red;">Ошибка</div>';
+        waitList.innerHTML = '<div style="color:red;">Ошибка</div>';
+        console.error(e);
+    }
 }
 
 async function checkLogin() {
@@ -275,11 +357,9 @@ async function update() {
             }
             document.getElementById('nid').innerText = r1[2].trim();
             
-            // --- НОВАЯ ЛОГИКА ДЛЯ СЛЕДУЮЩЕГО КОНТЕЙНЕРА (УМНОЕ ВРЕМЯ) ---
             const ninf = r1[3] ? r1[3].trim() : "";
             const idiv = document.getElementById('ninfo');
             
-            // Пытаемся вытащить число
             const extractedMinutes = parseInt(ninf.replace(/[^0-9]/g, ''));
             const prettyTime = !isNaN(extractedMinutes) ? formatFriendlyTime(extractedMinutes) : "";
 
@@ -306,7 +386,7 @@ async function update() {
                      dur = parseInt(drRaw); if (isNaN(dur)) dur = 0;
                  }
                  
-                 let ws = parts[4] ? parts[4].trim() : "";
+                 let ws = parts[3] ? parts[3].trim() : ""; 
                  
                  newDataMap.set(id, { time, dur, ws });
             }
@@ -334,9 +414,10 @@ async function update() {
             let badgeClass = 'badge-other';
             if (data.ws === 'BS') badgeClass = 'badge-bs';
             if (data.ws === 'AS') badgeClass = 'badge-as';
+            if (data.ws === 'PS') badgeClass = 'badge-ps';
             let wsHtml = data.ws ? `<span class="badge ${badgeClass}">${data.ws}</span>` : '';
 
-            // --- НОВАЯ ВЕРСТКА КАРТОЧКИ (С ПОДПИСЯМИ) ---
+            // --- КАРТОЧКА С ПОДПИСЯМИ ---
             let innerHTML = `
                 <div class="col-icon">${iconHtml}</div>
                 <div class="col-main">
