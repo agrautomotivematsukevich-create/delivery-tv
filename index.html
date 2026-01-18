@@ -39,85 +39,24 @@
             box-sizing: border-box; 
         }
 
-        /* === ЭКРАН ПРИВЕТСТВИЯ (SPLASH SCREEN) === */
+        /* === ЭКРАН ПРИВЕТСТВИЯ === */
         .intro-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: #000000;
-            z-index: 9999;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: #000000; z-index: 9999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
             transition: transform 1s cubic-bezier(0.77, 0, 0.175, 1);
         }
-
-        .intro-overlay.hidden {
-            transform: translateY(-100%);
-        }
-
-        .intro-content {
-            text-align: center;
-            opacity: 0;
-            animation: fadeIn 1s ease-out forwards;
-            display: flex;
-            flex-direction: column;
-            align-items: center; /* Центрирование содержимого */
-        }
-
-        .intro-logo {
-            font-size: 6rem;
-            margin-bottom: 1rem;
-            color: var(--accent-blue);
-            text-shadow: 0 0 30px rgba(10, 132, 255, 0.5);
-            animation: pulse 2s infinite;
-        }
-
+        .intro-overlay.hidden { transform: translateY(-100%); }
+        .intro-content { text-align: center; opacity: 0; animation: fadeIn 1s ease-out forwards; display: flex; flex-direction: column; align-items: center; }
+        .intro-logo { font-size: 6rem; margin-bottom: 1rem; color: var(--accent-blue); text-shadow: 0 0 30px rgba(10, 132, 255, 0.5); animation: pulse 2s infinite; }
         .intro-title {
-            font-size: 3rem;
-            font-weight: 900;
-            letter-spacing: 2px;
-            margin-bottom: 0.5rem;
-            background: linear-gradient(90deg, #fff, #888);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-            color: transparent;
+            font-size: 3rem; font-weight: 900; letter-spacing: 2px; margin-bottom: 0.5rem;
+            background: linear-gradient(90deg, #fff, #888); -webkit-background-clip: text; background-clip: text;
+            -webkit-text-fill-color: transparent; color: transparent;
         }
-
-        .intro-subtitle {
-            font-size: 1.2rem;
-            color: var(--text-secondary);
-            font-family: 'Roboto', monospace;
-            letter-spacing: 4px;
-            text-transform: uppercase;
-        }
-
-        .intro-loader {
-            width: 200px;
-            height: 2px;
-            background: rgba(255,255,255,0.1);
-            margin: 3rem auto 0; /* auto по бокам центрирует блок */
-            position: relative;
-            overflow: hidden;
-            border-radius: 2px;
-        }
-
-        .intro-loader::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 50%;
-            height: 100%;
-            background: var(--accent-blue);
-            box-shadow: 0 0 10px var(--accent-blue);
-            animation: loading 2s infinite ease-in-out;
-        }
-
+        .intro-subtitle { font-size: 1.2rem; color: var(--text-secondary); font-family: 'Roboto', monospace; letter-spacing: 4px; text-transform: uppercase; }
+        .intro-loader { width: 200px; height: 2px; background: rgba(255,255,255,0.1); margin: 3rem auto 0; position: relative; overflow: hidden; border-radius: 2px; }
+        .intro-loader::after { content: ''; position: absolute; top: 0; left: 0; width: 50%; height: 100%; background: var(--accent-blue); box-shadow: 0 0 10px var(--accent-blue); animation: loading 2s infinite ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
         @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.05); opacity: 0.8; } 100% { transform: scale(1); opacity: 1; } }
         @keyframes loading { 0% { left: -50%; } 100% { left: 100%; } }
@@ -171,28 +110,75 @@
         }
         .list-mask::-webkit-scrollbar { width: 4px; } .list-mask::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
 
+        /* === ЭЛЕМЕНТ СПИСКА (НОВЫЙ UX) === */
         .list-item { 
             display: flex; align-items: center; 
-            padding: 1.2rem 1.5rem; margin-bottom: 0.8rem; 
-            border-radius: 1.2rem; background: rgba(255,255,255,0.05); 
-            font-size: 2rem; font-weight: 600; transition: all 0.3s;
-            flex-shrink: 0; position: relative; 
+            padding: 1rem 1.5rem; 
+            margin-bottom: 0.8rem; 
+            border-radius: 1.2rem; 
+            background: rgba(255,255,255,0.05); 
+            transition: all 0.3s;
+            flex-shrink: 0;
+            position: relative; 
         }
         
-        .col-icon { width: 5rem; flex-shrink: 0; display: flex; align-items: center; } .container-img { width: 4rem; }
+        .col-icon { width: 5rem; flex-shrink: 0; display: flex; align-items: center; } 
+        .container-img { width: 4rem; }
+        
         .col-main { flex: 1; display: flex; align-items: center; gap: 1.5rem; overflow: hidden; }
-        .id-text { font-size: 2.5rem; white-space: nowrap; font-weight: 800; }
+        
+        .id-text { 
+            font-size: 2.5rem; 
+            white-space: nowrap; 
+            font-weight: 800;
+            line-height: 1;
+        }
+        
         .badge { padding: 6px 12px; border-radius: 8px; font-size: 1.4rem; font-weight: 800; text-transform: uppercase; color: white; white-space: nowrap; }
         .badge-bs { background: #0A84FF; } .badge-as { background: #FF9F0A; } .badge-other { background: #444; }
-        .col-right { margin-left: auto; display: flex; align-items: center; gap: 1.5rem; white-space: nowrap; font-size: 2rem; }
-        .col-dur { color: var(--text-secondary); font-size: 1.6rem; }
+        
+        /* Правая часть: Статистика с подписями */
+        .col-right { 
+            margin-left: auto; 
+            display: flex; 
+            align-items: center; 
+            gap: 2rem; 
+            white-space: nowrap; 
+        }
+
+        .stat-box {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end; /* Выравнивание по правому краю */
+            justify-content: center;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            margin-bottom: 2px;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            font-feature-settings: "tnum";
+        }
+        
+        .val-dur { color: var(--accent-green); }
 
         .list-item.overdue { background: rgba(255, 69, 58, 0.15); border: 1px solid rgba(255, 69, 58, 0.3); }
         .list-item.overdue span, .list-item.overdue .id-text { color: var(--accent-red) !important; }
-        .empty-message { text-align: center; color: var(--text-secondary); margin-top: 2rem; font-size: 1.5rem; }
+        .list-item.overdue .val-dur { color: var(--accent-red) !important; }
 
+        .empty-message { text-align: center; color: var(--text-secondary); margin-top: 2rem; font-size: 1.5rem; }
         .copyright-footer { text-align: center; font-size: 0.8rem; font-weight: 500; color: rgba(255, 255, 255, 0.25); margin-top: 0.5rem; flex-shrink: 0; letter-spacing: 0.5px; }
 
+        /* АНИМАЦИИ (ТОЛЬКО ДЛЯ ПК/ТВ) */
         @media (min-width: 1024px) {
             @keyframes driveIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
             @keyframes driveOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(120%); opacity: 0; } }
@@ -231,10 +217,23 @@
             .progress-container { width: 60%; padding-bottom: 60%; }
             .right-panel { order: 2; height: auto; overflow: visible; }
             .list-block { height: auto; overflow: visible; }
-            .list-item { padding: 0.8rem 1rem; font-size: 1.2rem; }
+            .list-item { padding: 0.8rem 1rem; flex-wrap: wrap; }
             .col-icon { width: 3rem; } .container-img { width: 2.5rem; }
-            .id-text { font-size: 1.3rem; } .badge { font-size: 0.8rem; }
-            .col-right { font-size: 1rem; } .col-dur { display: none; }
+            .id-text { font-size: 1.4rem; } 
+            .badge { font-size: 0.8rem; padding: 4px 8px; }
+            
+            .col-right { 
+                width: 100%; 
+                margin-top: 10px; 
+                justify-content: space-between; 
+                gap: 0;
+                border-top: 1px solid rgba(255,255,255,0.1);
+                padding-top: 8px;
+            }
+            .stat-box { align-items: flex-start; } 
+            .stat-box:last-child { align-items: flex-end; }
+            .stat-value { font-size: 1.2rem; }
+
             .copyright-footer { font-size: 0.7rem; padding-bottom: 1rem; }
             .intro-logo { font-size: 4rem; } .intro-title { font-size: 2rem; }
         }
@@ -252,7 +251,6 @@
     </div>
 
     <script>
-        // СКРИПТ УПРАВЛЕНИЯ ЗАСТАВКОЙ
         window.addEventListener('load', () => {
             setTimeout(() => {
                 const intro = document.getElementById('intro');

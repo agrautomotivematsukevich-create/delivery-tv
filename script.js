@@ -1,6 +1,6 @@
 // ================================================================
 // ВСТАВЬТЕ ВАШУ ССЫЛКУ НИЖЕ:
-const scriptUrl = 'https://script.google.com/macros/s/AKfycbzl59vrkl1zGDrV4ANnvIUDTimV_qbFWxuMYI1kKCoDSPW4Q2fZ7wQcooCBK7kp4kiujQ/exec'; 
+const scriptUrl = 'https://script.google.com/macros/s/AKfycby--iUZ7IoFsoRwLHPRvAQU6jY9USXl9MsfS8maoAMkP-ltKgJRd32DBx0G6asXNSmX/exec'; 
 // ================================================================
 
 const CONTAINER_IMG_SRC = 'container.svg'; 
@@ -15,15 +15,29 @@ const TRANSLATIONS = {
         title: "Мониторинг Склада", progress: "Общий прогресс", next: "Следующий контейнер", list: "Активные разгрузки",
         lunch: "ОБЕДЕННЫЙ ПЕРЕРЫВ", victory: "ПЛАН ВЫПОЛНЕН!", status_active: "В РАБОТЕ", status_pause: "ПАУЗА", status_wait: "ОЖИДАНИЕ",
         lunch_left: "До конца:", lunch_soon: "Скоро работа", empty: "Нет активных разгрузок", min: "мин.", locale: "ru-RU", 
-        eta_prefix: "ПРИБУДЕТ: ", delay_prefix: "ОПОЗДАНИЕ: "
+        eta_prefix: "ПРИБУДЕТ: ", delay_prefix: "ОПОЗДАНИЕ: ",
+        lbl_start: "НАЧАЛО", lbl_dur: "В РАБОТЕ"
     },
     EN_CN: {
         title: "Warehouse / 仓库监控", progress: "Progress / 总体进度", next: "Next / 下一个集装箱", list: "Active / 正在卸货",
         lunch: "LUNCH / 午休时间", victory: "COMPLETED / 计划完成", status_active: "ACTIVE / 进行中", status_pause: "PAUSED / 暂停", status_wait: "WAITING / 等待中",
         lunch_left: "Left / 剩余:", lunch_soon: "Back soon / 即将开始", empty: "No Tasks / 无活动任务", min: "min / 分", locale: "zh-CN", 
-        eta_prefix: "ETA / 预计: ", delay_prefix: "DELAY / 延迟: "
+        eta_prefix: "ETA / 预计: ", delay_prefix: "DELAY / 延迟: ",
+        lbl_start: "START / 开始", lbl_dur: "DURATION / 持续"
     }
 };
+
+// Функция умного форматирования времени
+function formatFriendlyTime(minutes) {
+    if (isNaN(minutes)) return "0 мин";
+    if (minutes < 60) {
+        return `${minutes} мин`;
+    } else {
+        const h = Math.floor(minutes / 60);
+        const m = minutes % 60;
+        return `${h}ч ${m}м`;
+    }
+}
 
 async function sha256(message) {
     const msgBuffer = new TextEncoder().encode(message);
@@ -260,13 +274,22 @@ async function update() {
                 if (document.body.classList.contains('is-victory')) document.body.classList.remove('is-victory'); 
             }
             document.getElementById('nid').innerText = r1[2].trim();
+            
+            // --- НОВАЯ ЛОГИКА ДЛЯ СЛЕДУЮЩЕГО КОНТЕЙНЕРА (УМНОЕ ВРЕМЯ) ---
             const ninf = r1[3] ? r1[3].trim() : "";
             const idiv = document.getElementById('ninfo');
+            
+            // Пытаемся вытащить число
+            const extractedMinutes = parseInt(ninf.replace(/[^0-9]/g, ''));
+            const prettyTime = !isNaN(extractedMinutes) ? formatFriendlyTime(extractedMinutes) : "";
+
             if (ninf.includes("ОПОЗДАНИЕ") || ninf.includes("DELAY")) {
-                idiv.innerHTML = `⚠️ <span class="warn-text">${t.delay_prefix} ${ninf.replace(/[^0-9]/g, '')} ${t.min}</span>`;
+                idiv.innerHTML = `⚠️ <span class="warn-text">${t.delay_prefix} ${prettyTime}</span>`;
             } else if (ninf.includes("ПРИБУДЕТ") || ninf.includes("ETA")) {
-                idiv.innerHTML = `⏱ <span class="time-text">${t.eta_prefix} ${ninf.replace(/[^0-9]/g, '')} ${t.min}</span>`;
-            } else { idiv.innerHTML = ninf; }
+                idiv.innerHTML = `⏱ <span class="time-text">${t.eta_prefix} ${prettyTime}</span>`;
+            } else { 
+                idiv.innerHTML = ninf; 
+            }
         }
 
         const listEl = document.getElementById('list');
@@ -298,7 +321,6 @@ async function update() {
         currentChildren.forEach(el => {
             if (!newDataMap.has(el.getAttribute('data-id'))) {
                 el.classList.add('remove-item');
-                // УВЕЛИЧИЛИ ТАЙМЕР до 1000мс, чтобы анимация успела закончиться
                 setTimeout(() => { if (el.parentNode) el.remove(); checkEmpty(); }, 1000);
             }
         });
@@ -314,6 +336,7 @@ async function update() {
             if (data.ws === 'AS') badgeClass = 'badge-as';
             let wsHtml = data.ws ? `<span class="badge ${badgeClass}">${data.ws}</span>` : '';
 
+            // --- НОВАЯ ВЕРСТКА КАРТОЧКИ (С ПОДПИСЯМИ) ---
             let innerHTML = `
                 <div class="col-icon">${iconHtml}</div>
                 <div class="col-main">
@@ -321,8 +344,14 @@ async function update() {
                     ${wsHtml}
                 </div>
                 <div class="col-right">
-                    <span>${data.time}</span>
-                    <span class="col-dur">${data.dur} ${t.min}</span>
+                    <div class="stat-box">
+                        <div class="stat-label">${t.lbl_start}</div>
+                        <div class="stat-value">${data.time}</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">${t.lbl_dur}</div>
+                        <div class="stat-value val-dur">${formatFriendlyTime(data.dur)}</div>
+                    </div>
                 </div>
             `;
             
@@ -331,7 +360,6 @@ async function update() {
                 if (isOverdue) existingEl.classList.add('overdue'); else existingEl.classList.remove('overdue');
             } else {
                 let newEl = document.createElement('div');
-                // ДОБАВЛЕН КЛАСС slide-in
                 newEl.className = `list-item ${overdueClass} slide-in`;
                 newEl.setAttribute('data-id', id);
                 newEl.innerHTML = innerHTML;
@@ -350,7 +378,6 @@ async function update() {
     } catch(e) { console.log("Update error:", e); }
 }
 
-// === ЛОГИРОВАНИЕ ПОСЕЩЕНИЙ ===
 async function logVisit() {
     const ua = navigator.userAgent; 
     let ip = "Не определен";
