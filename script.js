@@ -1,4 +1,5 @@
 // === НАСТРОЙКИ ===
+// Убедитесь, что ссылка правильная (Deploy -> New deployment -> Anyone)
 const scriptUrl = 'https://script.google.com/macros/s/AKfycbxen2QS7DxeT5YcUcJ2JINwckPbNTGL6KAOdO3sYYeTaexvccOyB0AEmPFiNgVzdSjo-A/exec'; 
 const CONTAINER_IMG_SRC = 'container.svg'; 
 
@@ -12,28 +13,24 @@ let lunchEndStr = "12:00";
 let serverLang = "RU"; 
 let localLang = localStorage.getItem('warehouse_lang');
 
-// === СЛОВАРЬ (ИСПРАВЛЕНЫ КЛЮЧИ) ===
+// === СЛОВАРЬ ===
 const TRANSLATIONS = {
     RU: {
         title: "Мониторинг Склада", progress: "Общий прогресс", next: "Следующий контейнер", list: "Активные разгрузки",
         lunch: "ОБЕДЕННЫЙ ПЕРЕРЫВ", victory: "ПЛАН ВЫПОЛНЕН!", status_active: "В РАБОТЕ", status_pause: "ПАУЗА", status_wait: "ОЖИДАНИЕ",
         lunch_left: "До конца:", lunch_soon: "Скоро работа", empty: "Нет активных разгрузок", min: "мин.", locale: "ru-RU", 
-        eta_prefix: "ПРИБУДЕТ: ", // Было eta, стало eta_prefix
-        delay_prefix: "ОПОЗДАНИЕ: " // Было del, стало delay_prefix
+        eta_prefix: "ПРИБУДЕТ: ", delay_prefix: "ОПОЗДАНИЕ: "
     },
     EN_CN: {
         title: "Warehouse / 仓库监控", progress: "Progress / 总体进度", next: "Next / 下一个集装箱", list: "Active / 正在卸货",
         lunch: "LUNCH / 午休时间", victory: "COMPLETED / 计划完成", status_active: "ACTIVE / 进行中", status_pause: "PAUSED / 暂停", status_wait: "WAITING / 等待中",
         lunch_left: "Left / 剩余:", lunch_soon: "Back soon / 即将开始", empty: "No Tasks / 无活动任务", min: "min / 分", locale: "zh-CN", 
-        eta_prefix: "ETA / 预计: ", 
-        delay_prefix: "DELAY / 延迟: "
+        eta_prefix: "ETA / 预计: ", delay_prefix: "DELAY / 延迟: "
     }
 };
 
-// --- ФУНКЦИИ ЯЗЫКА ---
-function determineEffectiveLang() {
-    return localLang ? localLang : serverLang;
-}
+// --- ЯЗЫК ---
+function determineEffectiveLang() { return localLang ? localLang : serverLang; }
 
 function toggleLocalLang() {
     if (!localLang) localLang = 'RU';
@@ -68,25 +65,9 @@ function updateLocalLangBtn() {
     }
 }
 
-// --- УВЕДОМЛЕНИЯ ---
-function showToast(text, type) {
-    const toast = document.getElementById('adminToast');
-    const txt = document.getElementById('toastText');
-    const icon = toast.querySelector('.toast-icon');
-    
-    if (txt) txt.innerText = text;
-    if (icon) icon.innerText = type === 'success' ? 'check_circle' : 'error';
-    
-    if (toast) {
-        toast.className = `admin-toast show ${type}`; 
-        setTimeout(() => { toast.className = 'admin-toast'; }, 3000);
-    }
-}
-
 function applyLanguage(lang) {
     if (!TRANSLATIONS[lang]) return;
     const t = TRANSLATIONS[lang];
-
     const safeSet = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val; };
 
     safeSet('txt_title', t.title);
@@ -100,38 +81,42 @@ function applyLanguage(lang) {
     if (emptyMsg) emptyMsg.innerText = t.empty;
 }
 
-// === ЛОГИН ===
+// --- УВЕДОМЛЕНИЯ ---
+function showToast(text, type) {
+    const toast = document.getElementById('adminToast');
+    const txt = document.getElementById('toastText');
+    const icon = toast.querySelector('.toast-icon');
+    if (txt) txt.innerText = text;
+    if (icon) icon.innerText = type === 'success' ? 'check_circle' : 'error';
+    if (toast) {
+        toast.className = `admin-toast show ${type}`; 
+        setTimeout(() => { toast.className = 'admin-toast'; }, 3000);
+    }
+}
+
+// --- ЛОГИН ---
 function openLogin() { 
     document.getElementById('modalLogin').classList.add('open'); 
     setTimeout(() => document.getElementById('adminUser').focus(), 100); 
 }
-
 function closeModals() { 
     document.getElementById('modalLogin').classList.remove('open'); 
     document.getElementById('adminPass').value = "";
 }
-
 async function checkLogin() {
     const u = document.getElementById('adminUser').value.trim();
     const p = document.getElementById('adminPass').value.trim();
-
     if (!u || !p) { showToast("Введите данные", "error"); return; }
     showToast("Проверка...", "success");
-
     try {
         const r = await fetch(`${scriptUrl}?nocache=${Date.now()}&mode=login&user=${encodeURIComponent(u)}&pass=${encodeURIComponent(p)}`);
         const txt = await r.text();
-        
         if (txt.includes("CORRECT")) {
             sessionStorage.setItem('warehouse_auth', JSON.stringify({ user: u, pass: p }));
             window.location.href = "admin.html";
-        } else {
-            showToast("Неверные данные", "error");
-        }
+        } else { showToast("Неверные данные", "error"); }
     } catch(e) { showToast("Ошибка сети", "error"); }
 }
-
-function testLunch() {}
 
 function launchVictoryConfetti() {
      var duration = 5 * 60 * 1000; 
@@ -154,9 +139,10 @@ setInterval(() => {
     checkLunchTime(d);
 }, 1000);
 
+// ИСПРАВЛЕННАЯ ФУНКЦИЯ ВРЕМЕНИ
 function checkLunchTime(now) {
     const [startH, startM] = lunchStartStr.split(':').map(Number);
-    const [endH, endM] = lunchEndStr.split(':').map(Number);
+    const [endH, endM] = lunchEndStr.split(':').map(Number); // Исправлено eh -> endH
     
     const cur = now.getHours() * 60 + now.getMinutes();
     const start = startH * 60 + startM;
@@ -171,9 +157,7 @@ function checkLunchTime(now) {
     if (isLunch) {
         if (!document.body.classList.contains('is-lunch')) document.body.classList.add('is-lunch');
         let target = new Date(); target.setHours(endH, endM, 0, 0);
-        
         if (isTest) target = new Date(parseInt(testUntil));
-
         let diff = target - now;
         document.getElementById('lunchTimer').innerText = diff > 0 ? `${t.lunch_left} ${Math.ceil(diff/60000)} ${t.min}` : t.lunch_soon;
     } else {
@@ -185,12 +169,12 @@ async function update() {
     try {
         const res = await fetch(scriptUrl + '?nocache=' + new Date().getTime());
         const fullText = await res.text();
-        if (!fullText || fullText.includes("DOCTYPE")) return;
+        if (!fullText || fullText.includes("DOCTYPE")) return; // Игнорируем ошибки HTML
 
         let csvData = fullText;
         let adminMessage = "";
         
-        // LANG Parsing
+        // --- PARSING BLOCKS ---
         if (fullText.includes("###LANG###")) {
             const parts = fullText.split("###LANG###");
             const sLang = parts[1].trim(); 
@@ -200,7 +184,6 @@ async function update() {
         
         applyLanguage(determineEffectiveLang());
 
-        // LUNCH Parsing
         if (csvData.includes("###LUNCH###")) {
             const parts = csvData.split("###LUNCH###");
             const times = parts[1].trim().split('|');
@@ -208,13 +191,13 @@ async function update() {
             csvData = parts[0];
         }
 
-        // MSG Parsing
         if (csvData.includes("###MSG###")) {
             const parts = csvData.split("###MSG###");
             csvData = parts[0];
             adminMessage = parts[1] ? parts[1].trim() : "";
         }
 
+        // --- MESSAGE BAR ---
         const msgBar = document.getElementById('messageBar');
         const msgText = document.getElementById('messageText');
         if (adminMessage.length > 0) {
@@ -226,6 +209,7 @@ async function update() {
             document.body.classList.remove('has-message');
         }
 
+        // --- DATA RENDERING ---
         const rows = csvData.split('\n').map(r => r.split(';')); 
         const r1 = rows[0]; 
         const t = TRANSLATIONS[determineEffectiveLang()] || TRANSLATIONS["RU"]; 
@@ -264,7 +248,6 @@ async function update() {
             const ninf = r1[3] ? r1[3].trim() : "";
             const idiv = document.getElementById('ninfo');
             
-            // ЗДЕСЬ БЫЛА ОШИБКА, ТЕПЕРЬ ИСПРАВЛЕНО (ИСПОЛЬЗУЮТСЯ PREFIX)
             if (ninf.includes("ОПОЗДАНИЕ") || ninf.includes("DELAY")) {
                 idiv.innerHTML = `⚠️ <span class="warn-text">${t.delay_prefix} ${ninf.replace(/[^0-9]/g, '')} ${t.min}</span>`;
             } else if (ninf.includes("ПРИБУДЕТ") || ninf.includes("ETA")) {
@@ -274,19 +257,31 @@ async function update() {
             }
         }
 
+        // --- SAFE LIST PARSING (ЗАЩИТА ОТ ОШИБОК) ---
         const listEl = document.getElementById('list');
         let newDataMap = new Map();
+        
         for (let i = 1; i < rows.length; i++) {
-            let parts = rows[i];
-            if (parts.length >= 1 && parts[0].includes('|')) {
-                 let subParts = parts[0].split('|');
-                 let id = subParts[0].trim();
-                 let time = subParts[1].trim();
-                 let durRaw = subParts[2].trim().replace(/[,"]/g, '');
-                 let dur = parseInt(durRaw); if (isNaN(dur)) dur = 0;
+            // Проверяем, есть ли данные и разделитель
+            if (rows[i][0] && rows[i][0].includes('|')) {
+                 let parts = rows[i][0].split('|');
+                 
+                 // БЕЗОПАСНОЕ ЧТЕНИЕ: Если части не хватает, ставим дефолт
+                 let id = parts[0] ? parts[0].trim() : "???";
+                 let time = parts[1] ? parts[1].trim() : "--:--";
+                 let dur = 0;
+                 
+                 // Защита от отсутствия 3-го параметра (длительности)
+                 if (parts[2]) {
+                     let drRaw = parts[2].trim().replace(/[,"]/g, '');
+                     dur = parseInt(drRaw);
+                     if (isNaN(dur)) dur = 0;
+                 }
+
                  newDataMap.set(id, { time, dur });
             }
         }
+
         const currentChildren = Array.from(listEl.querySelectorAll('.list-item:not(.remove-item)'));
         currentChildren.forEach(el => {
             const id = el.getAttribute('data-id');
@@ -295,12 +290,14 @@ async function update() {
                 setTimeout(() => { if (el.parentNode) el.remove(); checkEmpty(); }, 750);
             }
         });
+
         newDataMap.forEach((data, id) => {
             let existingEl = listEl.querySelector(`.list-item[data-id="${id}"]:not(.remove-item)`);
             let isOverdue = data.dur > 30;
             let overdueClass = isOverdue ? 'overdue' : '';
             let iconHtml = isOverdue ? '<span style="font-size:30px">⚠️</span>' : `<img src="${CONTAINER_IMG_SRC}" class="container-img" alt="box">`;
             let innerHTML = `<span>${iconHtml}</span><span>${id}</span><span>${data.time}</span><span>${data.dur} ${t.min}</span>`;
+            
             if (existingEl) {
                 if (existingEl.innerHTML !== innerHTML) existingEl.innerHTML = innerHTML;
                 if (isOverdue) existingEl.classList.add('overdue');
@@ -308,7 +305,6 @@ async function update() {
             } else {
                 let newEl = document.createElement('div');
                 newEl.className = `list-item ${overdueClass}`;
-                if (!isFirstRun) newEl.classList.add('new-item'); 
                 newEl.setAttribute('data-id', id);
                 newEl.innerHTML = innerHTML;
                 const emptyMsg = listEl.querySelector('.empty-message');
@@ -316,7 +312,7 @@ async function update() {
                 listEl.prepend(newEl);
             }
         });
-        isFirstRun = false;
+
         if (newDataMap.size === 0) checkEmpty();
         function checkEmpty() {
              const alive = listEl.querySelectorAll('.list-item:not(.remove-item)');
