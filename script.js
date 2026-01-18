@@ -1,19 +1,12 @@
-// === НАСТРОЙКИ ===
-// Убедитесь, что ссылка правильная (Deploy -> New deployment -> Anyone)
-const scriptUrl = 'https://script.google.com/macros/s/AKfycbxen2QS7DxeT5YcUcJ2JINwckPbNTGL6KAOdO3sYYeTaexvccOyB0AEmPFiNgVzdSjo-A/exec'; 
+// === ВСТАВЬТЕ СЮДА НОВУЮ ССЫЛКУ ПОСЛЕ ПУБЛИКАЦИИ ===
+const scriptUrl = 'https://script.google.com/macros/s/AKfycbyQO3WL2ApDqg_zBwIPFyblqROe-qBsodnRe7r-2luP2_AYQhswAtF1858TVpXipUdxJQ/exec'; 
 const CONTAINER_IMG_SRC = 'container.svg'; 
 
-let currentUser = ""; 
-let currentPassword = ""; 
-let isLunchTestMode = false; 
 let lunchStartStr = "11:30";
 let lunchEndStr = "12:00";
-
-// Глобальные переменные языка
 let serverLang = "RU"; 
 let localLang = localStorage.getItem('warehouse_lang');
 
-// === СЛОВАРЬ ===
 const TRANSLATIONS = {
     RU: {
         title: "Мониторинг Склада", progress: "Общий прогресс", next: "Следующий контейнер", list: "Активные разгрузки",
@@ -29,6 +22,14 @@ const TRANSLATIONS = {
     }
 };
 
+// --- CRYPTO (SHA-256) ---
+async function sha256(message) {
+    const msgBuffer = new TextEncoder().encode(message);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
 // --- ЯЗЫК ---
 function determineEffectiveLang() { return localLang ? localLang : serverLang; }
 
@@ -36,10 +37,8 @@ function toggleLocalLang() {
     if (!localLang) localLang = 'RU';
     else if (localLang === 'RU') localLang = 'EN_CN';
     else localLang = null;
-
     if (localLang) localStorage.setItem('warehouse_lang', localLang);
     else localStorage.removeItem('warehouse_lang');
-
     applyLanguage(determineEffectiveLang());
     updateLocalLangBtn();
 }
@@ -47,21 +46,19 @@ function toggleLocalLang() {
 function updateLocalLangBtn() {
     const btn = document.getElementById('localLangBtn');
     const label = document.getElementById('localLangLabel');
-    const icon = btn.querySelector('.lang-icon');
-    const text = btn.querySelector('.lang-text');
-
+    if(!btn) return;
     if (localLang) {
         btn.classList.add('active');
         label.innerText = localLang === 'RU' ? 'RU' : 'EN/CN';
         btn.style.borderColor = '#007bff';
-        icon.style.color = '#007bff';
-        text.style.color = '#007bff';
+        btn.querySelector('.lang-icon').style.color = '#007bff';
+        label.style.color = '#007bff';
     } else {
         btn.classList.remove('active');
         label.innerText = 'AUTO';
         btn.style.borderColor = '#444';
-        icon.style.color = '#a0a0a0';
-        text.style.color = '#a0a0a0';
+        btn.querySelector('.lang-icon').style.color = '#a0a0a0';
+        label.style.color = '#a0a0a0';
     }
 }
 
@@ -69,14 +66,8 @@ function applyLanguage(lang) {
     if (!TRANSLATIONS[lang]) return;
     const t = TRANSLATIONS[lang];
     const safeSet = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val; };
-
-    safeSet('txt_title', t.title);
-    safeSet('txt_progress', t.progress);
-    safeSet('txt_next', t.next);
-    safeSet('txt_list', t.list);
-    safeSet('txt_lunch', t.lunch);
-    safeSet('txt_victory', t.victory);
-    
+    safeSet('txt_title', t.title); safeSet('txt_progress', t.progress); safeSet('txt_next', t.next);
+    safeSet('txt_list', t.list); safeSet('txt_lunch', t.lunch); safeSet('txt_victory', t.victory);
     const emptyMsg = document.querySelector('.empty-message');
     if (emptyMsg) emptyMsg.innerText = t.empty;
 }
@@ -90,37 +81,81 @@ function showToast(text, type) {
     if (icon) icon.innerText = type === 'success' ? 'check_circle' : 'error';
     if (toast) {
         toast.className = `admin-toast show ${type}`; 
-        setTimeout(() => { toast.className = 'admin-toast'; }, 3000);
+        setTimeout(() => { toast.className = 'admin-toast'; }, 6000);
     }
 }
 
-// --- ЛОГИН ---
+// --- ЛОГИН / РЕГИСТРАЦИЯ ---
 function openLogin() { 
     document.getElementById('modalLogin').classList.add('open'); 
     setTimeout(() => document.getElementById('adminUser').focus(), 100); 
 }
 function closeModals() { 
     document.getElementById('modalLogin').classList.remove('open'); 
+    document.getElementById('modalRegister').classList.remove('open');
     document.getElementById('adminPass').value = "";
 }
+function openRegister() {
+    document.getElementById('modalLogin').classList.remove('open');
+    document.getElementById('modalRegister').classList.add('open');
+    setTimeout(() => document.getElementById('regName').focus(), 100);
+}
+function backToLogin() {
+    document.getElementById('modalRegister').classList.remove('open');
+    document.getElementById('modalLogin').classList.add('open');
+}
+
 async function checkLogin() {
     const u = document.getElementById('adminUser').value.trim();
     const p = document.getElementById('adminPass').value.trim();
     if (!u || !p) { showToast("Введите данные", "error"); return; }
     showToast("Проверка...", "success");
+    
+    const hash = await sha256(p); 
+
     try {
-        const r = await fetch(`${scriptUrl}?nocache=${Date.now()}&mode=login&user=${encodeURIComponent(u)}&pass=${encodeURIComponent(p)}`);
+        const r = await fetch(`${scriptUrl}?nocache=${Date.now()}&mode=login&user=${encodeURIComponent(u)}&hash=${hash}`);
         const txt = await r.text();
+        
         if (txt.includes("CORRECT")) {
-            sessionStorage.setItem('warehouse_auth', JSON.stringify({ user: u, pass: p }));
+            sessionStorage.setItem('warehouse_auth', JSON.stringify({ user: u, pass: hash }));
             window.location.href = "admin.html";
-        } else { showToast("Неверные данные", "error"); }
-    } catch(e) { showToast("Ошибка сети", "error"); }
+        } else if (txt.includes("PENDING")) {
+            showToast("Аккаунт ожидает подтверждения", "error");
+        } else if (txt.includes("WRONG")) {
+            showToast("Неверный логин или пароль", "error");
+        } else {
+            showToast("Ошибка: " + txt, "error"); // Покажем текст ошибки сервера
+        }
+    } catch(e) { showToast("Сбой сети (CORS/Deploy)", "error"); console.error(e); }
+}
+
+async function doRegister() {
+    const name = document.getElementById('regName').value.trim();
+    const u = document.getElementById('regUser').value.trim();
+    const p = document.getElementById('regPass').value.trim();
+    if (!name || !u || !p) { showToast("Заполните все поля", "error"); return; }
+    
+    showToast("Отправка...", "success");
+    const hash = await sha256(p);
+
+    try {
+        const url = `${scriptUrl}?nocache=${Date.now()}&mode=register&user=${encodeURIComponent(u)}&hash=${hash}&name=${encodeURIComponent(name)}`;
+        const r = await fetch(url);
+        const txt = await r.text();
+        if (txt.includes("REGISTERED")) {
+            showToast("Отправлено! Ждите одобрения.", "success");
+            setTimeout(backToLogin, 2000);
+        } else if (txt.includes("EXISTS")) {
+            showToast("Логин занят", "error");
+        } else {
+            showToast("Ошибка: " + txt, "error");
+        }
+    } catch(e) { showToast("Сбой сети (CORS/Deploy)", "error"); console.error(e); }
 }
 
 function launchVictoryConfetti() {
-     var duration = 5 * 60 * 1000; 
-     var end = Date.now() + duration;
+     var duration = 5 * 60 * 1000; var end = Date.now() + duration;
      (function frame() {
          confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#ffc107', '#28a745', '#ffffff'] });
          confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#ffc107', '#28a745', '#ffffff'] });
@@ -128,9 +163,8 @@ function launchVictoryConfetti() {
      }());
 }
 
-// === ЯДРО ОБНОВЛЕНИЯ ===
+// === ЯДРО ===
 updateLocalLangBtn();
-
 setInterval(() => {
     const d = new Date();
     document.getElementById('clock').innerText = d.toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'});
@@ -139,18 +173,14 @@ setInterval(() => {
     checkLunchTime(d);
 }, 1000);
 
-// ИСПРАВЛЕННАЯ ФУНКЦИЯ ВРЕМЕНИ
 function checkLunchTime(now) {
     const [startH, startM] = lunchStartStr.split(':').map(Number);
-    const [endH, endM] = lunchEndStr.split(':').map(Number); // Исправлено eh -> endH
-    
+    const [endH, endM] = lunchEndStr.split(':').map(Number);
     const cur = now.getHours() * 60 + now.getMinutes();
     const start = startH * 60 + startM;
     const end = endH * 60 + endM; 
-    
     const testUntil = localStorage.getItem('lunch_test_until');
     const isTest = testUntil && parseInt(testUntil) > Date.now();
-
     const isLunch = (cur >= start && cur < end) || isTest;
     const t = TRANSLATIONS[determineEffectiveLang()];
     
@@ -169,19 +199,17 @@ async function update() {
     try {
         const res = await fetch(scriptUrl + '?nocache=' + new Date().getTime());
         const fullText = await res.text();
-        if (!fullText || fullText.includes("DOCTYPE")) return; // Игнорируем ошибки HTML
+        if (!fullText || fullText.includes("DOCTYPE")) return;
 
         let csvData = fullText;
         let adminMessage = "";
         
-        // --- PARSING BLOCKS ---
         if (fullText.includes("###LANG###")) {
             const parts = fullText.split("###LANG###");
             const sLang = parts[1].trim(); 
             if (sLang && TRANSLATIONS[sLang]) serverLang = sLang;
             csvData = parts[0];
         } else { if (!serverLang) serverLang = "RU"; }
-        
         applyLanguage(determineEffectiveLang());
 
         if (csvData.includes("###LUNCH###")) {
@@ -197,7 +225,6 @@ async function update() {
             adminMessage = parts[1] ? parts[1].trim() : "";
         }
 
-        // --- MESSAGE BAR ---
         const msgBar = document.getElementById('messageBar');
         const msgText = document.getElementById('messageText');
         if (adminMessage.length > 0) {
@@ -209,9 +236,8 @@ async function update() {
             document.body.classList.remove('has-message');
         }
 
-        // --- DATA RENDERING ---
         const rows = csvData.split('\n').map(r => r.split(';')); 
-        const r1 = rows[0]; 
+        const r1 = rows[0]; // Это всегда статус (A1)
         const t = TRANSLATIONS[determineEffectiveLang()] || TRANSLATIONS["RU"]; 
 
         if (r1 && r1.length > 2) {
@@ -224,80 +250,60 @@ async function update() {
             const done = parseInt(counts[0]) || 0;
             const total = parseInt(counts[1]) || 0;
             document.getElementById('cnt').innerText = `${done} / ${total}`;
-            
             const p = total > 0 ? Math.round((done/total)*100) : 0;
             document.getElementById('pct').innerText = p + '%';
             const ring = document.getElementById('ring');
             ring.style.strokeDashoffset = 942 - (942 * p / 100);
-            
             if (!document.body.classList.contains('is-lunch')) {
-                ring.style.stroke = st === "ACTIVE" ? "var(--accent-green)" : (st === "PAUSE" ? "#555" : "var(--accent-yellow)");
+                document.getElementById('ring').style.stroke = st === "ACTIVE" ? "var(--accent-green)" : (st === "PAUSE" ? "#555" : "var(--accent-yellow)");
             }
-
             if (total > 0 && done === total && !document.body.classList.contains('is-lunch')) {
                 if (!document.body.classList.contains('is-victory')) {
-                    document.body.classList.add('is-victory'); 
-                    launchVictoryConfetti(); 
+                    document.body.classList.add('is-victory'); launchVictoryConfetti(); 
                     document.getElementById('victoryStat').innerText = `${done} / ${total}`;
                 }
             } else {
                 if (document.body.classList.contains('is-victory')) document.body.classList.remove('is-victory'); 
             }
-
             document.getElementById('nid').innerText = r1[2].trim();
             const ninf = r1[3] ? r1[3].trim() : "";
             const idiv = document.getElementById('ninfo');
-            
             if (ninf.includes("ОПОЗДАНИЕ") || ninf.includes("DELAY")) {
                 idiv.innerHTML = `⚠️ <span class="warn-text">${t.delay_prefix} ${ninf.replace(/[^0-9]/g, '')} ${t.min}</span>`;
             } else if (ninf.includes("ПРИБУДЕТ") || ninf.includes("ETA")) {
                 idiv.innerHTML = `⏱ <span class="time-text">${t.eta_prefix} ${ninf.replace(/[^0-9]/g, '')} ${t.min}</span>`;
-            } else {
-                idiv.innerHTML = ninf;
-            }
+            } else { idiv.innerHTML = ninf; }
         }
 
-        // --- SAFE LIST PARSING (ЗАЩИТА ОТ ОШИБОК) ---
         const listEl = document.getElementById('list');
         let newDataMap = new Map();
-        
+        // Начинаем с 1, потому что 0 - это статус
         for (let i = 1; i < rows.length; i++) {
-            // Проверяем, есть ли данные и разделитель
             if (rows[i][0] && rows[i][0].includes('|')) {
                  let parts = rows[i][0].split('|');
-                 
-                 // БЕЗОПАСНОЕ ЧТЕНИЕ: Если части не хватает, ставим дефолт
-                 let id = parts[0] ? parts[0].trim() : "???";
-                 let time = parts[1] ? parts[1].trim() : "--:--";
+                 let id = parts[0].trim();
+                 let time = parts[1].trim();
                  let dur = 0;
-                 
-                 // Защита от отсутствия 3-го параметра (длительности)
                  if (parts[2]) {
                      let drRaw = parts[2].trim().replace(/[,"]/g, '');
-                     dur = parseInt(drRaw);
-                     if (isNaN(dur)) dur = 0;
+                     dur = parseInt(drRaw); if (isNaN(dur)) dur = 0;
                  }
-
                  newDataMap.set(id, { time, dur });
             }
         }
-
         const currentChildren = Array.from(listEl.querySelectorAll('.list-item:not(.remove-item)'));
         currentChildren.forEach(el => {
-            const id = el.getAttribute('data-id');
-            if (!newDataMap.has(id)) {
+            if (!newDataMap.has(el.getAttribute('data-id'))) {
                 el.classList.add('remove-item');
                 setTimeout(() => { if (el.parentNode) el.remove(); checkEmpty(); }, 750);
             }
         });
-
         newDataMap.forEach((data, id) => {
             let existingEl = listEl.querySelector(`.list-item[data-id="${id}"]:not(.remove-item)`);
             let isOverdue = data.dur > 30;
             let overdueClass = isOverdue ? 'overdue' : '';
             let iconHtml = isOverdue ? '<span style="font-size:30px">⚠️</span>' : `<img src="${CONTAINER_IMG_SRC}" class="container-img" alt="box">`;
             let innerHTML = `<span>${iconHtml}</span><span>${id}</span><span>${data.time}</span><span>${data.dur} ${t.min}</span>`;
-            
             if (existingEl) {
                 if (existingEl.innerHTML !== innerHTML) existingEl.innerHTML = innerHTML;
                 if (isOverdue) existingEl.classList.add('overdue');
@@ -307,18 +313,15 @@ async function update() {
                 newEl.className = `list-item ${overdueClass}`;
                 newEl.setAttribute('data-id', id);
                 newEl.innerHTML = innerHTML;
-                const emptyMsg = listEl.querySelector('.empty-message');
-                if (emptyMsg) emptyMsg.remove();
                 listEl.prepend(newEl);
             }
         });
-
         if (newDataMap.size === 0) checkEmpty();
         function checkEmpty() {
              const alive = listEl.querySelectorAll('.list-item:not(.remove-item)');
-             if (alive.length === 0 && !listEl.querySelector('.empty-message')) {
-                 listEl.innerHTML = `<div class="empty-message">${t.empty}</div>`;
-             }
+             const em = listEl.querySelector('.empty-message');
+             if (alive.length === 0 && !em) listEl.innerHTML = `<div class="empty-message">${t.empty}</div>`;
+             else if (alive.length > 0 && em) em.remove();
         }
     } catch(e) { console.log("Update error:", e); }
 }

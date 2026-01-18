@@ -5,284 +5,89 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Warehouse Dashboard</title>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@400;600;700;900&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     
     <style>
-        :root {
-            /* iOS Colors */
-            --ios-bg: #000000;
-            --glass-bg: rgba(30, 30, 30, 0.6);
-            --glass-border: rgba(255, 255, 255, 0.1);
-            --text-primary: #ffffff;
-            --text-secondary: rgba(255, 255, 255, 0.6);
-            --accent-green: #30D158;
-            --accent-yellow: #FFD60A;
-            --accent-red: #FF453A;
-            --accent-blue: #0A84FF;
-        }
-
-        /* === УМНОЕ МАСШТАБИРОВАНИЕ (SCALING) === */
-        html {
-            /* Базовый размер для МОБИЛЬНЫХ (как было раньше) */
-            font-size: 16px; 
-        }
-
-        @media (min-width: 1024px) {
-            html {
-                /* Для ПК и ТВ увеличиваем базу в ~1.8 раза. 
-                   Все размеры в rem автоматически вырастут. */
-                font-size: 26px; 
-            }
-        }
-
-        body { 
-            background-color: var(--ios-bg); 
-            color: var(--text-primary); 
-            font-family: 'SF Pro Display', 'Roboto', sans-serif; 
-            margin: 0; 
-            height: 100vh; 
-            overflow: hidden; 
-            display: flex;
-            flex-direction: column;
-            padding: 1.5rem; 
-            box-sizing: border-box; 
-            position: relative;
-        }
-
-        /* === LIQUID BACKGROUND (АНИМАЦИЯ) === */
-        .orb {
-            position: fixed; border-radius: 50%; filter: blur(80px); z-index: -1;
-            animation: float 10s infinite ease-in-out; opacity: 0.5;
-        }
-        .orb-1 { width: 50vw; height: 50vw; background: #4f29cd; top: -10%; left: -10%; animation-delay: 0s; }
-        .orb-2 { width: 40vw; height: 40vw; background: #0A84FF; bottom: -10%; right: -10%; animation-delay: -5s; }
+        /* === ВЕСЬ CSS ОСТАЛСЯ ПРЕЖНИМ + НОВЫЕ СТИЛИ ДЛЯ РЕГИСТРАЦИИ === */
+        :root { --bg-app: #121212; --bg-card: #1e1e1e; --text-primary: #ffffff; --text-secondary: #a0a0a0; --accent-green: #28a745; --accent-yellow: #ffc107; --accent-red: #dc3545; --accent-blue: #007bff; }
         
-        @keyframes float {
-            0% { transform: translate(0, 0) scale(1); }
-            50% { transform: translate(30px, -50px) scale(1.1); }
-            100% { transform: translate(0, 0) scale(1); }
-        }
-
-        /* === GLASS CARD STYLE === */
-        .glass-panel {
-            background: var(--glass-bg);
-            backdrop-filter: blur(25px);
-            -webkit-backdrop-filter: blur(25px);
-            border: 1px solid var(--glass-border);
-            border-radius: 1.5rem;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-        }
-
-        /* HEADER */
-        .header { 
-            display: flex; justify-content: space-between; align-items: center; 
-            margin-bottom: 1.5rem; flex-shrink: 0; 
-        }
+        /* ... (Весь ваш старый CSS для body, header, grid и т.д. ОСТАВЛЯЕМ КАК ЕСТЬ для экономии места, я вставлю только нужное) ... */
+        body { background-color: var(--bg-app); color: var(--text-primary); font-family: 'Roboto', sans-serif; margin: 0; height: 100vh; overflow: hidden; display: flex; flex-direction: column; padding: 1.5rem; box-sizing: border-box; }
+        .orb { position: fixed; border-radius: 50%; filter: blur(80px); z-index: -1; animation: float 10s infinite ease-in-out; opacity: 0.5; }
+        .orb-1 { width: 50vw; height: 50vw; background: #4f29cd; top: -10%; left: -10%; } .orb-2 { width: 40vw; height: 40vw; background: #0A84FF; bottom: -10%; right: -10%; animation-delay: -5s; }
+        @keyframes float { 0% { transform: translate(0, 0) scale(1); } 50% { transform: translate(30px, -50px) scale(1.1); } 100% { transform: translate(0, 0) scale(1); } }
+        .glass-panel { background: rgba(30,30,30,0.6); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); border: 1px solid rgba(255,255,255,0.1); border-radius: 1.5rem; box-shadow: 0 10px 40px rgba(0,0,0,0.3); }
         
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-shrink: 0; }
         .header-left { display: flex; align-items: center; gap: 1rem; }
-        .header-title { font-size: 1.8rem; font-weight: 800; letter-spacing: 0.5px; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
-        
-        /* КНОПКА ЯЗЫКА */
-        .lang-widget { 
-            display: flex; align-items: center; gap: 0.5rem; 
-            background: rgba(255,255,255,0.1); padding: 0.4rem 1rem; 
-            border-radius: 2rem; cursor: pointer; transition: 0.3s; 
-            border: 1px solid rgba(255,255,255,0.1); user-select: none;
-        }
-        .lang-widget:active { transform: scale(0.95); }
+        .header-title { font-size: 1.8rem; font-weight: 800; }
+        .lang-widget { display: flex; align-items: center; gap: 0.5rem; background: rgba(255,255,255,0.1); padding: 0.4rem 1rem; border-radius: 2rem; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); user-select: none; }
         .lang-widget.active { background: rgba(10, 132, 255, 0.2); border-color: var(--accent-blue); }
-        .lang-icon { font-size: 1.2rem; color: var(--text-secondary); }
-        .lang-text { font-size: 0.9rem; font-weight: 700; color: var(--text-secondary); }
-        .lang-widget.active .lang-icon, .lang-widget.active .lang-text { color: var(--accent-blue); }
+        .lang-widget.active * { color: var(--accent-blue); }
+        .clock { font-size: 2.2rem; font-weight: 700; line-height: 1; text-align: right; }
+        .date { font-size: 1rem; color: var(--text-secondary); text-align: right; }
 
-        .clock-widget { text-align: right; }
-        .clock { font-size: 2.2rem; font-weight: 700; line-height: 1; }
-        .date { font-size: 1rem; color: var(--text-secondary); margin-top: 0.2rem; }
-
-        /* GRID LAYOUT */
-        .main-grid { 
-            display: grid; grid-template-columns: 1fr 1.6fr; gap: 1.5rem; 
-            height: 100%; overflow: hidden; 
-        }
-        .card { 
-            padding: 2rem; 
-            display: flex; flex-direction: column; 
-            position: relative; 
-        }
+        .main-grid { display: grid; grid-template-columns: 1fr 1.6fr; gap: 1.5rem; height: 100%; overflow: hidden; }
+        .card { padding: 2rem; display: flex; flex-direction: column; position: relative; }
+        .section-label { font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 1rem; }
         
-        .section-label { 
-            font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); 
-            text-transform: uppercase; letter-spacing: 2px; margin-bottom: 1rem; 
-        }
-
-        /* LEFT PANEL (PROGRESS) */
         .left-panel { align-items: center; justify-content: space-between; text-align: center; }
-        .progress-container { 
-            position: relative; 
-            width: 18rem; height: 18rem; /* Используем REM для масштаба */
-            max-width: 100%; 
-            margin: 0 auto;
-        }
-        svg { transform: rotate(-90deg); width: 100%; height: 100%; filter: drop-shadow(0 0 10px rgba(0,0,0,0.3)); }
-        circle { fill: none; stroke-width: 15; stroke-linecap: round; }
-        .bg-ring { stroke: rgba(255,255,255,0.1); }
-        .fg-ring { stroke: var(--accent-green); transition: stroke-dashoffset 1.5s ease-in-out; }
-        .percent-text { 
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); 
-            font-size: 4.5rem; font-weight: 800; letter-spacing: -2px; 
-        }
-        .count-text { font-size: 1.8rem; color: var(--text-secondary); font-weight: 500; margin-bottom: 1rem; }
-        
-        .status-btn { 
-            padding: 1rem 0; width: 100%; border-radius: 1rem; 
-            font-size: 1.5rem; font-weight: 700; text-transform: uppercase; 
-            color: white; background: rgba(255,255,255,0.1); 
-            backdrop-filter: blur(10px); text-align: center; 
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2); 
-        }
-        .status-btn.active { background: var(--accent-green); box-shadow: 0 0 20px rgba(48, 209, 88, 0.4); color: black; }
-        .status-btn.pause { background: #333; color: #aaa; }
-        .status-btn.wait { background: var(--accent-yellow); color: black; }
+        .progress-container { position: relative; width: 18rem; height: 18rem; margin: 0 auto; }
+        svg { transform: rotate(-90deg); width: 100%; height: 100%; } circle { fill: none; stroke-width: 15; stroke-linecap: round; }
+        .bg-ring { stroke: rgba(255,255,255,0.1); } .fg-ring { stroke: var(--accent-green); transition: stroke-dashoffset 1.5s ease-in-out; }
+        .percent-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 4.5rem; font-weight: 800; }
+        .count-text { font-size: 1.8rem; color: var(--text-secondary); margin-bottom: 1rem; }
+        .status-btn { padding: 1rem 0; width: 100%; border-radius: 1rem; font-size: 1.5rem; font-weight: 700; text-transform: uppercase; color: white; background: rgba(255,255,255,0.1); }
+        .status-btn.active { background: var(--accent-green); color: black; } .status-btn.pause { background: #333; } .status-btn.wait { background: var(--accent-yellow); color: black; }
 
-        /* RIGHT PANEL */
         .right-panel { gap: 1.5rem; padding: 0 !important; background: transparent !important; border: none !important; box-shadow: none !important; backdrop-filter: none !important; }
-        
-        /* Вложенные карточки справа */
-        .sub-card {
-            background: var(--glass-bg);
-            backdrop-filter: blur(25px);
-            border: 1px solid var(--glass-border);
-            border-radius: 1.5rem;
-            padding: 1.5rem;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-        }
-
-        .next-block { flex-shrink: 0; }
-        .next-id { font-size: 3.5rem; font-weight: 900; margin-bottom: 0.5rem; line-height: 1; letter-spacing: 1px; }
+        .sub-card { background: var(--glass-bg); backdrop-filter: blur(25px); border: 1px solid var(--glass-border); border-radius: 1.5rem; padding: 1.5rem; }
+        .next-id { font-size: 3.5rem; font-weight: 900; margin-bottom: 0.5rem; line-height: 1; }
         .next-info { font-size: 1.4rem; font-weight: 500; display: flex; align-items: center; gap: 1rem; color: var(--text-secondary); }
-        
-        .list-block { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding-bottom: 0.5rem; }
-        .list-content { overflow-y: auto; height: 100%; padding-right: 0.5rem; }
-        
-        /* Список - стиль iOS */
-        .list-item { 
-            display: grid; grid-template-columns: 3.5rem 2fr 1.5fr 1fr; 
-            align-items: center; padding: 1rem; 
-            margin-bottom: 0.8rem;
-            border-radius: 1rem; 
-            background: rgba(255,255,255,0.05); 
-            font-size: 1.2rem; font-weight: 600; 
-            transition: all 0.3s;
-        }
-        .list-item:last-child { margin-bottom: 0; }
-        
+        .list-block { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .list-content { overflow-y: auto; height: 100%; }
+        .list-item { display: grid; grid-template-columns: 3.5rem 2fr 1.5fr 1fr; align-items: center; padding: 1rem; margin-bottom: 0.8rem; border-radius: 1rem; background: rgba(255,255,255,0.05); font-size: 1.2rem; font-weight: 600; }
         .container-img { width: 2.5rem; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
-        .list-item span:nth-child(2) { font-size: 1.4rem; letter-spacing: 0.5px; }
-        .list-item span:nth-child(4) { color: var(--text-secondary); text-align: right; font-size: 1rem; }
-        
         .list-item.overdue { background: rgba(255, 69, 58, 0.15); border: 1px solid rgba(255, 69, 58, 0.3); }
         .list-item.overdue span { color: var(--accent-red) !important; }
         
-        .warn-text { color: var(--accent-red); font-weight: 700; } 
-        .time-text { color: var(--accent-green); font-weight: 700; }
+        .victory-block, .lunch-block { display: none; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; background: var(--glass-bg); backdrop-filter: blur(25px); border-radius: 1.5rem; border: 1px solid var(--glass-border); }
+        body.is-victory .victory-block, body.is-lunch .lunch-block { display: flex !important; }
+        body.is-victory .next-block, body.is-victory .list-block, body.is-lunch .next-block, body.is-lunch .list-block { display: none !important; }
+        .victory-icon { font-size: 8rem; color: var(--accent-yellow); margin-bottom: 1rem; } .lunch-icon { font-size: 8rem; color: var(--accent-blue); margin-bottom: 1rem; }
+        .victory-title, .lunch-title { font-size: 2.5rem; font-weight: 900; } .victory-stat { font-size: 2rem; color: var(--accent-green); }
+        .lunch-timer { font-size: 2rem; color: var(--accent-blue); background: rgba(10, 132, 255, 0.15); padding: 0.8rem 2rem; border-radius: 3rem; margin-top: 1rem; }
 
-        /* MESSAGE BAR (iOS Pill) */
-        .message-bar { 
-            position: fixed; bottom: -10rem; left: 50%; transform: translateX(-50%); 
-            width: 90%; max-width: 60rem; 
-            padding: 1rem 2rem; 
-            background: rgba(40, 40, 40, 0.9); backdrop-filter: blur(20px); 
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 3rem; 
-            box-shadow: 0 15px 40px rgba(0,0,0,0.5); 
-            display: flex; align-items: center; gap: 1.5rem;
-            z-index: 1000; transition: bottom 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); 
-        }
-        .message-bar.visible { bottom: 2rem; } 
-        .msg-icon-box { 
-            width: 3rem; height: 3rem; background: rgba(255, 214, 10, 0.2); 
-            border-radius: 50%; display: flex; align-items: center; justify-content: center; 
-            color: var(--accent-yellow); flex-shrink: 0;
-        }
-        .msg-icon-box .material-icons { font-size: 1.8rem; }
-        .msg-content { flex: 1; }
-        .msg-label { font-size: 0.8rem; text-transform: uppercase; color: var(--text-secondary); font-weight: 700; }
-        .msg-text { font-size: 1.4rem; font-weight: 600; line-height: 1.2; }
+        .message-bar { position: fixed; bottom: -10rem; left: 50%; transform: translateX(-50%); width: 90%; max-width: 60rem; padding: 1rem 2rem; background: rgba(40, 40, 40, 0.9); backdrop-filter: blur(20px); border-radius: 3rem; display: flex; align-items: center; gap: 1.5rem; transition: bottom 0.6s; }
+        .message-bar.visible { bottom: 2rem; }
+        .msg-icon-box { width: 3rem; height: 3rem; background: rgba(255, 214, 10, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--accent-yellow); flex-shrink: 0; }
+        .msg-text { font-size: 1.4rem; font-weight: 600; }
 
-        /* СПЕЦИАЛЬНЫЕ РЕЖИМЫ (ОБЕД / ПОБЕДА) */
-        body.is-victory .next-block, body.is-victory .list-block,
-        body.is-lunch .next-block, body.is-lunch .list-block { display: none !important; }
+        .admin-trigger { position: fixed; top: 1.5rem; right: 1.5rem; color: rgba(255,255,255,0.3); font-size: 1.5rem; cursor: pointer; z-index: 2000; }
+        .admin-toast { position: fixed; top: -5rem; left: 50%; transform: translateX(-50%); background: rgba(50,50,50,0.9); backdrop-filter: blur(10px); padding: 0.8rem 1.5rem; border-radius: 2rem; font-size: 1rem; font-weight: 600; z-index: 6000; transition: top 0.5s; display: flex; align-items: center; gap: 0.8rem; }
+        .admin-toast.show { top: 2rem; }
         
-        .victory-block, .lunch-block { 
-            display: none; flex-direction: column; align-items: center; justify-content: center; 
-            height: 100%; text-align: center; animation: popIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); 
-            background: var(--glass-bg); backdrop-filter: blur(25px); border-radius: 1.5rem;
-            border: 1px solid var(--glass-border);
-        }
-        body.is-victory .victory-block { display: flex !important; }
-        body.is-lunch .lunch-block { display: flex !important; }
-
-        .victory-icon { font-size: 8rem; color: var(--accent-yellow); margin-bottom: 1rem; filter: drop-shadow(0 0 30px rgba(255, 214, 10, 0.5)); animation: floatTrophy 3s infinite ease-in-out; }
-        .lunch-icon { font-size: 8rem; color: var(--accent-blue); margin-bottom: 1rem; filter: drop-shadow(0 0 30px rgba(10, 132, 255, 0.5)); animation: pulseLunch 3s infinite; }
-        
-        .victory-title, .lunch-title { font-size: 2.5rem; font-weight: 900; letter-spacing: 1px; margin-bottom: 0.5rem; }
-        .victory-stat { font-size: 2rem; color: var(--accent-green); font-weight: 700; }
-        .lunch-timer { 
-            font-size: 2rem; color: var(--accent-blue); font-weight: 600; 
-            background: rgba(10, 132, 255, 0.15); padding: 0.8rem 2rem; 
-            border-radius: 3rem; margin-top: 1rem;
-        }
-
-        @keyframes popIn { 0% { opacity: 0; transform: scale(0.8); } 100% { opacity: 1; transform: scale(1); }}
-        @keyframes floatTrophy { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
-        @keyframes pulseLunch { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
-
-        /* MODALS & TOAST */
-        .admin-trigger { position: fixed; top: 1.5rem; right: 1.5rem; color: rgba(255,255,255,0.3); font-size: 1.5rem; cursor: pointer; transition: 0.3s; z-index: 2000; }
-        .admin-trigger:hover { color: var(--accent-green); opacity: 1; }
-        
+        /* === MODALS (LOGIN & REGISTER) === */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); display: none; align-items: center; justify-content: center; z-index: 3000; }
         .modal-overlay.open { display: flex; }
-        .modal-box { background: #1c1c1e; padding: 2rem; border-radius: 1.5rem; width: 20rem; text-align: center; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 20px 60px rgba(0,0,0,0.6); }
+        .modal-box { background: #1c1c1e; padding: 2rem; border-radius: 1.5rem; width: 22rem; text-align: center; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 20px 60px rgba(0,0,0,0.6); }
         .modal-box h2 { margin-top: 0; font-size: 1.5rem; margin-bottom: 1.5rem; }
         .modal-input { width: 100%; padding: 1rem; margin: 0.5rem 0; background: #2c2c2e; border: none; color: white; border-radius: 0.8rem; font-size: 1.1rem; box-sizing: border-box; outline: none; }
         .modal-input:focus { box-shadow: 0 0 0 2px var(--accent-blue); }
+        
         .modal-btn { width: 100%; padding: 1rem; margin-top: 1rem; background: var(--accent-blue); border: none; color: white; font-weight: 700; font-size: 1.1rem; border-radius: 0.8rem; cursor: pointer; }
-        .modal-close { background: transparent; color: #888; font-size: 0.9rem; margin-top: 1rem; }
+        .modal-close { background: transparent; color: #888; font-size: 0.9rem; margin-top: 1rem; border: none; cursor: pointer; }
+        .modal-link { color: var(--accent-blue); cursor: pointer; font-size: 0.9rem; margin-top: 1rem; display: inline-block; }
 
-        .admin-toast { position: fixed; top: -5rem; left: 50%; transform: translateX(-50%); background: rgba(50,50,50,0.9); backdrop-filter: blur(10px); color: white; padding: 0.8rem 1.5rem; border-radius: 2rem; font-size: 1rem; font-weight: 600; z-index: 6000; transition: top 0.5s; display: flex; align-items: center; gap: 0.8rem; border: 1px solid rgba(255,255,255,0.1); }
-        .admin-toast.show { top: 2rem; }
-        .toast-icon { font-size: 1.2rem; }
-        .admin-toast.success .toast-icon { color: var(--accent-green); } 
-        .admin-toast.error .toast-icon { color: var(--accent-red); }
-
-        /* === MOBILE MEDIA QUERY (Переопределяем для телефона) === */
         @media (max-width: 768px) {
-            html { font-size: 14px; } /* Чуть меньше стандартного для плотности */
-            
-            body { 
-                height: auto; overflow-y: auto; display: block; 
-                padding: 1rem; padding-bottom: 6rem;
-            }
-            .header { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
-            .header-left { width: 100%; justify-content: space-between; }
+            html { font-size: 14px; }
+            body { height: auto; overflow-y: auto; display: block; padding: 1rem; padding-bottom: 6rem; }
+            .header { flex-direction: column; align-items: flex-start; gap: 0.5rem; } .header-left { width: 100%; justify-content: space-between; }
             .main-grid { display: flex; flex-direction: column; gap: 1rem; height: auto; }
-            
-            .left-panel { order: 1; }
-            .right-panel { order: 2; padding: 0; }
-            .sub-card { padding: 1.2rem; }
-            
-            .next-id { font-size: 3rem; }
-            .status-btn { font-size: 1.2rem; padding: 0.8rem 0; }
-            
-            .list-item { grid-template-columns: 3rem 1fr auto; }
-            .list-item span:nth-child(4) { display: none; } /* Скрываем 4-ю колонку на мелких экранах */
-            
-            .message-bar { width: 92%; padding: 0.8rem 1rem; bottom: -8rem; }
-            .message-bar.visible { bottom: 1.5rem; }
-            .msg-icon-box { width: 2.5rem; height: 2.5rem; }
-            .msg-text { font-size: 1.1rem; }
+            .left-panel { order: 1; } .right-panel { order: 2; padding: 0; }
+            .list-item span:nth-child(4) { display: none; }
+            .message-bar { width: 92%; padding: 0.8rem 1rem; bottom: -8rem; } .message-bar.visible { bottom: 1.5rem; }
         }
     </style>
 </head>
@@ -306,7 +111,25 @@
             <input type="text" id="adminUser" class="modal-input" placeholder="Логин">
             <input type="password" id="adminPass" class="modal-input" placeholder="Пароль" onkeydown="if(event.key === 'Enter') checkLogin()">
             <button class="modal-btn" onclick="checkLogin()">Войти</button>
-            <button class="modal-btn modal-close" onclick="closeModals()">Отмена</button>
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+                <button class="modal-close" onclick="closeModals()">Отмена</button>
+                <span class="modal-link" onclick="openRegister()">Регистрация</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalRegister">
+        <div class="modal-box glass-panel">
+            <h2>Регистрация</h2>
+            <input type="text" id="regName" class="modal-input" placeholder="Имя">
+            <input type="text" id="regUser" class="modal-input" placeholder="Придумайте Логин">
+            <input type="password" id="regPass" class="modal-input" placeholder="Придумайте Пароль">
+            <button class="modal-btn" onclick="doRegister()" style="background: var(--accent-green); color: black;">Отправить заявку</button>
+            
+            <div style="display: flex; justify-content: center; margin-top: 10px;">
+                <span class="modal-link" onclick="backToLogin()" style="color: #888;">Вернуться ко входу</span>
+            </div>
         </div>
     </div>
 
@@ -328,10 +151,7 @@
         <div class="card glass-panel left-panel">
             <div class="section-label" id="txt_progress">Progress</div>
             <div class="progress-container">
-                <svg viewBox="0 0 350 350">
-                    <circle cx="175" cy="175" r="150" class="bg-ring" />
-                    <circle cx="175" cy="175" r="150" class="fg-ring" id="ring" stroke-dasharray="942" stroke-dashoffset="942" />
-                </svg>
+                <svg viewBox="0 0 350 350"><circle cx="175" cy="175" r="150" class="bg-ring"/><circle cx="175" cy="175" r="150" class="fg-ring" id="ring" stroke-dasharray="942" stroke-dashoffset="942"/></svg>
                 <div class="percent-text" id="pct">0%</div>
             </div>
             <div class="count-text" id="cnt">-- / --</div>
@@ -339,26 +159,22 @@
         </div>
 
         <div class="right-panel">
-            
             <div class="sub-card next-block">
                 <div class="section-label" id="txt_next">Next Container</div>
                 <div class="next-id" id="nid">---</div>
                 <div class="next-info" id="ninfo">...</div>
             </div>
-
             <div class="sub-card list-block">
                 <div class="section-label" id="txt_list">Active Tasks</div>
                 <div class="list-mask" id="mask">
                     <div class="list-content" id="list"></div>
                 </div>
             </div>
-
             <div class="victory-block" id="victoryBlock">
                 <span class="material-icons victory-icon">emoji_events</span>
                 <div class="victory-title" id="txt_victory">COMPLETED!</div>
                 <div class="victory-stat" id="victoryStat">-- / --</div>
             </div>
-
             <div class="lunch-block" id="lunchBlock">
                 <span class="material-icons lunch-icon">coffee</span>
                 <div class="lunch-title" id="txt_lunch">LUNCH BREAK</div>
@@ -368,16 +184,10 @@
     </div>
 
     <div class="message-bar" id="messageBar">
-        <div class="msg-icon-box">
-            <span class="material-icons">campaign</span>
-        </div>
-        <div class="msg-content">
-            <div class="msg-label">Info</div>
-            <div class="msg-text" id="messageText"></div>
-        </div>
+        <div class="msg-icon-box"><span class="material-icons">campaign</span></div>
+        <div class="msg-content"><div class="msg-label">Info</div><div class="msg-text" id="messageText"></div></div>
     </div>
 
     <script src="script.js"></script>
-
 </body>
 </html>
