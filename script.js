@@ -283,19 +283,17 @@ async function update() {
                      dur = parseInt(drRaw); if (isNaN(dur)) dur = 0;
                  }
                  
-                 // Читаем, но не выводим ЛОТ. Берем только тип.
                  let ws = parts[4] ? parts[4].trim() : "";
                  
                  newDataMap.set(id, { time, dur, ws });
             }
         }
         
-        // === ФИКС: ПРИНУДИТЕЛЬНО УДАЛЯЕМ СООБЩЕНИЕ, ЕСЛИ ЕСТЬ ДАННЫЕ ===
+        // Удаляем сообщение "Нет разгрузок", если есть данные
         if (newDataMap.size > 0) {
             const emptyMsg = listEl.querySelector('.empty-message');
             if (emptyMsg) emptyMsg.remove();
         }
-        // ==============================================================
 
         const currentChildren = Array.from(listEl.querySelectorAll('.list-item:not(.remove-item)'));
         currentChildren.forEach(el => {
@@ -311,7 +309,6 @@ async function update() {
             let overdueClass = isOverdue ? 'overdue' : '';
             let iconHtml = isOverdue ? '<span style="font-size:30px">⚠️</span>' : `<img src="${CONTAINER_IMG_SRC}" class="container-img" alt="box">`;
             
-            // Определяем класс для бейджа
             let badgeClass = 'badge-other';
             if (data.ws === 'BS') badgeClass = 'badge-bs';
             if (data.ws === 'AS') badgeClass = 'badge-as';
@@ -353,23 +350,17 @@ async function update() {
     } catch(e) { console.log("Update error:", e); }
 }
 
-setInterval(update, 3000);
-update();
-// === ЛОГИРОВАНИЕ ПОСЕЩЕНИЙ ===
+// === ЛОГИРОВАНИЕ ПОСЕЩЕНИЙ (ИСПРАВЛЕНО) ===
 function logVisit() {
-    // Проверяем, логировали ли мы уже этот сеанс (чтобы не спамить при обновлении)
-    // Если хотите писать КАЖДОЕ обновление страницы, уберите if (!sessionStorage.getItem('visited'))
-    
-    if (!sessionStorage.getItem('visited')) {
-        const ua = navigator.userAgent; // Информация об устройстве (ПК/Телефон/Браузер)
-        fetch(`${scriptUrl}?mode=log_visit&ua=${encodeURIComponent(ua)}`)
-            .then(() => {
-                console.log("Visit logged");
-                sessionStorage.setItem('visited', 'true'); // Запоминаем, что уже записали
-            })
-            .catch(e => console.error("Log error", e));
-    }
+    // УБРАЛИ ПРОВЕРКУ sessionStorage - теперь пишем всегда при загрузке
+    const ua = navigator.userAgent; 
+    // Отправляем запрос
+    fetch(`${scriptUrl}?mode=log_visit&ua=${encodeURIComponent(ua)}`)
+        .then(() => console.log("Visit logged"))
+        .catch(e => console.error("Log error", e));
 }
 
-// Запускаем запись при загрузке
+// Запускаем при загрузке страницы
 logVisit();
+setInterval(update, 3000);
+update();
