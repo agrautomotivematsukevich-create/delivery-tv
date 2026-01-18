@@ -22,25 +22,24 @@
             --accent-blue: #0A84FF;
         }
 
-        /* Адаптивный размер шрифта для ТВ: зависит от меньшей стороны экрана */
+        /* Адаптивный размер шрифта */
         html { font-size: 1.5vh; } 
-        @media (min-aspect-ratio: 16/9) { html { font-size: 2vh; } } /* Для широких ТВ */
+        @media (min-aspect-ratio: 16/9) { html { font-size: 2vh; } }
 
         body { 
             background-color: var(--ios-bg); 
             color: var(--text-primary); 
             font-family: 'SF Pro Display', 'Roboto', sans-serif; 
             margin: 0; 
-            height: 100vh; /* Строго высота экрана */
+            height: 100vh; 
             width: 100vw;
-            overflow: hidden; /* Запрещаем скролл всей страницы */
+            overflow: hidden; 
             display: flex; 
             flex-direction: column; 
             padding: 1.5rem; 
             box-sizing: border-box; 
         }
 
-        /* ФОН (ОРБЫ) */
         .orb { position: fixed; border-radius: 50%; filter: blur(80px); z-index: -1; animation: float 10s infinite ease-in-out; opacity: 0.5; }
         .orb-1 { width: 50vw; height: 50vw; background: #4f29cd; top: -10%; left: -10%; }
         .orb-2 { width: 40vw; height: 40vw; background: #0A84FF; bottom: -10%; right: -10%; animation-delay: -5s; }
@@ -49,136 +48,106 @@
         .glass-panel { background: var(--glass-bg); backdrop-filter: blur(25px); border: 1px solid var(--glass-border); border-radius: 1.2rem; box-shadow: 0 10px 40px rgba(0,0,0,0.3); }
 
         /* === ШАПКА === */
-        /* Flex-shrink: 0 запрещает шапке сжиматься, она всегда своего размера */
-        .header { 
-            display: flex; justify-content: space-between; align-items: center; 
-            margin-bottom: 1rem; flex-shrink: 0; height: 3rem;
-        }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-shrink: 0; height: 3rem; }
         .header-left { display: flex; align-items: center; gap: 1rem; }
         .header-title { font-size: 1.8rem; font-weight: 800; letter-spacing: 0.5px; }
-        
         .lang-widget { display: flex; align-items: center; gap: 0.5rem; background: rgba(255,255,255,0.1); padding: 0.4rem 1rem; border-radius: 2rem; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); }
         .lang-widget.active { background: rgba(10, 132, 255, 0.2); border-color: var(--accent-blue); }
         .lang-icon, .lang-text { color: var(--text-secondary); font-size: 1rem; } .lang-widget.active .lang-icon, .lang-widget.active .lang-text { color: var(--accent-blue); }
-
         .clock-widget { line-height: 1; text-align: right; }
         .clock { font-size: 2rem; font-weight: 700; }
         .date { font-size: 0.9rem; color: var(--text-secondary); }
 
         /* === ОСНОВНАЯ СЕТКА === */
-        /* flex: 1 заставляет сетку занять ВСЁ оставшееся место после шапки */
-        .main-grid { 
-            display: grid; 
-            grid-template-columns: 1fr 2fr; /* Левая часть меньше, правая больше */
-            gap: 1.2rem; 
-            flex: 1; 
-            min-height: 0; /* Магия CSS: разрешает вложенным блокам скроллиться */
-        }
+        .main-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 1.2rem; flex: 1; min-height: 0; }
 
         /* === ЛЕВАЯ ПАНЕЛЬ === */
-        .left-panel { 
-            display: flex; flex-direction: column; 
-            align-items: center; justify-content: space-between; 
-            text-align: center; 
-            padding: 1.5rem;
-            height: 100%; /* На всю высоту грида */
-            box-sizing: border-box;
-        }
+        .left-panel { display: flex; flex-direction: column; align-items: center; justify-content: space-between; text-align: center; padding: 1.5rem; height: 100%; box-sizing: border-box; }
         .progress-wrapper { flex: 1; display: flex; align-items: center; justify-content: center; width: 100%; }
-        .progress-container { position: relative; width: 80%; padding-bottom: 80%; /* Квадрат */ height: 0; }
+        .progress-container { position: relative; width: 80%; padding-bottom: 80%; height: 0; }
         .progress-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
         circle { fill: none; stroke-width: 12; stroke-linecap: round; }
         .bg-ring { stroke: rgba(255,255,255,0.1); } .fg-ring { stroke: var(--accent-green); transition: stroke-dashoffset 1.5s; }
         .percent-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 4rem; font-weight: 800; }
-        
         .count-text { font-size: 1.8rem; color: var(--text-secondary); margin-bottom: 1rem; }
         .status-btn { padding: 0.8rem 0; width: 100%; border-radius: 1rem; font-size: 1.4rem; font-weight: 700; text-transform: uppercase; color: white; background: rgba(255,255,255,0.1); }
         .status-btn.active { background: var(--accent-green); color: black; } .status-btn.pause { background: #333; } .status-btn.wait { background: var(--accent-yellow); color: black; }
         .section-label { font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 0.5rem; width: 100%; text-align: left; }
 
         /* === ПРАВАЯ ПАНЕЛЬ === */
-        .right-panel { 
-            display: flex; flex-direction: column; gap: 1.2rem; 
-            height: 100%; 
-            min-height: 0; /* Важно для скролла */
-        }
+        .right-panel { display: flex; flex-direction: column; gap: 1.2rem; height: 100%; min-height: 0; }
+        .sub-card { background: var(--glass-bg); backdrop-filter: blur(25px); border: 1px solid var(--glass-border); border-radius: 1.2rem; padding: 1.2rem; display: flex; flex-direction: column; }
 
-        /* Карточки внутри правой панели */
-        .sub-card { 
-            background: var(--glass-bg); backdrop-filter: blur(25px); 
-            border: 1px solid var(--glass-border); border-radius: 1.2rem; 
-            padding: 1.2rem; 
-            display: flex; flex-direction: column;
-        }
-
-        /* 1. Следующий (Фиксированная высота, не сжимается) */
+        /* Следующий */
         .next-block { flex-shrink: 0; }
         .next-id { font-size: 3rem; font-weight: 900; line-height: 1; margin: 0.2rem 0; }
         .next-info { font-size: 1.2rem; font-weight: 500; display: flex; align-items: center; gap: 1rem; color: var(--text-secondary); }
 
-        /* 2. Список (Растягивается на всё остальное место) */
-        .list-block { 
-            flex: 1; /* Занимает все свободное место */
-            min-height: 0; /* Разрешает уменьшаться меньше контента */
-            position: relative;
-        }
+        /* Список (СКРОЛЛ) */
+        .list-block { flex: 1; min-height: 0; position: relative; }
+        .list-mask { flex: 1; overflow-y: auto; padding-right: 0.5rem; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.2) transparent; }
+        .list-mask::-webkit-scrollbar { width: 4px; } .list-mask::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
 
-        /* Маска для скролла */
-        .list-mask {
-            flex: 1;
-            overflow-y: auto; /* Скролл только тут */
-            padding-right: 0.5rem;
-            
-            /* Скрываем скроллбар визуально, но оставляем функционал */
-            scrollbar-width: thin;
-            scrollbar-color: rgba(255,255,255,0.2) transparent;
-        }
-        .list-mask::-webkit-scrollbar { width: 4px; }
-        .list-mask::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
-
-        /* Элемент списка */
+        /* === ЭЛЕМЕНТ СПИСКА (X2 SIZE) === */
         .list-item { 
             display: flex; align-items: center; 
-            padding: 0.8rem 1rem; margin-bottom: 0.5rem; 
-            border-radius: 0.8rem; background: rgba(255,255,255,0.05); 
-            font-size: 1.1rem; font-weight: 600; transition: all 0.3s;
+            padding: 1.2rem 1.5rem; /* Увеличенные отступы */
+            margin-bottom: 0.8rem; 
+            border-radius: 1.2rem; 
+            background: rgba(255,255,255,0.05); 
+            font-size: 2rem; /* Базовый шрифт увеличен */
+            font-weight: 600; transition: all 0.3s;
+            flex-shrink: 0;
         }
-        .col-icon { width: 2.5rem; flex-shrink: 0; display: flex; align-items: center; }
-        .container-img { width: 2rem; }
-        .col-main { flex: 1; display: flex; align-items: center; gap: 10px; overflow: hidden; }
-        .id-text { font-size: 1.2rem; white-space: nowrap; }
-        .badge { padding: 3px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: white; white-space: nowrap; }
+        
+        .col-icon { 
+            width: 5rem; /* Большая иконка */
+            flex-shrink: 0; display: flex; align-items: center; 
+        }
+        .container-img { width: 4rem; /* Картинка коробки */ }
+        
+        .col-main { 
+            flex: 1; display: flex; align-items: center; gap: 1.5rem; overflow: hidden; 
+        }
+        
+        .id-text { 
+            font-size: 2.5rem; /* ОГРОМНЫЙ НОМЕР */
+            white-space: nowrap; 
+            font-weight: 800;
+        }
+        
+        .badge { 
+            padding: 6px 12px; 
+            border-radius: 8px; 
+            font-size: 1.4rem; /* Большой значок */
+            font-weight: 800; text-transform: uppercase; color: white; white-space: nowrap; 
+        }
         .badge-bs { background: #0A84FF; } .badge-as { background: #FF9F0A; } .badge-other { background: #444; }
-        .col-right { margin-left: auto; display: flex; align-items: center; gap: 0.8rem; white-space: nowrap; }
-        .col-dur { color: var(--text-secondary); font-size: 1rem; }
+        
+        .col-right { 
+            margin-left: auto; display: flex; align-items: center; gap: 1.5rem; white-space: nowrap; 
+            font-size: 2rem; /* Большое время */
+        }
+        
+        .col-dur { color: var(--text-secondary); font-size: 1.6rem; }
+
         .list-item.overdue { background: rgba(255, 69, 58, 0.15); border: 1px solid rgba(255, 69, 58, 0.3); }
         .list-item.overdue span, .list-item.overdue .id-text { color: var(--accent-red) !important; }
+        .empty-message { text-align: center; color: var(--text-secondary); margin-top: 2rem; font-size: 1.5rem; }
 
-        .empty-message { text-align: center; color: var(--text-secondary); margin-top: 2rem; font-size: 1rem; }
-
-        /* Victory / Lunch Blocks (Full Height of Right Panel) */
-        .victory-block, .lunch-block { 
-            display: none; flex-direction: column; align-items: center; justify-content: center; 
-            height: 100%; text-align: center; flex: 1;
-            background: var(--glass-bg); backdrop-filter: blur(25px); border-radius: 1.2rem;
-        }
+        /* Остальное */
+        .victory-block, .lunch-block { display: none; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; background: var(--glass-bg); backdrop-filter: blur(25px); border-radius: 1.2rem; flex: 1; }
         body.is-victory .victory-block, body.is-lunch .lunch-block { display: flex !important; }
         body.is-victory .next-block, body.is-victory .list-block, body.is-lunch .next-block, body.is-lunch .list-block { display: none !important; }
-        
         .victory-icon, .lunch-icon { font-size: 6rem; margin-bottom: 0.5rem; } .victory-icon { color: var(--accent-yellow); } .lunch-icon { color: var(--accent-blue); }
         .victory-title, .lunch-title { font-size: 2rem; font-weight: 900; } .victory-stat { font-size: 1.8rem; color: var(--accent-green); }
         .lunch-timer { font-size: 1.8rem; color: var(--accent-blue); background: rgba(10, 132, 255, 0.15); padding: 0.5rem 1.5rem; border-radius: 2rem; margin-top: 1rem; }
 
-        /* Alerts & Modals */
-        .message-bar { position: fixed; bottom: -10rem; left: 50%; transform: translateX(-50%); width: 80%; padding: 1rem 2rem; background: rgba(40, 40, 40, 0.95); backdrop-filter: blur(20px); border-radius: 3rem; display: flex; align-items: center; gap: 1.5rem; transition: bottom 0.6s; z-index: 1000; box-shadow: 0 10px 40px black; }
-        .message-bar.visible { bottom: 2rem; }
-        .msg-icon-box { width: 3rem; height: 3rem; background: rgba(255, 214, 10, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--accent-yellow); flex-shrink: 0; }
-        .msg-text { font-size: 1.4rem; font-weight: 600; }
-
+        .message-bar { position: fixed; bottom: -10rem; left: 50%; transform: translateX(-50%); width: 80%; padding: 1rem 2rem; background: rgba(40, 40, 40, 0.95); backdrop-filter: blur(20px); border-radius: 3rem; display: flex; align-items: center; gap: 1.5rem; transition: bottom 0.6s; z-index: 1000; box-shadow: 0 10px 40px black; } .message-bar.visible { bottom: 2rem; } .msg-icon-box { width: 3rem; height: 3rem; background: rgba(255, 214, 10, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--accent-yellow); flex-shrink: 0; } .msg-text { font-size: 1.4rem; font-weight: 600; }
         .admin-trigger { position: fixed; top: 1rem; right: 1rem; color: rgba(255,255,255,0.2); font-size: 1.5rem; cursor: pointer; z-index: 2000; }
         .admin-toast { position: fixed; top: -5rem; left: 50%; transform: translateX(-50%); background: rgba(50,50,50,0.9); padding: 0.8rem 1.5rem; border-radius: 2rem; font-size: 1rem; font-weight: 600; z-index: 6000; transition: top 0.5s; display: flex; align-items: center; gap: 0.8rem; } .admin-toast.show { top: 2rem; }
 
-        /* Modal Styles */
+        /* МОДАЛЬНЫЕ ОКНА */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(15px); display: none; align-items: center; justify-content: center; z-index: 3000; } .modal-overlay.open { display: flex; }
         .modal-box { background: #1c1c1e; padding: 2rem; border-radius: 1.5rem; width: 90%; max-width: 22rem; text-align: center; border: 1px solid rgba(255,255,255,0.15); box-shadow: 0 20px 60px rgba(0,0,0,0.7); display: flex; flex-direction: column; gap: 1rem; }
         .modal-box h2 { margin: 0 0 0.5rem 0; font-size: 1.6rem; font-weight: 700; color: white; }
@@ -190,7 +159,7 @@
         .text-btn { background: transparent; border: none; color: var(--text-secondary); font-size: 0.95rem; cursor: pointer; padding: 5px; font-weight: 500; transition: 0.2s; font-family: inherit; }
         .text-btn:hover { color: white; } .text-btn.accent { color: var(--accent-blue); } .text-btn.accent:hover { color: #409cff; }
 
-        /* MOBILE (Phone) Overrides */
+        /* === MOBILE (ВОЗВРАТ К НОРМАЛЬНОМУ РАЗМЕРУ) === */
         @media (max-width: 768px) {
             body { height: auto; overflow-y: auto; padding-bottom: 5rem; }
             .header { flex-direction: column; align-items: flex-start; gap: 0.5rem; height: auto; margin-bottom: 1.5rem; } 
@@ -200,7 +169,13 @@
             .progress-container { width: 60%; padding-bottom: 60%; }
             .right-panel { order: 2; height: auto; overflow: visible; }
             .list-block { height: auto; overflow: visible; }
-            .list-mask { overflow: visible; height: auto; }
+            
+            /* Возвращаем нормальный размер шрифтов для телефона */
+            .list-item { padding: 0.8rem 1rem; font-size: 1.2rem; }
+            .col-icon { width: 3rem; } .container-img { width: 2.5rem; }
+            .id-text { font-size: 1.3rem; }
+            .badge { font-size: 0.8rem; }
+            .col-right { font-size: 1rem; }
             .col-dur { display: none; }
         }
     </style>
