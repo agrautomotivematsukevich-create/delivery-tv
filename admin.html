@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.07);
+            --glass-border: rgba(255, 255, 255, 0.12);
+            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            --ios-blue: #0A84FF;
+            --ios-green: #30D158;
+            --ios-red: #FF453A;
+            --text-main: #ffffff;
+            --text-muted: #ebebf599;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: 'SF Pro Display', 'Roboto', sans-serif;
+            background-color: #000;
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* Чтобы скроллилось на мобилках */
+            padding: 20px;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* === LIQUID BACKGROUND (АНИМИРОВАННЫЙ ФОН) === */
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            z-index: -1;
+            animation: float 10s infinite ease-in-out;
+            opacity: 0.6;
+        }
+        .orb-1 { width: 300px; height: 300px; background: #4f29cd; top: -50px; left: -50px; animation-delay: 0s; }
+        .orb-2 { width: 400px; height: 400px; background: #0A84FF; bottom: -100px; right: -50px; animation-delay: -5s; }
+        .orb-3 { width: 200px; height: 200px; background: #FF453A; top: 40%; left: 40%; animation-delay: -2s; opacity: 0.4; }
+
+        @keyframes float {
+            0% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(30px, -50px) scale(1.1); }
+            66% { transform: translate(-20px, 20px) scale(0.9); }
+            100% { transform: translate(0, 0) scale(1); }
+        }
+
+        /* === GLASS CONTAINER === */
+        .container {
+            width: 100%;
+            max-width: 500px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            box-shadow: var(--glass-shadow);
+            padding: 30px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+
+        /* HEADER */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        .header h2 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: 0.5px; }
+        
+        .back-btn {
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: var(--text-main);
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .back-btn:hover { background: rgba(255,255,255,0.2); transform: scale(1.05); }
+
+        /* SECTIONS */
+        .section { 
+            margin-bottom: 25px; 
+            padding-bottom: 25px; 
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .section:last-child { border-bottom: none; }
+
+        .label-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .label {
+            color: var(--text-muted);
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* === TOOLTIPS (СОВРЕМЕННЫЙ СТИЛЬ) === */
+        .tooltip { position: relative; display: inline-flex; margin-left: 8px; cursor: pointer; }
+        .tooltip-icon { font-size: 18px; color: var(--text-muted); transition: 0.2s; opacity: 0.7; }
+        .tooltip:hover .tooltip-icon, .tooltip:active .tooltip-icon { color: var(--ios-blue); opacity: 1; text-shadow: 0 0 10px rgba(10, 132, 255, 0.5); }
+        
+        .tooltip-text {
+            visibility: hidden; opacity: 0; position: absolute; 
+            bottom: 140%; left: 50%; transform: translateX(-50%) scale(0.9);
+            background: rgba(20, 20, 20, 0.95); color: #fff; 
+            padding: 12px 16px; border-radius: 12px; font-size: 13px; font-weight: 400; line-height: 1.4;
+            width: 240px; text-align: center; 
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            pointer-events: none; z-index: 100;
+        }
+        .tooltip-text::after {
+            content: ""; position: absolute; top: 100%; left: 50%; margin-left: -6px; 
+            border-width: 6px; border-style: solid;
+            border-color: rgba(20, 20, 20, 0.95) transparent transparent transparent;
+        }
+        .tooltip:hover .tooltip-text, .tooltip:focus .tooltip-text, .tooltip:active .tooltip-text { 
+            visibility: visible; opacity: 1; transform: translateX(-50%) scale(1); 
+        }
+
+        /* CONTROLS */
+        .control-group { display: flex; gap: 10px; flex-wrap: wrap; }
+
+        .input, select.input {
+            width: 100%;
+            padding: 16px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid transparent;
+            color: white;
+            border-radius: 14px;
+            font-size: 17px;
+            outline: none;
+            transition: 0.3s;
+            font-family: inherit;
+        }
+        .input:focus { background: rgba(0, 0, 0, 0.5); border-color: var(--ios-blue); }
+        
+        /* Custom Select Arrow */
+        select.input { appearance: none; background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23ffffff%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E"); background-repeat: no-repeat; background-position: right 15px center; background-size: 10px; }
+
+        /* IOS BUTTONS */
+        .btn {
+            flex: 1;
+            min-width: 130px;
+            padding: 16px;
+            border: none;
+            border-radius: 14px;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.1s, opacity 0.2s;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            color: white;
+            font-family: inherit;
+            position: relative; overflow: hidden;
+        }
+        .btn:active { transform: scale(0.96); opacity: 0.8; }
+        
+        /* Glass Button */
+        .btn-glass { 
+            background: rgba(255, 255, 255, 0.1); 
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .btn-glass.active { 
+            background: var(--ios-blue); 
+            border-color: var(--ios-blue);
+            box-shadow: 0 4px 20px rgba(10, 132, 255, 0.4);
+        }
+
+        .btn-primary { background: var(--ios-blue); box-shadow: 0 4px 15px rgba(10, 132, 255, 0.3); }
+        .btn-success { background: var(--ios-green); color: black; box-shadow: 0 4px 15px rgba(48, 209, 88, 0.3); }
+        .btn-danger { background: rgba(255, 69, 58, 0.15); color: var(--ios-red); border: 1px solid rgba(255, 69, 58, 0.3); }
+        .btn-dark { background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); }
+
+        /* TOAST */
+        .toast {
+            position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
+            background: rgba(30, 30, 30, 0.8); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            color: white; padding: 12px 24px; border-radius: 50px; font-size: 15px; font-weight: 600;
+            z-index: 9999; transition: top 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.1);
+            display: flex; align-items: center; gap: 10px; width: max-content;
+        }
+        .toast.show { top: 20px; }
+        .status-dot { width: 10px; height: 10px; border-radius: 50%; }
+        .toast.success .status-dot { background: var(--ios-green); box-shadow: 0 0 10px var(--ios-green); }
+        .toast.error .status-dot { background: var(--ios-red); box-shadow: 0 0 10px var(--ios-red); }
+
+        @media (max-width: 480px) {
+            body { padding: 10px; }
+            .container { padding: 20px; }
+            .btn { width: 100%; min-width: 100%; padding: 18px; }
+            .row-mobile { flex-direction: row !important; }
+        }
+    </style>
+    
+    <script>
+        // ЗАЩИТА: ПРОВЕРКА ДО РЕНДЕРИНГА
+        const auth = JSON.parse(sessionStorage.getItem('warehouse_auth'));
+        if (!auth || !auth.user) {
+            window.location.replace("index.html");
+        }
+    </script>
+</head>
+<body style="display: none;"> <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+
+    <div id="toast" class="toast"><div class="status-dot"></div><span id="toastMsg"></span></div>
+
+    <div class="container">
+        
+        <div class="header">
+            <button class="back-btn" onclick="goBack()">
+                <span class="material-icons">arrow_back</span>
+            </button>
+            <h2>Admin Control</h2>
+            <div style="width: 40px;"></div>
+        </div>
+
+        <div class="section">
+            <div class="label-row">
+                <span class="label">Глобальный язык</span>
+                <div class="tooltip" tabindex="0">
+                    <span class="material-icons tooltip-icon">info_outline</span>
+                    <div class="tooltip-text">Меняет язык на ВСЕХ устройствах, которые находятся в режиме "AUTO".</div>
+                </div>
+            </div>
+            <div class="control-group row-mobile">
+                <button class="btn btn-glass" id="btnRu" onclick="setLang('RU')">🇷🇺 RU</button>
+                <button class="btn btn-glass" id="btnEn" onclick="setLang('EN_CN')">🇬🇧 EN / 🇨🇳 CN</button>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="label-row">
+                <span class="label">Сообщение на экран</span>
+                <div class="tooltip" tabindex="0">
+                    <span class="material-icons tooltip-icon">info_outline</span>
+                    <div class="tooltip-text">Текст появится внизу экрана. Выберите время, через которое оно исчезнет.</div>
+                </div>
+            </div>
+            <div class="control-group">
+                <input type="text" id="msgInput" class="input" placeholder="Введите текст...">
+                <select id="timeInput" class="input">
+                    <option value="5">5 мин</option>
+                    <option value="15">15 мин</option>
+                    <option value="60">1 час</option>
+                    <option value="480">Смена (8ч)</option>
+                </select>
+                <button class="btn btn-success" onclick="sendMsg()"><span class="material-icons">send</span></button>
+                <button class="btn btn-danger" onclick="clearMsg()" style="flex: 0.4;"><span class="material-icons">delete</span></button>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="label-row">
+                <span class="label">Настройка обеда</span>
+                <div class="tooltip" tabindex="0">
+                    <span class="material-icons tooltip-icon">info_outline</span>
+                    <div class="tooltip-text">В указанное время экран перейдет в режим перерыва.</div>
+                </div>
+            </div>
+            <div class="control-group row-mobile">
+                <input type="time" id="lStart" class="input" value="11:30">
+                <input type="time" id="lEnd" class="input" value="12:00">
+            </div>
+            <div class="control-group" style="margin-top: 12px;">
+                <button class="btn btn-primary" onclick="saveLunch()">Сохранить время</button>
+            </div>
+        </div>
+
+        <div class="section" style="border:none; padding-bottom: 0;">
+            <div class="label-row">
+                <span class="label">Инструменты</span>
+                <div class="tooltip" tabindex="0">
+                    <span class="material-icons tooltip-icon">info_outline</span>
+                    <div class="tooltip-text">Безопасный тест. Включает режим обеда на 10 сек только на этом устройстве.</div>
+                </div>
+            </div>
+            <button class="btn btn-dark" onclick="testLunch()"><span class="material-icons">timer</span> Тест обеда (10 сек)</button>
+        </div>
+
+    </div>
+
+    <script>
+        // ВАША ССЫЛКА
+        const scriptUrl = 'https://script.google.com/macros/s/AKfycbxen2QS7DxeT5YcUcJ2JINwckPbNTGL6KAOdO3sYYeTaexvccOyB0AEmPFiNgVzdSjo-A/exec';
+
+        // ПРОВЕРКА (Повторная)
+        if (!auth || !auth.user) {
+            window.location.replace("index.html");
+        } else {
+            document.body.style.display = 'flex';
+        }
+
+        function goBack() {
+            window.location.href = "index.html";
+        }
+
+        // --- ЛОГИКА ---
+        function testLunch() {
+            localStorage.setItem('lunch_test_until', Date.now() + 10000);
+            showToast("Тест запущен...", "success");
+            setTimeout(() => { window.location.href = "index.html"; }, 1500);
+        }
+
+        function showToast(msg, type) {
+            const t = document.getElementById('toast');
+            document.getElementById('toastMsg').innerText = msg;
+            t.className = `toast show ${type}`;
+            setTimeout(() => t.className = 'toast', 3000);
+        }
+
+        function highlightLang(lang) {
+            document.getElementById('btnRu').className = lang==='RU' ? 'btn btn-glass active' : 'btn btn-glass';
+            document.getElementById('btnEn').className = lang==='EN_CN' ? 'btn btn-glass active' : 'btn btn-glass';
+        }
+
+        async function api(mode, params = {}) {
+            const qs = new URLSearchParams({
+                mode: mode, user: auth.user, pass: auth.pass, nocache: Date.now(), ...params
+            });
+            try {
+                const res = await fetch(`${scriptUrl}?${qs}`);
+                return await res.text();
+            } catch(e) { return "ERROR"; }
+        }
+
+        async function setLang(lang) {
+            highlightLang(lang);
+            showToast("Сохранение...", "success");
+            const res = await api('set_lang', {lang});
+            if(res.includes("UPDATED")) showToast("Язык изменен", "success");
+            else showToast("Ошибка", "error");
+        }
+
+        async function sendMsg() {
+            const t = document.getElementById('msgInput').value;
+            const d = document.getElementById('timeInput').value;
+            if(!t) return showToast("Введите текст", "error");
+            showToast("Отправка...", "success");
+            const res = await api('write', {text: t, dur: d});
+            if(res.includes("SUCCESS")) showToast("Опубликовано", "success");
+            else showToast("Ошибка", "error");
+        }
+
+        async function clearMsg() {
+            showToast("Удаление...", "success");
+            const res = await api('write', {text: "", dur: 0});
+            if(res.includes("SUCCESS")) {
+                document.getElementById('msgInput').value = "";
+                showToast("Удалено", "success");
+            } else showToast("Ошибка", "error");
+        }
+
+        async function saveLunch() {
+            const s = document.getElementById('lStart').value;
+            const e = document.getElementById('lEnd').value;
+            showToast("Сохранение...", "success");
+            const res = await api('set_lunch', {start: s, end: e});
+            if(res.includes("UPDATED")) showToast("Обед обновлен", "success");
+            else showToast("Ошибка", "error");
+        }
+    </script>
+</body>
+</html>

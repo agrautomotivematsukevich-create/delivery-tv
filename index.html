@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Warehouse Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>Warehouse Dashboard</title>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
@@ -19,22 +19,52 @@
             --accent-blue: #007bff; 
         }
 
-        body { background-color: var(--bg-app); color: var(--text-primary); font-family: 'Roboto', sans-serif; margin: 0; height: 100vh; overflow: hidden; display: grid; grid-template-rows: 70px 1fr 0px; padding: 20px; padding-bottom: 20px; box-sizing: border-box; transition: grid-template-rows 0.5s ease; }
+        /* === DESKTOP STYLES (DEFAULT) === */
+        body { 
+            background-color: var(--bg-app); 
+            color: var(--text-primary); 
+            font-family: 'Roboto', sans-serif; 
+            margin: 0; 
+            height: 100vh; /* На ПК высота фиксирована */
+            overflow: hidden; /* На ПК скролла нет */
+            display: grid; 
+            grid-template-rows: 70px 1fr 0px; 
+            padding: 20px; 
+            box-sizing: border-box; 
+            transition: all 0.5s ease; 
+        }
+        
         body.has-message { padding-bottom: 90px; }
 
-        /* HEADER & GRID */
+        /* HEADER */
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #333; }
+        .header-left { display: flex; align-items: center; gap: 20px; }
         .header-title { font-size: 28px; font-weight: 700; color: var(--text-primary); }
         .clock-widget { text-align: right; color: var(--text-secondary); }
         .clock { font-size: 32px; font-weight: 700; color: var(--text-primary); line-height: 1; }
         .date { font-size: 18px; }
+
+        /* LANG BUTTON */
+        .lang-widget { 
+            display: flex; align-items: center; gap: 8px; 
+            background: #2a2a2a; padding: 5px 15px; border-radius: 20px; 
+            cursor: pointer; transition: all 0.3s; border: 2px solid #444;
+            user-select: none; z-index: 100;
+        }
+        .lang-widget:hover { background: #444; }
+        .lang-widget.active { border-color: var(--accent-blue); background: rgba(0, 123, 255, 0.15); }
+        .lang-icon { font-size: 20px; color: #666; transition: 0.3s; }
+        .lang-text { font-size: 14px; font-weight: 700; color: #666; transition: 0.3s; }
+        .lang-widget.active .lang-icon, .lang-widget.active .lang-text { color: var(--accent-blue); }
+
+        /* MAIN LAYOUT */
         .main-grid { display: grid; grid-template-columns: 1fr 1.5fr; gap: 25px; height: 100%; overflow: hidden; }
         .card { background: var(--bg-card); border-radius: 16px; padding: 35px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); display: flex; flex-direction: column; position: relative; }
         .section-label { font-size: 16px; font-weight: 500; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; }
         
         /* LEFT PANEL */
         .left-panel { align-items: center; justify-content: center; text-align: center; }
-        .progress-container { position: relative; width: 300px; height: 300px; margin-bottom: 30px; }
+        .progress-container { position: relative; width: 300px; height: 300px; margin-bottom: 30px; max-width: 100%; }
         svg { transform: rotate(-90deg); width: 100%; height: 100%; }
         circle { fill: none; stroke-width: 20; stroke-linecap: round; }
         .bg-ring { stroke: #333; }
@@ -51,8 +81,8 @@
         .next-block { padding-bottom: 25px; border-bottom: 1px solid #333; }
         .next-id { font-size: 48px; font-weight: 900; margin-bottom: 10px; }
         .next-info { font-size: 24px; font-weight: 500; display: flex; align-items: center; gap: 10px; }
-        .warn-text { color: var(--accent-red); }
-        .time-text { color: var(--accent-green); }
+        .warn-text { color: var(--accent-red); } .time-text { color: var(--accent-green); }
+        
         .list-block { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
         .list-mask { flex: 1; overflow: hidden; position: relative; }
         .list-content { position: absolute; width: 100%; transition: all 0.3s ease; }
@@ -83,66 +113,141 @@
         .msg-text { font-size: 24px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         @keyframes pulseGlow { 0% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(255, 193, 7, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0); } }
 
-        /* TOAST NOTIFICATION */
-        .admin-toast {
-            position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
-            background: #333; color: white; padding: 2vh 4vh; border-radius: 50px;
-            font-size: 2.5vh; font-weight: 700; z-index: 6000;
-            transition: top 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: flex; align-items: center; gap: 2vh;
-        }
-        .admin-toast.show { top: 5vh; }
+        /* TOAST */
+        .admin-toast { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 15px 30px; border-radius: 50px; font-size: 20px; font-weight: 700; z-index: 6000; transition: top 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: flex; align-items: center; gap: 15px; }
+        .admin-toast.show { top: 30px; }
         .admin-toast.success { background: #28a745; border: 2px solid #20c997; }
         .admin-toast.error { background: #dc3545; border: 2px solid #ff6b6b; }
-        .toast-icon { font-size: 3vh; }
+        .toast-icon { font-size: 24px; }
 
-        /* MODAL */
+        /* LOGIN MODAL */
         .admin-trigger { position: fixed; top: 20px; right: 20px; color: #444; font-size: 24px; cursor: pointer; opacity: 0.3; transition: all 0.3s; z-index: 2000; }
         .admin-trigger:hover { opacity: 1; color: var(--accent-green); transform: scale(1.1); }
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; z-index: 3000; backdrop-filter: blur(8px); }
         .modal-overlay.open { display: flex; }
-        .modal-box { background: #1e1e1e; padding: 40px; border-radius: 16px; width: 500px; box-shadow: 0 10px 40px rgba(0,0,0,0.8); border: 1px solid #333; text-align: center; max-height: 90vh; overflow-y: auto; }
-        .modal-box h2 { margin-top: 0; color: white; font-weight: 700; margin-bottom: 25px; font-size: 3vh;}
-        .modal-section-title { color: var(--text-secondary); font-size: 14px; text-transform: uppercase; margin-top: 25px; margin-bottom: 10px; text-align: left; font-weight: bold; border-bottom: 1px solid #333; padding-bottom: 5px; }
-        .modal-input { width: 100%; padding: 15px; margin: 5px 0; background: #121212; border: 1px solid #444; color: white; border-radius: 8px; font-size: 2.2vh; box-sizing: border-box; outline: none; }
+        .modal-box { background: #1e1e1e; padding: 40px; border-radius: 16px; width: 90%; max-width: 450px; box-shadow: 0 10px 40px rgba(0,0,0,0.8); border: 1px solid #333; text-align: center; }
+        .modal-box h2 { margin-top: 0; color: white; font-weight: 700; margin-bottom: 25px;}
+        .modal-input { width: 100%; padding: 15px; margin: 5px 0; background: #121212; border: 1px solid #444; color: white; border-radius: 8px; font-size: 18px; box-sizing: border-box; outline: none; }
         .modal-input:focus { border-color: var(--accent-green); }
-        .time-group { display: flex; gap: 10px; }
-        .time-group input { text-align: center; }
-        
-        .lang-group { display: flex; gap: 10px; justify-content: center; margin-bottom: 10px; }
-        .lang-btn { flex: 1; padding: 12px; background: #333; border: 1px solid #555; color: #aaa; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; font-size: 2vh; }
-        .lang-btn:hover { background: #444; color: white; }
-        .lang-btn.active { background: var(--accent-green); color: white; border-color: var(--accent-green); box-shadow: 0 0 10px rgba(40, 167, 69, 0.4); }
-
-        .modal-btn { width: 100%; padding: 15px; margin-top: 15px; background: var(--accent-green); border: none; color: white; font-weight: bold; font-size: 2.2vh; border-radius: 8px; cursor: pointer; transition: 0.2s; }
-        .modal-btn:hover { background: #218838; transform: translateY(-2px); }
-        .modal-btn-blue { background: var(--accent-blue); margin-top: 10px; }
-        .modal-btn-blue:hover { background: #0069d9; }
-        .modal-btn-red { background: var(--accent-red); margin-top: 0; } 
-        .modal-btn-red:hover { background: #c82333; }
+        .modal-btn { width: 100%; padding: 15px; margin-top: 15px; background: var(--accent-green); border: none; color: white; font-weight: bold; font-size: 18px; border-radius: 8px; cursor: pointer; transition: 0.2s; }
         .modal-btn.grey { background: #444; margin-top: 10px; }
-        .modal-close { margin-top: 15px; background: transparent; color: #888; font-size: 14px; }
-        .modal-close:hover { color: #fff; }
-
+        
         /* SPEC MODES */
         body.is-victory .next-block, body.is-victory .list-block,
         body.is-lunch .next-block, body.is-lunch .list-block { display: none !important; }
         body.is-victory .victory-block { display: flex !important; }
         body.is-lunch .lunch-block { display: flex !important; }
-
         .victory-block, .lunch-block { display: none; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; animation: popIn 0.8s; }
-        .victory-icon { font-size: 150px; color: var(--accent-yellow); filter: drop-shadow(0 0 30px rgba(255, 193, 7, 0.8)); margin-bottom: 20px; animation: floatTrophy 3s ease-in-out infinite; }
-        .victory-title, .lunch-title { font-size: 48px; font-weight: 900; color: #fff; text-transform: uppercase; margin-bottom: 10px; letter-spacing: 2px; }
+        .victory-icon { font-size: 150px; color: var(--accent-yellow); margin-bottom: 20px; animation: floatTrophy 3s ease-in-out infinite; }
+        .victory-title, .lunch-title { font-size: 48px; font-weight: 900; text-transform: uppercase; margin-bottom: 10px; }
         .victory-stat { font-size: 36px; color: var(--accent-green); font-weight: 700; }
         .lunch-icon { font-size: 140px; color: var(--accent-blue); animation: pulseLunchIcon 3s infinite ease-in-out; }
         .lunch-timer { font-size: 32px; color: var(--accent-blue); font-weight: 500; background: rgba(0, 123, 255, 0.1); padding: 10px 30px; border-radius: 50px; border: 1px solid rgba(0, 123, 255, 0.3); }
-
         @keyframes popIn { 0% { opacity: 0; transform: scale(0.5); } 100% { opacity: 1; transform: scale(1); }}
         @keyframes floatTrophy { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
-        @keyframes pulseLunchIcon { 0% { transform: scale(1); filter: drop-shadow(0 0 10px rgba(0, 123, 255, 0.4)); } 50% { transform: scale(1.05); filter: drop-shadow(0 0 30px rgba(0, 123, 255, 0.8)); } 100% { transform: scale(1); filter: drop-shadow(0 0 10px rgba(0, 123, 255, 0.4)); } }
-        body.is-lunch .fg-ring { stroke: var(--accent-blue) !important; transition: all 0.5s ease; animation: breatheRing 4s infinite ease-in-out; }
-        @keyframes breatheRing { 0% { stroke-width: 20; stroke-opacity: 1; } 50% { stroke-width: 28; stroke-opacity: 0.6; } 100% { stroke-width: 20; stroke-opacity: 1; } }
+        @keyframes pulseLunchIcon { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
 
+        /* ========================================= */
+        /* === MOBILE ADAPTATION (MEDIA QUERIES) === */
+        /* ========================================= */
+        @media (max-width: 768px) {
+            body {
+                height: auto; /* Разрешаем скролл */
+                overflow-y: auto; 
+                display: block; /* Убираем грид с body */
+                padding: 10px;
+                padding-bottom: 80px;
+            }
+
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .header-left {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .header-title { font-size: 22px; }
+            .clock { font-size: 24px; }
+            .date { font-size: 14px; }
+
+            .main-grid {
+                display: flex;
+                flex-direction: column; /* Ставим панели друг под друга */
+                height: auto;
+                gap: 15px;
+            }
+
+            .card {
+                padding: 20px;
+                height: auto; /* Высота по контенту */
+            }
+
+            /* Левая панель (Круг) */
+            .left-panel {
+                order: 1; /* Сверху */
+            }
+            .progress-container {
+                width: 220px;
+                height: 220px;
+            }
+            .percent-text { font-size: 50px; }
+            .count-text { font-size: 24px; margin-bottom: 20px; }
+            .status-btn { 
+                font-size: 20px; 
+                padding: 12px 20px; 
+                width: 100%; 
+                box-sizing: border-box; 
+            }
+
+            /* Правая панель (Список) */
+            .right-panel {
+                order: 2; /* Снизу */
+                overflow: visible; /* Чтобы список растягивал экран */
+            }
+            .list-block {
+                overflow: visible;
+                height: auto;
+            }
+            .list-mask {
+                overflow: visible;
+                height: auto;
+            }
+            .list-content {
+                position: relative; /* Возвращаем в поток документа */
+            }
+
+            .next-id { font-size: 36px; }
+            .next-info { font-size: 18px; }
+
+            /* Элементы списка */
+            .list-item {
+                grid-template-columns: 50px 1fr auto; /* Упрощаем сетку */
+                gap: 10px;
+                font-size: 16px;
+                padding: 12px;
+            }
+            .list-item span:nth-child(2) { font-size: 18px; } /* Номер контейнера */
+            .list-item span:nth-child(4) { display: none; } /* Скрываем "В работе" текст на телефоне, чтобы влезло */
+            .container-img { width: 45px; }
+
+            /* Сообщение внизу */
+            .message-bar {
+                width: 95%;
+                padding: 0 15px;
+                height: 60px;
+            }
+            .msg-text { font-size: 18px; }
+            .msg-icon-box { width: 35px; height: 35px; margin-right: 10px; }
+
+            /* Победа и Обед на телефоне */
+            .victory-icon, .lunch-icon { font-size: 100px; }
+            .victory-title, .lunch-title { font-size: 32px; }
+            .victory-stat { font-size: 28px; }
+        }
     </style>
 </head>
 <body>
@@ -166,45 +271,15 @@
         </div>
     </div>
 
-    <div class="modal-overlay" id="modalAdmin">
-        <div class="modal-box">
-            <h2 style="color: var(--accent-green)">Панель управления</h2>
-            
-            <div class="modal-section-title">🌐 Язык интерфейса</div>
-            <div class="lang-group">
-                <button class="lang-btn" onclick="setLang('RU')">🇷🇺 RU</button>
-                <button class="lang-btn" onclick="setLang('EN_CN')">🇬🇧/🇨🇳 EN/CN</button>
-            </div>
-
-            <div class="modal-section-title">📢 Сообщение</div>
-            <input type="text" id="msgInput" class="modal-input" placeholder="Текст...">
-            <select id="timeInput" class="modal-input">
-                <option value="5">5 мин</option>
-                <option value="15">15 мин</option>
-                <option value="30">30 мин</option>
-                <option value="60">1 час</option>
-                <option value="480">Смена</option>
-            </select>
-            
-            <div style="display: flex; gap: 10px; margin-top: 15px;">
-                <button class="modal-btn" style="flex: 2;" onclick="sendMessage()">ОПУБЛИКОВАТЬ</button>
-                <button class="modal-btn modal-btn-red" style="flex: 1;" onclick="clearMessage()">УДАЛИТЬ</button>
-            </div>
-            
-            <div class="modal-section-title">☕ Обед</div>
-            <div class="time-group">
-                <input type="time" id="lunchStartInput" class="modal-input" value="11:30">
-                <input type="time" id="lunchEndInput" class="modal-input" value="12:00">
-            </div>
-            <button class="modal-btn modal-btn-blue" onclick="saveLunchTime()">СОХРАНИТЬ ВРЕМЯ</button>
-            <button class="modal-btn grey" onclick="testLunch()">Тест обеда (10 сек)</button>
-
-            <button class="modal-btn grey" onclick="closeModals()">Закрыть</button>
-        </div>
-    </div>
-
     <div class="header">
-        <div class="header-title" id="txt_title">Мониторинг Склада</div>
+        <div class="header-left">
+            <div class="header-title" id="txt_title">Мониторинг Склада</div>
+            <div class="lang-widget" id="localLangBtn" onclick="toggleLocalLang()">
+                <span class="material-icons lang-icon">language</span>
+                <span class="lang-text" id="localLangLabel">AUTO</span>
+            </div>
+        </div>
+
         <div class="clock-widget">
             <div class="clock" id="clock">00:00</div>
             <div class="date" id="date">-- ---</div>
