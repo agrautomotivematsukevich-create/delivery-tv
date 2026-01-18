@@ -289,7 +289,6 @@ async function update() {
             }
         }
         
-        // Удаляем сообщение "Нет разгрузок", если есть данные
         if (newDataMap.size > 0) {
             const emptyMsg = listEl.querySelector('.empty-message');
             if (emptyMsg) emptyMsg.remove();
@@ -299,7 +298,8 @@ async function update() {
         currentChildren.forEach(el => {
             if (!newDataMap.has(el.getAttribute('data-id'))) {
                 el.classList.add('remove-item');
-                setTimeout(() => { if (el.parentNode) el.remove(); checkEmpty(); }, 750);
+                // УВЕЛИЧИЛИ ТАЙМЕР до 1000мс, чтобы анимация успела закончиться
+                setTimeout(() => { if (el.parentNode) el.remove(); checkEmpty(); }, 1000);
             }
         });
         
@@ -314,7 +314,6 @@ async function update() {
             if (data.ws === 'AS') badgeClass = 'badge-as';
             let wsHtml = data.ws ? `<span class="badge ${badgeClass}">${data.ws}</span>` : '';
 
-            // ОДНА СТРОКА: Иконка -> ID -> Бейдж -> Время -> Длит
             let innerHTML = `
                 <div class="col-icon">${iconHtml}</div>
                 <div class="col-main">
@@ -332,7 +331,8 @@ async function update() {
                 if (isOverdue) existingEl.classList.add('overdue'); else existingEl.classList.remove('overdue');
             } else {
                 let newEl = document.createElement('div');
-                newEl.className = `list-item ${overdueClass}`;
+                // ДОБАВЛЕН КЛАСС slide-in
+                newEl.className = `list-item ${overdueClass} slide-in`;
                 newEl.setAttribute('data-id', id);
                 newEl.innerHTML = innerHTML;
                 listEl.prepend(newEl);
@@ -350,35 +350,22 @@ async function update() {
     } catch(e) { console.log("Update error:", e); }
 }
 
-// === ЛОГИРОВАНИЕ ПОСЕЩЕНИЙ (С IP АДРЕСОМ) ===
+// === ЛОГИРОВАНИЕ ПОСЕЩЕНИЙ ===
 async function logVisit() {
     const ua = navigator.userAgent; 
     let ip = "Не определен";
-
     try {
-        // 1. Пытаемся узнать IP через сторонний сервис
         const response = await fetch('https://api.ipify.org?format=json');
         const data = await response.json();
-        if (data && data.ip) {
-            ip = data.ip;
-        }
-    } catch (e) {
-        console.warn("Не удалось получить IP (возможно блокировщик рекламы)", e);
-    }
+        if (data && data.ip) ip = data.ip;
+    } catch (e) { console.warn("IP fail", e); }
 
-    // 2. Отправляем данные в Google (в любом случае)
     try {
         const url = `${scriptUrl}?mode=log_visit&ua=${encodeURIComponent(ua)}&ip=${encodeURIComponent(ip)}`;
         await fetch(url);
-        console.log("Visit logged. IP:", ip);
-    } catch (e) {
-        console.error("Log error", e);
-    }
+    } catch (e) { console.error("Log error", e); }
 }
 
-// Запускаем при загрузке страницы
 logVisit();
-
-// ... (остальной код запуска, например setInterval)
 setInterval(update, 3000);
 update();
