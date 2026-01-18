@@ -14,14 +14,14 @@
         .orb { position: fixed; border-radius: 50%; filter: blur(80px); z-index: -1; animation: float 10s infinite ease-in-out; opacity: 0.6; }
         .orb-1 { width: 300px; height: 300px; background: #4f29cd; top: -50px; left: -50px; } .orb-2 { width: 400px; height: 400px; background: #0A84FF; bottom: -100px; right: -50px; animation-delay: -5s; } .orb-3 { width: 200px; height: 200px; background: #FF453A; top: 40%; left: 40%; animation-delay: -2s; opacity: 0.4; }
         @keyframes float { 0% { transform: translate(0, 0) scale(1); } 33% { transform: translate(30px, -50px) scale(1.1); } 66% { transform: translate(-20px, 20px) scale(0.9); } 100% { transform: translate(0, 0) scale(1); } }
+        
         .container { width: 100%; max-width: 500px; background: var(--glass-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-radius: 24px; box-shadow: var(--glass-shadow); padding: 30px; margin-top: 20px; margin-bottom: 20px; }
         .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 30px; position: relative; }
         .header h2 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: 0.5px; }
         .back-btn { background: rgba(255,255,255,0.1); border: none; color: var(--text-main); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; }
         .section { margin-bottom: 25px; padding-bottom: 25px; border-bottom: 1px solid rgba(255,255,255,0.05); } .section:last-child { border-bottom: none; }
         .label-row { display: flex; align-items: center; margin-bottom: 15px; } .label { color: var(--text-muted); font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
-        .tooltip { position: relative; display: inline-flex; margin-left: 8px; cursor: pointer; } .tooltip-icon { font-size: 18px; color: var(--text-muted); transition: 0.2s; opacity: 0.7; } .tooltip:hover .tooltip-icon { color: var(--ios-blue); opacity: 1; }
-        .tooltip-text { visibility: hidden; opacity: 0; position: absolute; bottom: 140%; left: 50%; transform: translateX(-50%) scale(0.9); background: rgba(20, 20, 20, 0.95); color: #fff; padding: 12px 16px; border-radius: 12px; font-size: 13px; width: 240px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); transition: all 0.2s; pointer-events: none; z-index: 100; } .tooltip:hover .tooltip-text { visibility: visible; opacity: 1; transform: translateX(-50%) scale(1); }
+        
         .control-group { display: flex; gap: 10px; flex-wrap: wrap; }
         .input, select.input { width: 100%; padding: 16px; background: rgba(0, 0, 0, 0.3); border: 1px solid transparent; color: white; border-radius: 14px; font-size: 17px; outline: none; transition: 0.3s; font-family: inherit; } .input:focus { background: rgba(0, 0, 0, 0.5); border-color: var(--ios-blue); }
         .btn { flex: 1; min-width: 130px; padding: 16px; border: none; border-radius: 14px; font-weight: 600; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; color: white; font-family: inherit; }
@@ -30,6 +30,25 @@
         .toast { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: rgba(30, 30, 30, 0.95); backdrop-filter: blur(20px); color: white; padding: 12px 24px; border-radius: 50px; font-size: 15px; font-weight: 600; z-index: 9999; transition: top 0.5s; box-shadow: 0 10px 40px rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 10px; width: max-content; } .toast.show { top: 20px; }
         .status-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; } .toast.success .status-dot { background: var(--ios-green); } .toast.error .status-dot { background: var(--ios-red); }
         @media (max-width: 480px) { body { padding: 10px; } .container { padding: 20px; } .btn { width: 100%; min-width: 100%; padding: 18px; } .row-mobile { flex-direction: row !important; } }
+
+        /* === СТИЛИ ДЛЯ ОКНА СТАТИСТИКИ === */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); display: none; align-items: center; justify-content: center; z-index: 5000; }
+        .modal-overlay.open { display: flex; }
+        .stats-box { width: 90%; max-width: 800px; height: 80vh; background: #1c1c1e; border-radius: 20px; display: flex; flex-direction: column; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 20px 60px rgba(0,0,0,0.8); overflow: hidden; }
+        .stats-header { padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); }
+        .stats-header h3 { margin: 0; font-size: 1.2rem; }
+        .close-stats { background: none; border: none; color: white; cursor: pointer; }
+        
+        .stats-content { flex: 1; overflow-y: auto; padding: 0; }
+        
+        .log-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        .log-table th { background: rgba(0,0,0,0.3); padding: 12px; text-align: left; color: var(--text-muted); font-size: 0.8rem; position: sticky; top: 0; backdrop-filter: blur(10px); }
+        .log-table td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); color: #fff; }
+        .log-table tr:hover { background: rgba(255,255,255,0.03); }
+        
+        .badge-admin { color: var(--ios-green); font-weight: bold; }
+        .badge-guest { color: var(--ios-blue); }
+        .ip-addr { font-family: monospace; color: var(--text-muted); font-size: 0.85rem; }
     </style>
     
     <script>
@@ -45,11 +64,35 @@
 
     <div id="toast" class="toast"><div class="status-dot"></div><span id="toastMsg"></span></div>
 
+    <div class="modal-overlay" id="statsModal">
+        <div class="stats-box">
+            <div class="stats-header">
+                <h3>Журнал посещений (Последние 50)</h3>
+                <button class="close-stats" onclick="closeStats()"><span class="material-icons">close</span></button>
+            </div>
+            <div class="stats-content">
+                <table class="log-table">
+                    <thead>
+                        <tr>
+                            <th>ВРЕМЯ</th>
+                            <th>ПОЛЬЗОВАТЕЛЬ</th>
+                            <th>IP АДРЕС</th>
+                            <th>УСТРОЙСТВО</th>
+                        </tr>
+                    </thead>
+                    <tbody id="statsBody">
+                        <tr><td colspan="4" style="text-align:center; padding: 20px;">Загрузка...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
     <div class="container">
         <div class="header">
             <button class="back-btn" onclick="goBack()"><span class="material-icons">arrow_back</span></button>
             <h2>Admin Control</h2>
-            <div style="width: 40px;"></div>
+            <button class="back-btn" onclick="openStats()" style="background: var(--ios-blue); color: white;"><span class="material-icons">analytics</span></button>
         </div>
 
         <div class="section">
@@ -93,8 +136,8 @@
     </div>
 
     <script>
-        // ВАША ССЫЛКА (УБЕДИТЕСЬ ЧТО ОНА АКТУАЛЬНАЯ)
-        const scriptUrl = 'https://script.google.com/macros/s/AKfycby--iUZ7IoFsoRwLHPRvAQU6jY9USXl9MsfS8maoAMkP-ltKgJRd32DBx0G6asXNSmX/exec';
+        // ВАША ССЫЛКА
+        const scriptUrl = 'https://script.google.com/macros/s/AKfycbzl59vrkl1zGDrV4ANnvIUDTimV_qbFWxuMYI1kKCoDSPW4Q2fZ7wQcooCBK7kp4kiujQ/exec';
 
         if (auth && auth.user) { document.body.style.display = 'flex'; }
         function goBack() { window.location.href = "index.html"; }
@@ -103,7 +146,7 @@
             const t = document.getElementById('toast');
             document.getElementById('toastMsg').innerText = msg;
             t.className = `toast show ${type}`;
-            setTimeout(() => t.className = 'toast', 6000); // 6 секунд
+            setTimeout(() => t.className = 'toast', 6000);
         }
 
         function highlightLang(lang) {
@@ -126,7 +169,7 @@
             showToast("Сохранение...", "success");
             const res = await api('set_lang', {lang});
             if(res.includes("UPDATED")) showToast("Язык изменен", "success");
-            else showToast("ОШИБКА: " + res, "error"); // <--- ВЫВОД ОШИБКИ
+            else showToast("ОШИБКА: " + res, "error");
         }
 
         async function sendMsg() {
@@ -136,7 +179,7 @@
             showToast("Отправка...", "success");
             const res = await api('write', {text: t, dur: d});
             if(res.includes("SUCCESS")) showToast("Опубликовано", "success");
-            else showToast("ОШИБКА: " + res, "error"); // <--- ВЫВОД ОШИБКИ
+            else showToast("ОШИБКА: " + res, "error");
         }
 
         async function clearMsg() {
@@ -145,7 +188,7 @@
             if(res.includes("SUCCESS")) {
                 document.getElementById('msgInput').value = "";
                 showToast("Удалено", "success");
-            } else showToast("ОШИБКА: " + res, "error"); // <--- ВЫВОД ОШИБКИ
+            } else showToast("ОШИБКА: " + res, "error");
         }
 
         async function saveLunch() {
@@ -154,13 +197,74 @@
             showToast("Сохранение...", "success");
             const res = await api('set_lunch', {start: s, end: e});
             if(res.includes("UPDATED")) showToast("Обед обновлен", "success");
-            else showToast("ОШИБКА: " + res, "error"); // <--- ВЫВОД ОШИБКИ
+            else showToast("ОШИБКА: " + res, "error");
         }
 
         function testLunch() {
             localStorage.setItem('lunch_test_until', Date.now() + 10000);
             showToast("Тест запущен...", "success");
             setTimeout(() => { window.location.href = "index.html"; }, 1500);
+        }
+
+        // === СТАТИСТИКА ===
+        function openStats() {
+            document.getElementById('statsModal').classList.add('open');
+            loadStatsData();
+        }
+        function closeStats() {
+            document.getElementById('statsModal').classList.remove('open');
+        }
+
+        async function loadStatsData() {
+            const tbody = document.getElementById('statsBody');
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 20px;">Загрузка данных...</td></tr>';
+            
+            const raw = await api('get_logs');
+            
+            if (raw === "ACCESS_DENIED") {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color: var(--ios-red);">⛔ Нет прав доступа (Требуется роль ADMIN)</td></tr>';
+                return;
+            }
+            if (!raw || raw.trim() === "" || raw.includes("NO_LOGS")) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color: var(--text-muted);">Журнал пуст</td></tr>';
+                return;
+            }
+
+            const rows = raw.trim().split('\n');
+            let html = "";
+            
+            rows.forEach(line => {
+                const cols = line.split('|');
+                // Ожидаем: TIME | USER | UA | IP
+                const time = cols[0] || "-";
+                const userRaw = cols[1] || "-";
+                const uaRaw = cols[2] || "-";
+                const ip = cols[3] || "-";
+
+                // Красивое отображение пользователя
+                let userDisplay = userRaw;
+                if(userRaw.includes("admin")) userDisplay = `<span class="badge-admin">ADMIN</span>`;
+                if(userRaw.includes("GUEST")) userDisplay = `<span class="badge-guest">GUEST</span>`;
+
+                // Упрощение User Agent (вырезаем лишнее)
+                let dev = "PC";
+                if(uaRaw.includes("iPhone")) dev = "iPhone";
+                else if(uaRaw.includes("Android")) dev = "Android";
+                else if(uaRaw.includes("Macintosh")) dev = "Mac";
+                else if(uaRaw.includes("Windows")) dev = "Windows PC";
+                else if(uaRaw.includes("TV") || uaRaw.includes("Web0S")) dev = "Smart TV";
+
+                html += `
+                    <tr>
+                        <td style="white-space:nowrap; color:#fff;">${time}</td>
+                        <td>${userDisplay} <span style="font-size:0.8em; opacity:0.7;">${userRaw.replace("admin","").replace("GUEST","")}</span></td>
+                        <td class="ip-addr">${ip}</td>
+                        <td title="${uaRaw}">${dev}</td>
+                    </tr>
+                `;
+            });
+            
+            tbody.innerHTML = html;
         }
     </script>
 </body>
