@@ -31,15 +31,40 @@ const TRANSLATIONS = {
     }
 };
 
+// Форматирование минут в "1ч 20м"
 function formatFriendlyTime(minutes) {
     if (isNaN(minutes)) return "0 мин";
-    if (minutes < 60) {
-        return `${minutes} мин`;
-    } else {
-        const h = Math.floor(minutes / 60);
-        const m = minutes % 60;
-        return `${h}ч ${m}м`;
+    if (minutes < 60) return `${minutes} мин`;
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    return `${h}ч ${m}м`;
+}
+
+// Расчет разницы времени для "Следующего контейнера"
+function calculateTimeDiff(timeStr) {
+    // timeStr формата "HH:MM"
+    const match = timeStr.match(/(\d{1,2}):(\d{2})/);
+    if (!match) return null;
+
+    const targetH = parseInt(match[1]);
+    const targetM = parseInt(match[2]);
+    
+    const now = new Date();
+    let target = new Date();
+    target.setHours(targetH, targetM, 0, 0);
+
+    // Вычисляем разницу в минутах
+    let diffMinutes = (target - now) / 60000;
+
+    // Логика перехода через сутки:
+    // Если разница меньше -12 часов (например, сейчас 23:00, а цель 01:00), значит это завтра (+24ч)
+    // Если разница больше +12 часов (вряд ли для склада), можно считать ошибкой или оставить как есть
+    if (diffMinutes < -720) { 
+        target.setDate(target.getDate() + 1);
+        diffMinutes = (target - now) / 60000;
     }
+
+    return Math.round(diffMinutes);
 }
 
 async function sha256(message) {
@@ -151,7 +176,6 @@ async function loadStatistics() {
         const response = await fetch(`${scriptUrl}?nocache=${Date.now()}&mode=get_stats`);
         const data = await response.json();
         
-        // Получаем текущие переводы
         const t = TRANSLATIONS[determineEffectiveLang()] || TRANSLATIONS["RU"];
         
         let doneHtml = "";
@@ -160,7 +184,6 @@ async function loadStatistics() {
         let wCount = 0;
         
         data.forEach(item => {
-            // ОПРЕДЕЛЕНИЕ ТИПА РАБОТ (С ПЕРЕВОДОМ)
             let typeBadge = "";
             let rawType = item.type ? item.type.trim() : "";
             
@@ -357,17 +380,26 @@ async function update() {
             }
             document.getElementById('nid').innerText = r1[2].trim();
             
+            // --- ЛОГИКА ДЛЯ СЛЕДУЮЩЕГО КОНТЕЙНЕРА (ИСПРАВЛЕНА ОШИБКА) ---
             const ninf = r1[3] ? r1[3].trim() : "";
             const idiv = document.getElementById('ninfo');
             
-            const extractedMinutes = parseInt(ninf.replace(/[^0-9]/g, ''));
-            const prettyTime = !isNaN(extractedMinutes) ? formatFriendlyTime(extractedMinutes) : "";
-
-            if (ninf.includes("ОПОЗДАНИЕ") || ninf.includes("DELAY")) {
-                idiv.innerHTML = `⚠️ <span class="warn-text">${t.delay_prefix} ${prettyTime}</span>`;
-            } else if (ninf.includes("ПРИБУДЕТ") || ninf.includes("ETA")) {
-                idiv.innerHTML = `⏱ <span class="time-text">${t.eta_prefix} ${prettyTime}</span>`;
+            // Ищем время в строке (например, 08:00)
+            const diffMinutes = calculateTimeDiff(ninf);
+            
+            // Если смогли посчитать разницу
+            if (diffMinutes !== null) {
+                const prettyTime = formatFriendlyTime(Math.abs(diffMinutes));
+                
+                if (diffMinutes >= 0) {
+                    // Время еще не наступило (или сейчас)
+                    idiv.innerHTML = `⏱ <span class="time-text">${t.eta_prefix} ${prettyTime}</span>`;
+                } else {
+                    // Время уже прошло
+                    idiv.innerHTML = `⚠️ <span class="warn-text">${t.delay_prefix} ${prettyTime}</span>`;
+                }
             } else { 
+                // Если времени в ячейке нет (просто текст)
                 idiv.innerHTML = ninf; 
             }
         }
