@@ -1,5 +1,5 @@
 // === ВСТАВЬТЕ СЮДА НОВУЮ ССЫЛКУ ПОСЛЕ ПУБЛИКАЦИИ ===
-const scriptUrl = 'https://script.google.com/macros/s/AKfycbyQO3WL2ApDqg_zBwIPFyblqROe-qBsodnRe7r-2luP2_AYQhswAtF1858TVpXipUdxJQ/exec'; 
+const scriptUrl = 'https://script.google.com/macros/s/AKfycbw9NmcWbeFtM_6dOZAuw6keNqk6nf-HGi1iK2Oxm992XzJ5Rpg2gNtE-k4nl_9q7Z0XUQ/exec'; 
 const CONTAINER_IMG_SRC = 'container.svg'; 
 
 let lunchStartStr = "11:30";
