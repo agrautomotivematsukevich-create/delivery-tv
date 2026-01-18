@@ -1,6 +1,6 @@
 // ================================================================
 // ВСТАВЬТЕ ВАШУ ССЫЛКУ НИЖЕ:
-const scriptUrl = 'https://script.google.com/macros/s/AKfycbwjd9LMTBATRPb81Dpk3AOo17AQ4R_NU8nRlPgzwio9BHs2jnvWTsSjpiV8S5IkC59DRQ/exec'; 
+const scriptUrl = 'https://script.google.com/macros/s/AKfycby0nA7BqsQYnO7mCS6SkIsv1qnvoDvtTqSlXP1T9zpjrePmXEEkKa9XYAVEWTGRRLBQ9w/exec'; 
 // ================================================================
 
 const CONTAINER_IMG_SRC = 'container.svg'; 
@@ -350,17 +350,35 @@ async function update() {
     } catch(e) { console.log("Update error:", e); }
 }
 
-// === ЛОГИРОВАНИЕ ПОСЕЩЕНИЙ (ИСПРАВЛЕНО) ===
-function logVisit() {
-    // УБРАЛИ ПРОВЕРКУ sessionStorage - теперь пишем всегда при загрузке
+// === ЛОГИРОВАНИЕ ПОСЕЩЕНИЙ (С IP АДРЕСОМ) ===
+async function logVisit() {
     const ua = navigator.userAgent; 
-    // Отправляем запрос
-    fetch(`${scriptUrl}?mode=log_visit&ua=${encodeURIComponent(ua)}`)
-        .then(() => console.log("Visit logged"))
-        .catch(e => console.error("Log error", e));
+    let ip = "Не определен";
+
+    try {
+        // 1. Пытаемся узнать IP через сторонний сервис
+        const response = await fetch('https://api.ipify.org?format=json');
+        const data = await response.json();
+        if (data && data.ip) {
+            ip = data.ip;
+        }
+    } catch (e) {
+        console.warn("Не удалось получить IP (возможно блокировщик рекламы)", e);
+    }
+
+    // 2. Отправляем данные в Google (в любом случае)
+    try {
+        const url = `${scriptUrl}?mode=log_visit&ua=${encodeURIComponent(ua)}&ip=${encodeURIComponent(ip)}`;
+        await fetch(url);
+        console.log("Visit logged. IP:", ip);
+    } catch (e) {
+        console.error("Log error", e);
+    }
 }
 
 // Запускаем при загрузке страницы
 logVisit();
+
+// ... (остальной код запуска, например setInterval)
 setInterval(update, 3000);
 update();
