@@ -1,6 +1,6 @@
 // ================================================================
 // ВСТАВЬТЕ ВАШУ ССЫЛКУ НИЖЕ:
-const scriptUrl = 'https://script.google.com/macros/s/AKfycby--iUZ7IoFsoRwLHPRvAQU6jY9USXl9MsfS8maoAMkP-ltKgJRd32DBx0G6asXNSmX/exec'; 
+const scriptUrl = 'https://script.google.com/macros/s/AKfycbwjd9LMTBATRPb81Dpk3AOo17AQ4R_NU8nRlPgzwio9BHs2jnvWTsSjpiV8S5IkC59DRQ/exec'; 
 // ================================================================
 
 const CONTAINER_IMG_SRC = 'container.svg'; 
@@ -355,3 +355,21 @@ async function update() {
 
 setInterval(update, 3000);
 update();
+// === ЛОГИРОВАНИЕ ПОСЕЩЕНИЙ ===
+function logVisit() {
+    // Проверяем, логировали ли мы уже этот сеанс (чтобы не спамить при обновлении)
+    // Если хотите писать КАЖДОЕ обновление страницы, уберите if (!sessionStorage.getItem('visited'))
+    
+    if (!sessionStorage.getItem('visited')) {
+        const ua = navigator.userAgent; // Информация об устройстве (ПК/Телефон/Браузер)
+        fetch(`${scriptUrl}?mode=log_visit&ua=${encodeURIComponent(ua)}`)
+            .then(() => {
+                console.log("Visit logged");
+                sessionStorage.setItem('visited', 'true'); // Запоминаем, что уже записали
+            })
+            .catch(e => console.error("Log error", e));
+    }
+}
+
+// Запускаем запись при загрузке
+logVisit();
