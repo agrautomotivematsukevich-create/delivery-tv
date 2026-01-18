@@ -1,5 +1,8 @@
-// === ВСТАВЬТЕ СЮДА НОВУЮ ССЫЛКУ ПОСЛЕ ПУБЛИКАЦИИ ===
-const scriptUrl = 'https://script.google.com/macros/s/AKfycbw9NmcWbeFtM_6dOZAuw6keNqk6nf-HGi1iK2Oxm992XzJ5Rpg2gNtE-k4nl_9q7Z0XUQ/exec'; 
+// ================================================================
+// ВСТАВЬТЕ ВАШУ ССЫЛКУ НИЖЕ:
+const scriptUrl = 'https://script.google.com/macros/s/AKfycby--iUZ7IoFsoRwLHPRvAQU6jY9USXl9MsfS8maoAMkP-ltKgJRd32DBx0G6asXNSmX/exec'; 
+// ================================================================
+
 const CONTAINER_IMG_SRC = 'container.svg'; 
 
 let lunchStartStr = "11:30";
@@ -22,7 +25,6 @@ const TRANSLATIONS = {
     }
 };
 
-// --- CRYPTO (SHA-256) ---
 async function sha256(message) {
     const msgBuffer = new TextEncoder().encode(message);
     const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
@@ -30,7 +32,6 @@ async function sha256(message) {
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-// --- ЯЗЫК ---
 function determineEffectiveLang() { return localLang ? localLang : serverLang; }
 
 function toggleLocalLang() {
@@ -51,13 +52,15 @@ function updateLocalLangBtn() {
         btn.classList.add('active');
         label.innerText = localLang === 'RU' ? 'RU' : 'EN/CN';
         btn.style.borderColor = '#007bff';
-        btn.querySelector('.lang-icon').style.color = '#007bff';
+        const icon = btn.querySelector('.lang-icon');
+        if(icon) icon.style.color = '#007bff';
         label.style.color = '#007bff';
     } else {
         btn.classList.remove('active');
         label.innerText = 'AUTO';
         btn.style.borderColor = '#444';
-        btn.querySelector('.lang-icon').style.color = '#a0a0a0';
+        const icon = btn.querySelector('.lang-icon');
+        if(icon) icon.style.color = '#a0a0a0';
         label.style.color = '#a0a0a0';
     }
 }
@@ -72,7 +75,6 @@ function applyLanguage(lang) {
     if (emptyMsg) emptyMsg.innerText = t.empty;
 }
 
-// --- УВЕДОМЛЕНИЯ ---
 function showToast(text, type) {
     const toast = document.getElementById('adminToast');
     const txt = document.getElementById('toastText');
@@ -85,7 +87,6 @@ function showToast(text, type) {
     }
 }
 
-// --- ЛОГИН / РЕГИСТРАЦИЯ ---
 function openLogin() { 
     document.getElementById('modalLogin').classList.add('open'); 
     setTimeout(() => document.getElementById('adminUser').focus(), 100); 
@@ -110,13 +111,10 @@ async function checkLogin() {
     const p = document.getElementById('adminPass').value.trim();
     if (!u || !p) { showToast("Введите данные", "error"); return; }
     showToast("Проверка...", "success");
-    
     const hash = await sha256(p); 
-
     try {
         const r = await fetch(`${scriptUrl}?nocache=${Date.now()}&mode=login&user=${encodeURIComponent(u)}&hash=${hash}`);
         const txt = await r.text();
-        
         if (txt.includes("CORRECT")) {
             sessionStorage.setItem('warehouse_auth', JSON.stringify({ user: u, pass: hash }));
             window.location.href = "admin.html";
@@ -125,9 +123,9 @@ async function checkLogin() {
         } else if (txt.includes("WRONG")) {
             showToast("Неверный логин или пароль", "error");
         } else {
-            showToast("Ошибка: " + txt, "error"); // Покажем текст ошибки сервера
+            showToast("Ошибка: " + txt, "error");
         }
-    } catch(e) { showToast("Сбой сети (CORS/Deploy)", "error"); console.error(e); }
+    } catch(e) { showToast("Сбой сети", "error"); console.error(e); }
 }
 
 async function doRegister() {
@@ -135,10 +133,8 @@ async function doRegister() {
     const u = document.getElementById('regUser').value.trim();
     const p = document.getElementById('regPass').value.trim();
     if (!name || !u || !p) { showToast("Заполните все поля", "error"); return; }
-    
     showToast("Отправка...", "success");
     const hash = await sha256(p);
-
     try {
         const url = `${scriptUrl}?nocache=${Date.now()}&mode=register&user=${encodeURIComponent(u)}&hash=${hash}&name=${encodeURIComponent(name)}`;
         const r = await fetch(url);
@@ -151,7 +147,7 @@ async function doRegister() {
         } else {
             showToast("Ошибка: " + txt, "error");
         }
-    } catch(e) { showToast("Сбой сети (CORS/Deploy)", "error"); console.error(e); }
+    } catch(e) { showToast("Сбой сети", "error"); console.error(e); }
 }
 
 function launchVictoryConfetti() {
@@ -163,7 +159,6 @@ function launchVictoryConfetti() {
      }());
 }
 
-// === ЯДРО ===
 updateLocalLangBtn();
 setInterval(() => {
     const d = new Date();
@@ -237,7 +232,7 @@ async function update() {
         }
 
         const rows = csvData.split('\n').map(r => r.split(';')); 
-        const r1 = rows[0]; // Это всегда статус (A1)
+        const r1 = rows[0]; 
         const t = TRANSLATIONS[determineEffectiveLang()] || TRANSLATIONS["RU"]; 
 
         if (r1 && r1.length > 2) {
@@ -252,8 +247,7 @@ async function update() {
             document.getElementById('cnt').innerText = `${done} / ${total}`;
             const p = total > 0 ? Math.round((done/total)*100) : 0;
             document.getElementById('pct').innerText = p + '%';
-            const ring = document.getElementById('ring');
-            ring.style.strokeDashoffset = 942 - (942 * p / 100);
+            document.getElementById('ring').style.strokeDashoffset = 942 - (942 * p / 100);
             if (!document.body.classList.contains('is-lunch')) {
                 document.getElementById('ring').style.stroke = st === "ACTIVE" ? "var(--accent-green)" : (st === "PAUSE" ? "#555" : "var(--accent-yellow)");
             }
@@ -277,7 +271,7 @@ async function update() {
 
         const listEl = document.getElementById('list');
         let newDataMap = new Map();
-        // Начинаем с 1, потому что 0 - это статус
+        
         for (let i = 1; i < rows.length; i++) {
             if (rows[i][0] && rows[i][0].includes('|')) {
                  let parts = rows[i][0].split('|');
@@ -288,9 +282,21 @@ async function update() {
                      let drRaw = parts[2].trim().replace(/[,"]/g, '');
                      dur = parseInt(drRaw); if (isNaN(dur)) dur = 0;
                  }
-                 newDataMap.set(id, { time, dur });
+                 
+                 // Читаем, но не выводим ЛОТ. Берем только тип.
+                 let ws = parts[4] ? parts[4].trim() : "";
+                 
+                 newDataMap.set(id, { time, dur, ws });
             }
         }
+        
+        // === ФИКС: ПРИНУДИТЕЛЬНО УДАЛЯЕМ СООБЩЕНИЕ, ЕСЛИ ЕСТЬ ДАННЫЕ ===
+        if (newDataMap.size > 0) {
+            const emptyMsg = listEl.querySelector('.empty-message');
+            if (emptyMsg) emptyMsg.remove();
+        }
+        // ==============================================================
+
         const currentChildren = Array.from(listEl.querySelectorAll('.list-item:not(.remove-item)'));
         currentChildren.forEach(el => {
             if (!newDataMap.has(el.getAttribute('data-id'))) {
@@ -298,16 +304,35 @@ async function update() {
                 setTimeout(() => { if (el.parentNode) el.remove(); checkEmpty(); }, 750);
             }
         });
+        
         newDataMap.forEach((data, id) => {
             let existingEl = listEl.querySelector(`.list-item[data-id="${id}"]:not(.remove-item)`);
             let isOverdue = data.dur > 30;
             let overdueClass = isOverdue ? 'overdue' : '';
             let iconHtml = isOverdue ? '<span style="font-size:30px">⚠️</span>' : `<img src="${CONTAINER_IMG_SRC}" class="container-img" alt="box">`;
-            let innerHTML = `<span>${iconHtml}</span><span>${id}</span><span>${data.time}</span><span>${data.dur} ${t.min}</span>`;
+            
+            // Определяем класс для бейджа
+            let badgeClass = 'badge-other';
+            if (data.ws === 'BS') badgeClass = 'badge-bs';
+            if (data.ws === 'AS') badgeClass = 'badge-as';
+            let wsHtml = data.ws ? `<span class="badge ${badgeClass}">${data.ws}</span>` : '';
+
+            // ОДНА СТРОКА: Иконка -> ID -> Бейдж -> Время -> Длит
+            let innerHTML = `
+                <div class="col-icon">${iconHtml}</div>
+                <div class="col-main">
+                    <span class="id-text">${id}</span>
+                    ${wsHtml}
+                </div>
+                <div class="col-right">
+                    <span>${data.time}</span>
+                    <span class="col-dur">${data.dur} ${t.min}</span>
+                </div>
+            `;
+            
             if (existingEl) {
                 if (existingEl.innerHTML !== innerHTML) existingEl.innerHTML = innerHTML;
-                if (isOverdue) existingEl.classList.add('overdue');
-                else existingEl.classList.remove('overdue');
+                if (isOverdue) existingEl.classList.add('overdue'); else existingEl.classList.remove('overdue');
             } else {
                 let newEl = document.createElement('div');
                 newEl.className = `list-item ${overdueClass}`;
@@ -316,6 +341,7 @@ async function update() {
                 listEl.prepend(newEl);
             }
         });
+        
         if (newDataMap.size === 0) checkEmpty();
         function checkEmpty() {
              const alive = listEl.querySelectorAll('.list-item:not(.remove-item)');
@@ -323,6 +349,7 @@ async function update() {
              if (alive.length === 0 && !em) listEl.innerHTML = `<div class="empty-message">${t.empty}</div>`;
              else if (alive.length > 0 && em) em.remove();
         }
+
     } catch(e) { console.log("Update error:", e); }
 }
 
