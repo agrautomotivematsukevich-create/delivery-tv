@@ -1,6 +1,6 @@
 // ================================================================
 // ВСТАВЬТЕ ВАШУ ССЫЛКУ НИЖЕ:
-const scriptUrl = 'https://script.google.com/macros/s/AKfycbyOqLhDtXG9gL9Qes0QX0SNMeoEqvafHG416bnN1umyTz8haiHeFohKxuRX2MBYpMUgzw/exec'; 
+const scriptUrl = 'https://script.google.com/macros/s/AKfycbzIzPaYqxLdSCrMxJsvCuFylVZc0vRRqad1KJG3cBvy9Gq4hYgT-jGh92j3f231_BzeUQ/exec'; 
 // ================================================================
 
 const CONTAINER_IMG_SRC = 'container.svg'; 
@@ -9,6 +9,8 @@ let lunchStartStr = "11:30";
 let lunchEndStr = "12:00";
 let serverLang = "RU"; 
 let localLang = localStorage.getItem('warehouse_lang');
+let shiftChart = null;
+let historyChart = null;
 
 const TRANSLATIONS = {
     RU: {
@@ -17,8 +19,19 @@ const TRANSLATIONS = {
         lunch_left: "До конца:", lunch_soon: "Скоро работа", empty: "Нет активных разгрузок", min: "мин.", locale: "ru-RU", 
         eta_prefix: "ПРИБУДЕТ ЧЕРЕЗ: ", delay_prefix: "ОПОЗДАНИЕ: ",
         lbl_start: "НАЧАЛО", lbl_dur: "В РАБОТЕ",
-        stat_title: "Статистика смены", stat_done: "Выгружено", stat_wait: "В очереди", menu_stat: "Статистика выгрузки",
-        type_bs: "КУЗОВНОЙ", type_as: "СБОРКА", type_ps: "ПОКРАСКА"
+        // STATS
+        tab_shift: "Смена", tab_analytics: "Аналитика", tab_lots: "Лоты",
+        stat_done: "Выгружено", stat_wait: "В очереди",
+        a_week: "Объем", a_avg: "Среднее время", a_best: "Рекорд",
+        type_bs: "КУЗОВНОЙ", type_as: "СБОРКА", type_ps: "ПОКРАСКА",
+        btn_driver: "Водитель", drv_title: "Очередь выгрузки",
+        s_done: "ВЫПОЛНЕНО", s_wait: "ОСТАЛОСЬ",
+        no_schedule: "На сегодня нет расписания",
+        lots_info: "Статистика по Лотам",
+        // MODALS
+        login_title: "Вход", reg_title: "Регистрация", 
+        btn_login: "Войти", btn_reg: "Отправить", btn_cancel: "Отмена",
+        btn_to_reg: "Регистрация", btn_to_log: "Вернуться ко входу"
     },
     EN_CN: {
         title: "Warehouse / 仓库监控", progress: "Progress / 总体进度", next: "Next / 下一个集装箱", list: "Active / 正在卸货",
@@ -26,12 +39,22 @@ const TRANSLATIONS = {
         lunch_left: "Left / 剩余:", lunch_soon: "Back soon / 即将开始", empty: "No Tasks / 无活动任务", min: "min / 分", locale: "zh-CN", 
         eta_prefix: "ETA / 预计: ", delay_prefix: "DELAY / 延迟: ",
         lbl_start: "START / 开始", lbl_dur: "DURATION / 持续",
-        stat_title: "Shift Statistics / 班次统计", stat_done: "Unloaded / 已卸载", stat_wait: "Queue / 排队", menu_stat: "Statistics / 统计",
-        type_bs: "BODY SHOP", type_as: "ASSEMBLY", type_ps: "PAINT SHOP"
+        // STATS
+        tab_shift: "Shift / 班次", tab_analytics: "Analytics / 分析", tab_lots: "Lots / 批次",
+        stat_done: "Unloaded / 已卸载", stat_wait: "Queue / 排队",
+        a_week: "Volume / 数量", a_avg: "Avg Time / 平均时间", a_best: "Best / 最佳",
+        type_bs: "BODY SHOP", type_as: "ASSEMBLY", type_ps: "PAINT SHOP",
+        btn_driver: "Driver / 司机", drv_title: "Queue / 排队",
+        s_done: "DONE", s_wait: "LEFT",
+        no_schedule: "No Schedule for Today / 今日无排程",
+        lots_info: "Lot Statistics / 批次统计",
+        // MODALS
+        login_title: "Login / 登录", reg_title: "Register / 注册",
+        btn_login: "Enter / 进入", btn_reg: "Send / 发送", btn_cancel: "Cancel / 取消",
+        btn_to_reg: "Registration / 注册", btn_to_log: "Back to Login / 返回"
     }
 };
 
-// Форматирование минут в "1ч 20м"
 function formatFriendlyTime(minutes) {
     if (isNaN(minutes)) return "0 мин";
     if (minutes < 60) return `${minutes} мин`;
@@ -40,30 +63,16 @@ function formatFriendlyTime(minutes) {
     return `${h}ч ${m}м`;
 }
 
-// Расчет разницы времени для "Следующего контейнера"
 function calculateTimeDiff(timeStr) {
-    // timeStr формата "HH:MM"
     const match = timeStr.match(/(\d{1,2}):(\d{2})/);
     if (!match) return null;
-
     const targetH = parseInt(match[1]);
     const targetM = parseInt(match[2]);
-    
     const now = new Date();
     let target = new Date();
     target.setHours(targetH, targetM, 0, 0);
-
-    // Вычисляем разницу в минутах
     let diffMinutes = (target - now) / 60000;
-
-    // Логика перехода через сутки:
-    // Если разница меньше -12 часов (например, сейчас 23:00, а цель 01:00), значит это завтра (+24ч)
-    // Если разница больше +12 часов (вряд ли для склада), можно считать ошибкой или оставить как есть
-    if (diffMinutes < -720) { 
-        target.setDate(target.getDate() + 1);
-        diffMinutes = (target - now) / 60000;
-    }
-
+    if (diffMinutes < -720) { target.setDate(target.getDate() + 1); diffMinutes = (target - now) / 60000; }
     return Math.round(diffMinutes);
 }
 
@@ -113,11 +122,23 @@ function applyLanguage(lang) {
     const safeSet = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val; };
     safeSet('txt_title', t.title); safeSet('txt_progress', t.progress); safeSet('txt_next', t.next);
     safeSet('txt_list', t.list); safeSet('txt_lunch', t.lunch); safeSet('txt_victory', t.victory);
+    safeSet('txt_no_schedule', t.no_schedule);
     
-    safeSet('txt_stat_title', t.stat_title);
-    safeSet('txt_stat_done', t.stat_done);
-    safeSet('txt_stat_wait', t.stat_wait);
-    safeSet('txt_menu_stat', t.menu_stat);
+    // Stats & Tabs
+    safeSet('tab_shift', t.tab_shift); safeSet('tab_analytics', t.tab_analytics); safeSet('tab_lots', t.tab_lots);
+    safeSet('txt_stat_done', t.stat_done); safeSet('txt_stat_wait', t.stat_wait);
+    safeSet('txt_a_week', t.a_week); safeSet('txt_a_avg', t.a_avg); safeSet('txt_a_best', t.a_best);
+    safeSet('txt_s_done', t.s_done); safeSet('txt_s_wait', t.s_wait);
+    safeSet('txt_lots_info', t.lots_info);
+    
+    // Driver
+    safeSet('txt_btn_driver', t.btn_driver); safeSet('txt_drv_title', t.drv_title);
+
+    // Modals
+    safeSet('txt_login_title', t.login_title); safeSet('btn_login_enter', t.btn_login);
+    safeSet('txt_reg_title', t.reg_title); safeSet('btn_reg_send', t.btn_reg);
+    safeSet('btn_cancel_1', t.btn_cancel); safeSet('btn_cancel_2', t.btn_cancel);
+    safeSet('btn_to_reg', t.btn_to_reg); safeSet('btn_to_log', t.btn_to_log);
 
     const emptyMsg = document.querySelector('.empty-message');
     if (emptyMsg) emptyMsg.innerText = t.empty;
@@ -154,75 +175,136 @@ function backToLogin() {
     document.getElementById('modalLogin').classList.add('open');
 }
 
-// === УПРАВЛЕНИЕ СТАТИСТИКОЙ ===
+// === TABS & STATS LOGIC ===
+function switchTab(tabName) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
+    document.getElementById('content_' + tabName).classList.add('active');
+    document.getElementById('tab_' + tabName).classList.add('active');
+}
+
 function openStats() {
     document.getElementById('statsModal').classList.add('open');
-    loadStatistics();
+    loadStatistics(false); // Mode normal
+}
+function openDriverMode() {
+    document.getElementById('driverModal').classList.add('open');
+    loadStatistics(true); // Mode driver
 }
 function closeStats() {
     document.getElementById('statsModal').classList.remove('open');
 }
 
-async function loadStatistics() {
+async function loadStatistics(isDriverMode) {
     const doneList = document.getElementById('statDoneList');
-    const waitList = document.getElementById('statWaitList');
-    const doneCount = document.getElementById('statDoneCount');
-    const waitCount = document.getElementById('statWaitCount');
+    const waitList = isDriverMode ? document.getElementById('driverQueueList') : document.getElementById('statWaitList');
     
-    doneList.innerHTML = '<div style="color:#777; text-align:center;">Загрузка...</div>';
-    waitList.innerHTML = '<div style="color:#777; text-align:center;">Загрузка...</div>';
+    if(!isDriverMode) doneList.innerHTML = '<div style="color:#777;text-align:center;">Loading...</div>';
+    waitList.innerHTML = '<div style="color:#777;text-align:center;">Loading...</div>';
     
     try {
+        const t = TRANSLATIONS[determineEffectiveLang()] || TRANSLATIONS["RU"];
+        
+        // 1. Текущая смена
         const response = await fetch(`${scriptUrl}?nocache=${Date.now()}&mode=get_stats`);
         const data = await response.json();
         
-        const t = TRANSLATIONS[determineEffectiveLang()] || TRANSLATIONS["RU"];
-        
-        let doneHtml = "";
-        let waitHtml = "";
-        let dCount = 0;
-        let wCount = 0;
-        
+        let doneHtml = "", waitHtml = "", dCount = 0, wCount = 0;
         data.forEach(item => {
             let typeBadge = "";
-            let rawType = item.type ? item.type.trim() : "";
-            
-            if (rawType === "BS") typeBadge = `<span class="mini-badge bs">${t.type_bs}</span>`;
-            else if (rawType === "AS") typeBadge = `<span class="mini-badge as">${t.type_as}</span>`;
-            else if (rawType === "PS") typeBadge = `<span class="mini-badge ps">${t.type_ps}</span>`;
+            if (!isDriverMode) {
+                let rt = item.type ? item.type.trim() : "";
+                if (rt === "BS") typeBadge = `<span class="mini-badge bs">${t.type_bs}</span>`;
+                else if (rt === "AS") typeBadge = `<span class="mini-badge as">${t.type_as}</span>`;
+                else if (rt === "PS") typeBadge = `<span class="mini-badge ps">${t.type_ps}</span>`;
+            }
             
             if (item.status === "DONE") {
                 dCount++;
-                doneHtml += `
-                    <div class="stats-item done-item">
-                        <div class="stats-item-left">
-                            <div class="stats-item-id">${item.id} ${typeBadge}</div>
-                        </div>
-                        <div class="stats-item-time">🏁 ${item.time}</div>
-                    </div>`;
+                doneHtml += `<div class="stats-row"><div class="row-id"><span class="material-icons" style="color:#30D158;font-size:1rem;">check_circle</span> ${item.id} ${typeBadge}</div><div class="row-time">${item.time}</div></div>`;
             } else if (item.status === "WAIT") {
                 wCount++;
-                waitHtml += `
-                    <div class="stats-item wait-item">
-                        <div class="stats-item-left">
-                            <div class="stats-item-id">${item.id} ${typeBadge}</div>
-                        </div>
-                        <div class="stats-item-time">⏱ ${item.time}</div>
-                    </div>`;
+                let style = isDriverMode ? 'padding:15px 0; border-bottom:1px solid rgba(255,255,255,0.1); font-size:1.2rem;' : '';
+                waitHtml += `<div class="stats-row" style="${style}"><div class="row-id"><span class="material-icons" style="color:#777;font-size:1rem;">schedule</span> ${item.id} ${typeBadge}</div><div class="row-time">${item.time}</div></div>`;
             }
         });
         
-        doneCount.innerText = dCount;
-        waitCount.innerText = wCount;
+        if (!isDriverMode) {
+            document.getElementById('statDoneCount').innerText = dCount;
+            document.getElementById('statWaitCount').innerText = wCount;
+            document.getElementById('sumDone').innerText = dCount;
+            document.getElementById('sumWait').innerText = wCount;
+            
+            doneList.innerHTML = dCount > 0 ? doneHtml : '<div style="color:#555;text-align:center;padding:20px;">-</div>';
+            updateShiftChart(dCount, wCount);
+            loadHistory();
+        }
+        waitList.innerHTML = wCount > 0 ? waitHtml : '<div style="color:#555;text-align:center;padding:20px;">-</div>';
         
-        doneList.innerHTML = dCount > 0 ? doneHtml : '<div style="color:#555; text-align:center;">Пусто</div>';
-        waitList.innerHTML = wCount > 0 ? waitHtml : '<div style="color:#555; text-align:center;">Всё готово</div>';
+    } catch(e) { console.error(e); }
+}
+
+async function loadHistory() {
+    try {
+        const start = document.getElementById('dateStart').value;
+        const end = document.getElementById('dateEnd').value;
+        const url = `${scriptUrl}?nocache=${Date.now()}&mode=get_history${start ? '&start='+start : ''}${end ? '&end='+end : ''}`;
         
-    } catch(e) {
-        doneList.innerHTML = '<div style="color:red;">Ошибка</div>';
-        waitList.innerHTML = '<div style="color:red;">Ошибка</div>';
-        console.error(e);
-    }
+        const response = await fetch(url);
+        const data = await response.json();
+        const historyData = data.days;
+        const lotsData = data.lots;
+        
+        // 1. График
+        let totalVol = 0, totalAvg = 0, daysWithData = 0, bestTime = 999;
+        let labels = [], values = [];
+        // Сортировка по дате (backend может вернуть как попало)
+        historyData.sort((a, b) => a.date.localeCompare(b.date));
+        
+        historyData.forEach(day => {
+            labels.push(day.date); values.push(day.done); totalVol += day.done;
+            if (day.avgTime > 0) { totalAvg += day.avgTime; daysWithData++; if (day.avgTime < bestTime) bestTime = day.avgTime; }
+        });
+        
+        let finalAvg = daysWithData > 0 ? Math.round(totalAvg / daysWithData) : 0;
+        if (bestTime === 999) bestTime = 0;
+        
+        document.getElementById('val_week_total').innerText = totalVol;
+        document.getElementById('val_week_avg').innerHTML = `${finalAvg} <span style="font-size:1rem;opacity:0.5">min</span>`;
+        document.getElementById('val_week_best').innerHTML = `${bestTime} <span style="font-size:1rem;opacity:0.5">min</span>`;
+        updateHistoryChart(labels, values);
+
+        // 2. Лоты
+        let lotsHtml = "";
+        lotsData.forEach(lot => {
+            lotsHtml += `<div class="stats-row"><div class="row-id">${lot.name}</div><div class="row-time" style="color:white;font-weight:700;">${lot.count}</div></div>`;
+        });
+        document.getElementById('lotsList').innerHTML = lotsHtml || '<div style="color:#555;text-align:center;">No Data</div>';
+
+    } catch(e) { console.error("History Error", e); }
+}
+
+function updateShiftChart(done, wait) {
+    const ctx = document.getElementById('shiftChart').getContext('2d');
+    if (shiftChart) shiftChart.destroy();
+    shiftChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: { labels: ['Done', 'Queue'], datasets: [{ data: [done, wait], backgroundColor: ['#30D158', '#333'], borderWidth: 0 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, cutout: '75%' }
+    });
+}
+
+function updateHistoryChart(labels, data) {
+    const ctx = document.getElementById('historyChart').getContext('2d');
+    if (historyChart) historyChart.destroy();
+    historyChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{ label: 'Containers', data: data, borderColor: '#0A84FF', backgroundColor: 'rgba(10, 132, 255, 0.1)', fill: true, tension: 0.4 }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#888' } }, x: { grid: { display: false }, ticks: { color: '#888' } } } }
+    });
 }
 
 async function checkLogin() {
@@ -269,15 +351,6 @@ async function doRegister() {
     } catch(e) { showToast("Сбой сети", "error"); console.error(e); }
 }
 
-function launchVictoryConfetti() {
-     var duration = 5 * 60 * 1000; var end = Date.now() + duration;
-     (function frame() {
-         confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#ffc107', '#28a745', '#ffffff'] });
-         confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#ffc107', '#28a745', '#ffffff'] });
-         if (Date.now() < end) requestAnimationFrame(frame);
-     }());
-}
-
 updateLocalLangBtn();
 setInterval(() => {
     const d = new Date();
@@ -317,14 +390,20 @@ async function update() {
 
         let csvData = fullText;
         let adminMessage = "";
+        let driverState = "SHOW"; // Default
         
         if (fullText.includes("###LANG###")) {
             const parts = fullText.split("###LANG###");
-            const sLang = parts[1].trim(); 
+            const afterLang = parts[1].split("###DRIVER###");
+            const sLang = afterLang[0].trim();
             if (sLang && TRANSLATIONS[sLang]) serverLang = sLang;
+            if (afterLang.length > 1) driverState = afterLang[1].trim();
             csvData = parts[0];
         } else { if (!serverLang) serverLang = "RU"; }
         applyLanguage(determineEffectiveLang());
+
+        const drvBtn = document.getElementById('driverBtn');
+        if (driverState === "SHOW") drvBtn.classList.add('visible'); else drvBtn.classList.remove('visible');
 
         if (csvData.includes("###LUNCH###")) {
             const parts = csvData.split("###LUNCH###");
@@ -354,6 +433,13 @@ async function update() {
         const r1 = rows[0]; 
         const t = TRANSLATIONS[determineEffectiveLang()] || TRANSLATIONS["RU"]; 
 
+        if (r1 && r1[2] === "NO_SCHEDULE") {
+            document.body.classList.add('is-noschedule');
+            return;
+        } else {
+            document.body.classList.remove('is-noschedule');
+        }
+
         if (r1 && r1.length > 2) {
             const st = r1[0].trim();
             const btn = document.getElementById('sts');
@@ -372,7 +458,7 @@ async function update() {
             }
             if (total > 0 && done === total && !document.body.classList.contains('is-lunch')) {
                 if (!document.body.classList.contains('is-victory')) {
-                    document.body.classList.add('is-victory'); launchVictoryConfetti(); 
+                    document.body.classList.add('is-victory'); 
                     document.getElementById('victoryStat').innerText = `${done} / ${total}`;
                 }
             } else {
@@ -380,26 +466,15 @@ async function update() {
             }
             document.getElementById('nid').innerText = r1[2].trim();
             
-            // --- ЛОГИКА ДЛЯ СЛЕДУЮЩЕГО КОНТЕЙНЕРА (ИСПРАВЛЕНА ОШИБКА) ---
             const ninf = r1[3] ? r1[3].trim() : "";
             const idiv = document.getElementById('ninfo');
             
-            // Ищем время в строке (например, 08:00)
             const diffMinutes = calculateTimeDiff(ninf);
-            
-            // Если смогли посчитать разницу
             if (diffMinutes !== null) {
                 const prettyTime = formatFriendlyTime(Math.abs(diffMinutes));
-                
-                if (diffMinutes >= 0) {
-                    // Время еще не наступило (или сейчас)
-                    idiv.innerHTML = `⏱ <span class="time-text">${t.eta_prefix} ${prettyTime}</span>`;
-                } else {
-                    // Время уже прошло
-                    idiv.innerHTML = `⚠️ <span class="warn-text">${t.delay_prefix} ${prettyTime}</span>`;
-                }
+                if (diffMinutes >= 0) idiv.innerHTML = `⏱ <span class="time-text">${t.eta_prefix} ${prettyTime}</span>`;
+                else idiv.innerHTML = `⚠️ <span class="warn-text">${t.delay_prefix} ${prettyTime}</span>`;
             } else { 
-                // Если времени в ячейке нет (просто текст)
                 idiv.innerHTML = ninf; 
             }
         }
@@ -417,9 +492,7 @@ async function update() {
                      let drRaw = parts[2].trim().replace(/[,"]/g, '');
                      dur = parseInt(drRaw); if (isNaN(dur)) dur = 0;
                  }
-                 
                  let ws = parts[3] ? parts[3].trim() : ""; 
-                 
                  newDataMap.set(id, { time, dur, ws });
             }
         }
@@ -449,7 +522,6 @@ async function update() {
             if (data.ws === 'PS') badgeClass = 'badge-ps';
             let wsHtml = data.ws ? `<span class="badge ${badgeClass}">${data.ws}</span>` : '';
 
-            // --- КАРТОЧКА С ПОДПИСЯМИ ---
             let innerHTML = `
                 <div class="col-icon">${iconHtml}</div>
                 <div class="col-main">

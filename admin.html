@@ -5,267 +5,148 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Panel</title>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        /* === СТИЛИ ОСТАЮТСЯ ПРЕЖНИМИ (Liquid Glass) === */
-        :root { --glass-bg: rgba(255, 255, 255, 0.07); --glass-border: rgba(255, 255, 255, 0.12); --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37); --ios-blue: #0A84FF; --ios-green: #30D158; --ios-red: #FF453A; --text-main: #ffffff; --text-muted: #ebebf599; }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { margin: 0; min-height: 100vh; font-family: 'SF Pro Display', 'Roboto', sans-serif; background-color: #000; color: var(--text-main); display: flex; justify-content: center; align-items: flex-start; padding: 20px; overflow-x: hidden; position: relative; }
-        .orb { position: fixed; border-radius: 50%; filter: blur(80px); z-index: -1; animation: float 10s infinite ease-in-out; opacity: 0.6; }
-        .orb-1 { width: 300px; height: 300px; background: #4f29cd; top: -50px; left: -50px; } .orb-2 { width: 400px; height: 400px; background: #0A84FF; bottom: -100px; right: -50px; animation-delay: -5s; } .orb-3 { width: 200px; height: 200px; background: #FF453A; top: 40%; left: 40%; animation-delay: -2s; opacity: 0.4; }
-        @keyframes float { 0% { transform: translate(0, 0) scale(1); } 33% { transform: translate(30px, -50px) scale(1.1); } 66% { transform: translate(-20px, 20px) scale(0.9); } 100% { transform: translate(0, 0) scale(1); } }
-        
-        .container { width: 100%; max-width: 500px; background: var(--glass-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-radius: 24px; box-shadow: var(--glass-shadow); padding: 30px; margin-top: 20px; margin-bottom: 20px; }
-        .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 30px; position: relative; }
-        .header h2 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: 0.5px; }
-        .back-btn { background: rgba(255,255,255,0.1); border: none; color: var(--text-main); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; }
-        .section { margin-bottom: 25px; padding-bottom: 25px; border-bottom: 1px solid rgba(255,255,255,0.05); } .section:last-child { border-bottom: none; }
-        .label-row { display: flex; align-items: center; margin-bottom: 15px; } .label { color: var(--text-muted); font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
-        
-        .control-group { display: flex; gap: 10px; flex-wrap: wrap; }
-        .input, select.input { width: 100%; padding: 16px; background: rgba(0, 0, 0, 0.3); border: 1px solid transparent; color: white; border-radius: 14px; font-size: 17px; outline: none; transition: 0.3s; font-family: inherit; } .input:focus { background: rgba(0, 0, 0, 0.5); border-color: var(--ios-blue); }
-        .btn { flex: 1; min-width: 130px; padding: 16px; border: none; border-radius: 14px; font-weight: 600; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; color: white; font-family: inherit; }
-        .btn-glass { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.05); } .btn-glass.active { background: var(--ios-blue); border-color: var(--ios-blue); }
-        .btn-primary { background: var(--ios-blue); } .btn-success { background: var(--ios-green); color: black; } .btn-danger { background: rgba(255, 69, 58, 0.15); color: var(--ios-red); border: 1px solid rgba(255, 69, 58, 0.3); } .btn-dark { background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); }
-        .toast { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: rgba(30, 30, 30, 0.95); backdrop-filter: blur(20px); color: white; padding: 12px 24px; border-radius: 50px; font-size: 15px; font-weight: 600; z-index: 9999; transition: top 0.5s; box-shadow: 0 10px 40px rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 10px; width: max-content; } .toast.show { top: 20px; }
-        .status-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; } .toast.success .status-dot { background: var(--ios-green); } .toast.error .status-dot { background: var(--ios-red); }
-        @media (max-width: 480px) { body { padding: 10px; } .container { padding: 20px; } .btn { width: 100%; min-width: 100%; padding: 18px; } .row-mobile { flex-direction: row !important; } }
-
-        /* === СТИЛИ ДЛЯ ОКНА СТАТИСТИКИ === */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); display: none; align-items: center; justify-content: center; z-index: 5000; }
-        .modal-overlay.open { display: flex; }
-        .stats-box { width: 90%; max-width: 800px; height: 80vh; background: #1c1c1e; border-radius: 20px; display: flex; flex-direction: column; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 20px 60px rgba(0,0,0,0.8); overflow: hidden; }
-        .stats-header { padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); }
-        .stats-header h3 { margin: 0; font-size: 1.2rem; }
-        .close-stats { background: none; border: none; color: white; cursor: pointer; }
-        
-        .stats-content { flex: 1; overflow-y: auto; padding: 0; }
-        
-        .log-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-        .log-table th { background: rgba(0,0,0,0.3); padding: 12px; text-align: left; color: var(--text-muted); font-size: 0.8rem; position: sticky; top: 0; backdrop-filter: blur(10px); }
-        .log-table td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); color: #fff; }
-        .log-table tr:hover { background: rgba(255,255,255,0.03); }
-        
-        .badge-admin { color: var(--ios-green); font-weight: bold; }
-        .badge-guest { color: var(--ios-blue); }
-        .ip-addr { font-family: monospace; color: var(--text-muted); font-size: 0.85rem; }
+        :root { --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --accent: #3b82f6; --border: #334155; }
+        body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+        .admin-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 24px; width: 100%; max-width: 600px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        h2 { margin: 0 0 16px 0; font-size: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 10px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+        .input-group { display: flex; gap: 10px; margin-bottom: 10px; }
+        input, select { flex: 1; padding: 12px; background: #0f172a; border: 1px solid var(--border); color: white; border-radius: 8px; outline: none; font-size: 1rem; }
+        button { padding: 12px 20px; background: var(--accent); border: none; color: white; font-weight: 600; border-radius: 8px; cursor: pointer; transition: 0.2s; }
+        button:hover { filter: brightness(1.1); }
+        button.danger { background: #ef4444; }
+        button.logout { background: transparent; color: #94a3b8; padding: 5px; font-size: 0.9rem; }
+        button.logout:hover { color: white; }
+        .log-list { max-height: 300px; overflow-y: auto; font-family: monospace; font-size: 0.9rem; }
+        .log-item { padding: 8px; border-bottom: 1px solid var(--border); color: #94a3b8; }
+        .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #10b981; color: white; padding: 10px 20px; border-radius: 50px; opacity: 0; transition: 0.3s; pointer-events: none; }
+        .toast.show { opacity: 1; bottom: 40px; }
+        .toggle-row { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid var(--border); }
+        .switch { position: relative; display: inline-block; width: 50px; height: 28px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #334155; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--accent); }
+        input:checked + .slider:before { transform: translateX(22px); }
     </style>
-    
-    <script>
-        const auth = JSON.parse(sessionStorage.getItem('warehouse_auth'));
-        if (!auth || !auth.user) { window.location.replace("index.html"); }
-    </script>
 </head>
-<body style="display: none;">
+<body>
 
-    <div class="orb orb-1"></div>
-    <div class="orb orb-2"></div>
-    <div class="orb orb-3"></div>
-
-    <div id="toast" class="toast"><div class="status-dot"></div><span id="toastMsg"></span></div>
-
-    <div class="modal-overlay" id="statsModal">
-        <div class="stats-box">
-            <div class="stats-header">
-                <h3>Журнал посещений (Последние 50)</h3>
-                <button class="close-stats" onclick="closeStats()"><span class="material-icons">close</span></button>
-            </div>
-            <div class="stats-content">
-                <table class="log-table">
-                    <thead>
-                        <tr>
-                            <th>ВРЕМЯ</th>
-                            <th>ПОЛЬЗОВАТЕЛЬ</th>
-                            <th>IP АДРЕС</th>
-                            <th>УСТРОЙСТВО</th>
-                        </tr>
-                    </thead>
-                    <tbody id="statsBody">
-                        <tr><td colspan="4" style="text-align:center; padding: 20px;">Загрузка...</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <div class="container">
-        <div class="header">
-            <button class="back-btn" onclick="goBack()"><span class="material-icons">arrow_back</span></button>
-            <h2>Admin Control</h2>
-            <button class="back-btn" onclick="openStats()" style="background: var(--ios-blue); color: white;"><span class="material-icons">analytics</span></button>
+    <div class="admin-card">
+        <h2>
+            <span><span class="material-icons" style="vertical-align:middle">settings</span> Управление</span>
+            <button class="logout" onclick="logout()">Выход <span class="material-icons" style="vertical-align:middle; font-size:1rem;">logout</span></button>
+        </h2>
+        
+        <div class="toggle-row">
+            <span>Кнопка водителей</span>
+            <label class="switch"><input type="checkbox" id="driverToggle" onchange="toggleDriver(this)"><span class="slider"></span></label>
         </div>
 
-        <div class="section">
-            <div class="label-row"><span class="label">Глобальный язык</span></div>
-            <div class="control-group row-mobile">
-                <button class="btn btn-glass" id="btnRu" onclick="setLang('RU')">🇷🇺 RU</button>
-                <button class="btn btn-glass" id="btnEn" onclick="setLang('EN_CN')">🇬🇧 EN / 🇨🇳 CN</button>
+        <div style="margin-top: 15px;">
+            <label style="display:block; margin-bottom:5px; color:#94a3b8;">Сообщение (На экран)</label>
+            <div class="input-group">
+                <input type="text" id="msgText" placeholder="Текст...">
+                <input type="number" id="msgDur" placeholder="Мин" style="max-width: 80px;" value="60">
+                <button onclick="sendMsg()">Отправить</button>
             </div>
+            <button class="danger" style="width:100%" onclick="clearMsg()">Удалить сообщение</button>
         </div>
 
-        <div class="section">
-            <div class="label-row"><span class="label">Сообщение на экран</span></div>
-            <div class="control-group">
-                <input type="text" id="msgInput" class="input" placeholder="Введите текст...">
-                <select id="timeInput" class="input">
-                    <option value="5">5 мин</option>
-                    <option value="15">15 мин</option>
-                    <option value="60">1 час</option>
-                    <option value="480">Смена (8ч)</option>
+        <div style="margin-top: 15px;">
+            <label style="display:block; margin-bottom:5px; color:#94a3b8;">Обед (Start - End)</label>
+            <div class="input-group">
+                <input type="time" id="lunchStart">
+                <input type="time" id="lunchEnd">
+                <button onclick="setLunch()">Set</button>
+            </div>
+        </div>
+        
+        <div style="margin-top: 15px;">
+            <label style="display:block; margin-bottom:5px; color:#94a3b8;">Язык системы</label>
+            <div class="input-group">
+                <select id="langSelect">
+                    <option value="RU">Русский</option>
+                    <option value="EN_CN">Англ/Кит</option>
                 </select>
-                <button class="btn btn-success" onclick="sendMsg()"><span class="material-icons">send</span></button>
-                <button class="btn btn-danger" onclick="clearMsg()" style="flex: 0.4;"><span class="material-icons">delete</span></button>
+                <button onclick="setLang()">Set</button>
             </div>
-        </div>
-
-        <div class="section">
-            <div class="label-row"><span class="label">Настройка обеда</span></div>
-            <div class="control-group row-mobile">
-                <input type="time" id="lStart" class="input" value="11:30">
-                <input type="time" id="lEnd" class="input" value="12:00">
-            </div>
-            <div class="control-group" style="margin-top: 12px;">
-                <button class="btn btn-primary" onclick="saveLunch()">Сохранить время</button>
-            </div>
-        </div>
-
-        <div class="section" style="border:none; padding-bottom: 0;">
-            <div class="label-row"><span class="label">Инструменты</span></div>
-            <button class="btn btn-dark" onclick="testLunch()"><span class="material-icons">timer</span> Тест обеда (10 сек)</button>
         </div>
     </div>
+
+    <div class="admin-card">
+        <h2><span class="material-icons" style="vertical-align:middle">history</span> Логи</h2>
+        <button onclick="loadLogs()" style="width:100%; background:#334155; margin-bottom:10px;">Обновить</button>
+        <div class="log-list" id="logList">Загрузка...</div>
+    </div>
+
+    <div class="toast" id="toast">Готово!</div>
 
     <script>
-        // ВАША ССЫЛКА
-        const scriptUrl = 'https://script.google.com/macros/s/AKfycbz-hZf4q3hcBoNi98-7AkimLfigpNZ5jRliYMe9ckPsUzHjHu9LT-cDqvb3bdxusH_tdA/exec';
+        // ВСТАВЬТЕ ССЫЛКУ СЮДА
+        const scriptUrl = 'https://script.google.com/macros/s/AKfycbzIzPaYqxLdSCrMxJsvCuFylVZc0vRRqad1KJG3cBvy9Gq4hYgT-jGh92j3f231_BzeUQ/exec';
+        
+        const auth = JSON.parse(sessionStorage.getItem('warehouse_auth'));
+        if (!auth) window.location.href = "index.html";
 
-        if (auth && auth.user) { document.body.style.display = 'flex'; }
-        function goBack() { window.location.href = "index.html"; }
-
-        function showToast(msg, type) {
+        function showToast(msg) {
             const t = document.getElementById('toast');
-            document.getElementById('toastMsg').innerText = msg;
-            t.className = `toast show ${type}`;
-            setTimeout(() => t.className = 'toast', 6000);
+            t.innerText = msg; t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 3000);
         }
 
-        function highlightLang(lang) {
-            document.getElementById('btnRu').className = lang==='RU' ? 'btn btn-glass active' : 'btn btn-glass';
-            document.getElementById('btnEn').className = lang==='EN_CN' ? 'btn btn-glass active' : 'btn btn-glass';
+        function logout() {
+            sessionStorage.removeItem('warehouse_auth');
+            window.location.href = "index.html";
         }
 
-        async function api(mode, params = {}) {
-            const qs = new URLSearchParams({
-                mode: mode, user: auth.user, pass: auth.pass, nocache: Date.now(), ...params
-            });
-            try {
-                const res = await fetch(`${scriptUrl}?${qs}`);
-                return await res.text();
-            } catch(e) { return "NETWORK_ERROR"; }
+        async function api(params) {
+            const qs = new URLSearchParams({ ...params, user: auth.user, pass: auth.pass, nocache: Date.now() });
+            const res = await fetch(`${scriptUrl}?${qs}`);
+            return await res.text();
         }
 
-        async function setLang(lang) {
-            highlightLang(lang);
-            showToast("Сохранение...", "success");
-            const res = await api('set_lang', {lang});
-            if(res.includes("UPDATED")) showToast("Язык изменен", "success");
-            else showToast("ОШИБКА: " + res, "error");
+        async function toggleDriver(el) {
+            const state = el.checked ? "SHOW" : "HIDE";
+            await api({ mode: 'toggle_driver', state: state });
+            showToast("Кнопка водителя: " + state);
         }
 
         async function sendMsg() {
-            const t = document.getElementById('msgInput').value;
-            const d = document.getElementById('timeInput').value;
-            if(!t) return showToast("Введите текст", "error");
-            showToast("Отправка...", "success");
-            const res = await api('write', {text: t, dur: d});
-            if(res.includes("SUCCESS")) showToast("Опубликовано", "success");
-            else showToast("ОШИБКА: " + res, "error");
+            const text = document.getElementById('msgText').value;
+            const dur = document.getElementById('msgDur').value;
+            await api({ mode: 'write', text: text, dur: dur });
+            showToast("Отправлено");
         }
 
         async function clearMsg() {
-            showToast("Удаление...", "success");
-            const res = await api('write', {text: "", dur: 0});
-            if(res.includes("SUCCESS")) {
-                document.getElementById('msgInput').value = "";
-                showToast("Удалено", "success");
-            } else showToast("ОШИБКА: " + res, "error");
+            await api({ mode: 'clear_msg' });
+            document.getElementById('msgText').value = "";
+            showToast("Удалено");
         }
 
-        async function saveLunch() {
-            const s = document.getElementById('lStart').value;
-            const e = document.getElementById('lEnd').value;
-            showToast("Сохранение...", "success");
-            const res = await api('set_lunch', {start: s, end: e});
-            if(res.includes("UPDATED")) showToast("Обед обновлен", "success");
-            else showToast("ОШИБКА: " + res, "error");
+        async function setLunch() {
+            const s = document.getElementById('lunchStart').value;
+            const e = document.getElementById('lunchEnd').value;
+            await api({ mode: 'set_lunch', start: s, end: e });
+            showToast("Обед обновлен");
         }
 
-        function testLunch() {
-            localStorage.setItem('lunch_test_until', Date.now() + 10000);
-            showToast("Тест запущен...", "success");
-            setTimeout(() => { window.location.href = "index.html"; }, 1500);
+        async function setLang() {
+            const l = document.getElementById('langSelect').value;
+            await api({ mode: 'set_lang', lang: l });
+            showToast("Язык обновлен");
         }
 
-        // === СТАТИСТИКА ===
-        function openStats() {
-            document.getElementById('statsModal').classList.add('open');
-            loadStatsData();
-        }
-        function closeStats() {
-            document.getElementById('statsModal').classList.remove('open');
+        async function loadLogs() {
+            const data = await api({ mode: 'get_logs' });
+            const list = document.getElementById('logList');
+            if (data === "ACCESS_DENIED") { list.innerHTML = "Нет доступа"; return; }
+            list.innerHTML = data.split('\n').map(l => `<div class="log-item">${l}</div>`).join('');
         }
 
-        async function loadStatsData() {
-            const tbody = document.getElementById('statsBody');
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 20px;">Загрузка данных...</td></tr>';
-            
-            const raw = await api('get_logs');
-            
-            if (raw === "ACCESS_DENIED") {
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color: var(--ios-red);">⛔ Нет прав доступа (Требуется роль ADMIN)</td></tr>';
-                return;
-            }
-            if (!raw || raw.trim() === "" || raw.includes("NO_LOGS")) {
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color: var(--text-muted);">Журнал пуст</td></tr>';
-                return;
-            }
-
-            const rows = raw.trim().split('\n');
-            let html = "";
-            
-            rows.forEach(line => {
-                const cols = line.split('|');
-                // Ожидаем: TIME | USER | UA | IP
-                const time = cols[0] || "-";
-                const userRaw = cols[1] || "-";
-                const uaRaw = cols[2] || "-";
-                const ip = cols[3] || "-";
-
-                // Красивое отображение пользователя
-                let userDisplay = userRaw;
-                if(userRaw.includes("admin")) userDisplay = `<span class="badge-admin">ADMIN</span>`;
-                if(userRaw.includes("GUEST")) userDisplay = `<span class="badge-guest">GUEST</span>`;
-
-                // Упрощение User Agent (вырезаем лишнее)
-                let dev = "PC";
-                if(uaRaw.includes("iPhone")) dev = "iPhone";
-                else if(uaRaw.includes("Android")) dev = "Android";
-                else if(uaRaw.includes("Macintosh")) dev = "Mac";
-                else if(uaRaw.includes("Windows")) dev = "Windows PC";
-                else if(uaRaw.includes("TV") || uaRaw.includes("Web0S")) dev = "Smart TV";
-
-                html += `
-                    <tr>
-                        <td style="white-space:nowrap; color:#fff;">${time}</td>
-                        <td>${userDisplay} <span style="font-size:0.8em; opacity:0.7;">${userRaw.replace("admin","").replace("GUEST","")}</span></td>
-                        <td class="ip-addr">${ip}</td>
-                        <td title="${uaRaw}">${dev}</td>
-                    </tr>
-                `;
-            });
-            
-            tbody.innerHTML = html;
-        }
+        loadLogs();
     </script>
 </body>
 </html>
