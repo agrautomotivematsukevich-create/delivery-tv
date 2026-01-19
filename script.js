@@ -1,6 +1,6 @@
 // ================================================================
 // ВСТАВЬТЕ ВАШУ ССЫЛКУ НИЖЕ:
-const scriptUrl = 'https://script.google.com/macros/s/AKfycbzIzPaYqxLdSCrMxJsvCuFylVZc0vRRqad1KJG3cBvy9Gq4hYgT-jGh92j3f231_BzeUQ/exec'; 
+const scriptUrl = 'https://script.google.com/macros/s/AKfycbwDT5Jb-duRBA9Wyi9KSKq7xSt5Cz36c-CMN3gCvT33HnLl_eRT5uaV-5rkOy-PhqTNiw/exec'; 
 // ================================================================
 
 const CONTAINER_IMG_SRC = 'container.svg'; 
