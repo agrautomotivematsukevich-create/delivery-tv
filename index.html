@@ -2,8 +2,9 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Warehouse Dashboard</title>
+    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons&display=block" rel="stylesheet">
@@ -11,9 +12,9 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <style>
-        /* === КРИТИЧЕСКИЕ СТИЛИ ЗАГРУЗКИ (ДОЛЖНЫ БЫТЬ ПЕРВЫМИ) === */
+        /* === 1. КРИТИЧЕСКИЕ СТИЛИ (ЗАГРУЗКА И ИКОНКИ) === */
         
-        /* Исправление мелькания текста иконок */
+        /* Скрываем текст иконок до загрузки шрифта */
         .material-icons {
             font-family: 'Material Icons';
             font-weight: normal;
@@ -32,26 +33,18 @@
             font-feature-settings: 'liga';
         }
 
-        /* Экран загрузки */
+        /* Экран приветствия */
         #intro {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background-color: #000000; /* Глубокий черный, чтобы скрыть контент */
-            z-index: 999999; /* Поверх всего */
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            background-color: #000000; /* Черный фон перекрывает всё */
+            z-index: 999999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
             transition: opacity 0.8s ease-in-out, transform 0.8s ease-in-out;
-            opacity: 1; /* Виден по умолчанию */
+            opacity: 1;
         }
-
-        #intro.hidden {
-            opacity: 0;
-            pointer-events: none;
-            transform: scale(1.1); /* Красивое исчезновение */
-        }
-
+        #intro.hidden { opacity: 0; pointer-events: none; transform: scale(1.1); }
+        
         .intro-content { text-align: center; opacity: 0; animation: fadeIn 1s ease-out forwards 0.2s; }
         .intro-logo { font-size: 6rem; margin-bottom: 1rem; color: #0A84FF; text-shadow: 0 0 30px rgba(10, 132, 255, 0.5); }
         .intro-title { font-size: 3rem; font-weight: 900; letter-spacing: 2px; margin-bottom: 0.5rem; background: linear-gradient(90deg, #fff, #888); -webkit-background-clip: text; background-clip: text; color: transparent; }
@@ -62,24 +55,26 @@
         @keyframes fadeIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
         @keyframes loading { 0% { left: -50%; } 100% { left: 100%; } }
 
-        /* === ОСНОВНЫЕ СТИЛИ (LIQUID GLASS) === */
+        /* === 2. ОСНОВНЫЕ СТИЛИ (LIQUID GLASS) === */
         :root {
             --ios-bg: #000000;
             --glass-bg: rgba(30, 30, 30, 0.4);
             --glass-border: rgba(255, 255, 255, 0.1);
             --text-primary: #ffffff;
             --text-secondary: rgba(255, 255, 255, 0.5);
+            
             --accent-green: #30D158;
             --accent-yellow: #FFD60A;
             --accent-red: #FF453A;
             --accent-blue: #0A84FF;
             --accent-purple: #BF5AF2;
             --accent-gold: #FFD700;
+            
             --shadow-glass: 0 20px 40px rgba(0,0,0,0.6);
         }
 
         * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
-        html { font-size: 1.4vh; } 
+        html { font-size: 1.4vh; height: 100%; } 
         @media (min-aspect-ratio: 16/9) { html { font-size: 1.8vh; } }
 
         body { 
@@ -89,13 +84,13 @@
             display: flex; flex-direction: column; padding: 1.5rem; 
         }
 
-        /* ORBS BACKGROUND */
+        /* ФОН */
         .orb { position: fixed; border-radius: 50%; filter: blur(90px); z-index: -1; animation: float 10s infinite ease-in-out; opacity: 0.6; }
         .orb-1 { width: 60vw; height: 60vw; background: radial-gradient(circle, #1a237e 0%, transparent 70%); top: -20%; left: -20%; }
         .orb-2 { width: 50vw; height: 50vw; background: radial-gradient(circle, #4a148c 0%, transparent 70%); bottom: -20%; right: -20%; animation-delay: -5s; }
         @keyframes float { 0% { transform: translate(0, 0) scale(1); } 50% { transform: translate(30px, -50px) scale(1.1); } 100% { transform: translate(0, 0) scale(1); } }
 
-        /* GLASS */
+        /* СТЕКЛО */
         .glass-panel { background: var(--glass-bg); backdrop-filter: blur(30px) saturate(120%); border: 1px solid var(--glass-border); border-radius: 1.8rem; box-shadow: var(--shadow-glass); }
 
         /* HEADER */
@@ -105,6 +100,7 @@
         .header-title-wrapper { position: relative; cursor: pointer; display: flex; align-items: center; gap: 8px; background: transparent; border: none; padding: 0.5rem 0; }
         .header-title { font-size: 2.2rem; font-weight: 800; letter-spacing: 0.5px; text-shadow: 0 0 20px rgba(255,255,255,0.1); transition: 0.3s; color: white; }
         .header-title-wrapper:hover .header-title { text-shadow: 0 0 30px rgba(10, 132, 255, 0.6); color: var(--accent-blue); }
+        
         .header-dropdown { position: absolute; top: 100%; left: 0; background: rgba(20, 20, 20, 0.95); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-radius: 12px; padding: 0.5rem; min-width: 220px; opacity: 0; transform: translateY(-10px); pointer-events: none; transition: all 0.3s; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .header-title-wrapper:hover .header-dropdown { opacity: 1; transform: translateY(0); pointer-events: auto; }
         .dropdown-item { display: flex; align-items: center; gap: 10px; padding: 12px 15px; border-radius: 8px; color: var(--text-primary); font-weight: 600; transition: 0.2s; cursor: pointer; }
@@ -125,10 +121,11 @@
         .clock { font-size: 2.2rem; font-weight: 800; }
         .date { font-size: 1rem; color: var(--text-secondary); margin-top: 4px; }
 
-        /* GRID (FIXED RATIO) */
+        /* === 3. СЕТКА (GRID) === */
+        /* На ПК левая панель фиксирована 380px, правая занимает остаток */
         .main-grid { display: grid; grid-template-columns: 380px 1fr; gap: 2rem; flex: 1; min-height: 0; }
 
-        /* LEFT PANEL */
+        /* ЛЕВАЯ ПАНЕЛЬ */
         .left-panel { display: flex; flex-direction: column; align-items: center; justify-content: space-between; text-align: center; padding: 2.5rem 2rem; height: 100%; box-sizing: border-box; }
         .progress-wrapper { flex: 1; display: flex; align-items: center; justify-content: center; width: 100%; }
         .progress-container { position: relative; width: 90%; padding-bottom: 90%; height: 0; }
@@ -143,7 +140,7 @@
         .status-btn.wait { background: var(--accent-yellow); color: black; border-color: transparent; }
         .section-label { font-size: 0.9rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 0.5rem; width: 100%; text-align: left; letter-spacing: 1px; }
 
-        /* RIGHT PANEL */
+        /* ПРАВАЯ ПАНЕЛЬ */
         .right-panel { display: flex; flex-direction: column; gap: 1.5rem; height: 100%; min-height: 0; }
         .sub-card { background: var(--glass-bg); backdrop-filter: blur(25px); border: 1px solid var(--glass-border); border-radius: 1.5rem; padding: 1.5rem; display: flex; flex-direction: column; }
         .next-id { font-size: 4.5rem; font-weight: 900; line-height: 1; margin: 0.5rem 0; letter-spacing: -1px; }
@@ -172,6 +169,7 @@
         .empty-message { text-align: center; color: var(--text-secondary); margin-top: 2rem; font-size: 1.5rem; }
         .copyright-footer { text-align: center; font-size: 0.8rem; font-weight: 500; color: rgba(255, 255, 255, 0.2); margin-top: 0.5rem; flex-shrink: 0; letter-spacing: 0.5px; }
 
+        /* ОСОБЫЕ БЛОКИ */
         .no-schedule-block, .victory-block, .lunch-block { display: none; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; background: var(--glass-bg); backdrop-filter: blur(25px); border-radius: 1.5rem; flex: 1; border: 1px solid var(--glass-border); }
         body.is-noschedule .no-schedule-block { display: flex !important; }
         body.is-noschedule .next-block, body.is-noschedule .list-block, body.is-noschedule .victory-block, body.is-noschedule .lunch-block { display: none !important; }
@@ -194,8 +192,13 @@
         .admin-trigger { position: fixed; top: 1rem; right: 1rem; color: rgba(255,255,255,0.2); font-size: 1.5rem; cursor: pointer; z-index: 2000; }
         .admin-toast { position: fixed; top: -5rem; left: 50%; transform: translateX(-50%); background: rgba(50,50,50,0.9); padding: 0.8rem 1.5rem; border-radius: 2rem; font-size: 1rem; font-weight: 600; z-index: 6000; transition: top 0.5s; display: flex; align-items: center; gap: 0.8rem; } .admin-toast.show { top: 2rem; }
 
-        /* === MODALS (FIXED) === */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(20px); display: none; align-items: center; justify-content: center; z-index: 3000; } .modal-overlay.open { display: flex; }
+        /* === 4. МОДАЛЬНЫЕ ОКНА (ЦЕНТР + ФИКСАЦИЯ) === */
+        .modal-overlay { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(20px); 
+            display: none; align-items: center; justify-content: center; z-index: 3000; 
+        } 
+        .modal-overlay.open { display: flex; }
         .modal-box { background: #1c1c1e; padding: 2rem; border-radius: 1.5rem; width: 90%; max-width: 400px; text-align: center; border: 1px solid rgba(255,255,255,0.15); box-shadow: 0 20px 60px rgba(0,0,0,0.7); display: flex; flex-direction: column; gap: 1rem; }
         .modal-box h2 { margin: 0 0 0.5rem 0; font-size: 1.6rem; font-weight: 700; color: white; }
         .modal-input { width: 100%; padding: 14px; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.1); color: white; border-radius: 12px; font-size: 1.1rem; outline: none; box-sizing: border-box; transition: 0.2s; font-family: inherit; }
@@ -240,6 +243,7 @@
         .a-value { font-size: 2.5rem; font-weight: 900; color: white; }
         .a-graph { background: rgba(0,0,0,0.3); border-radius: 1.5rem; padding: 1.5rem; position: relative; height: 300px; }
 
+        /* === 5. МОБИЛЬНАЯ АДАПТАЦИЯ (ВЕРТИКАЛЬНАЯ КОЛОНКА) === */
         @media (max-width: 768px) {
             body { height: auto; overflow-y: auto; padding-bottom: 5rem; }
             .header { flex-direction: column; align-items: flex-start; gap: 0.5rem; height: auto; margin-bottom: 1.5rem; } 
@@ -257,17 +261,21 @@
             .copyright-footer { font-size: 0.7rem; padding-bottom: 1rem; }
             .intro-logo { font-size: 4rem; } .intro-title { font-size: 2rem; }
             
+            /* Кнопка водителя на телефоне */
             .driver-btn.visible { 
                 position: fixed; bottom: 20px; right: 20px; top: auto;
                 opacity: 1; background: var(--accent-blue); color: white; padding: 15px 25px; 
                 box-shadow: 0 10px 30px rgba(10,132,255,0.5); border-radius: 50px;
                 z-index: 5000; font-size: 1.1rem; border: none;
             }
-            .driver-btn .btn-text { color: white; }
-            .stats-big-box { height: 95vh; width: 100%; border-radius: 20px 20px 0 0; position: absolute; bottom: 0; }
+            .driver-btn .btn-text { color: white; display: block; }
+            
+            /* Адаптация статистики */
+            .stats-big-box { height: 95vh; width: 100%; border-radius: 20px 20px 0 0; position: fixed; bottom: 0; top: auto; max-width: none; }
             .shift-layout { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
             .shift-summary { display: none; }
             .analytics-cards { grid-template-columns: 1fr; }
+            .date-filter { flex-wrap: wrap; }
         }
     </style>
 </head>
@@ -275,7 +283,7 @@
 
     <div class="intro-overlay" id="intro">
         <div class="intro-content">
-            <div class="intro-logo"><span class="material-icons">inventory_2</span></div>
+            <div class="intro-logo"><span class="material-icons" style="font-size: inherit;">inventory_2</span></div>
             <div class="intro-title">AGM LOGISTICS</div>
             <div class="intro-subtitle">Warehouse Monitoring System</div>
             <div class="intro-loader"></div>
@@ -283,14 +291,12 @@
     </div>
 
     <script>
-        // Wait for window load (includes fonts)
         window.addEventListener('load', () => {
             setTimeout(() => {
                 const intro = document.getElementById('intro');
                 if(intro) intro.classList.add('hidden');
-                // Remove from DOM after transition
                 setTimeout(() => { if(intro) intro.remove(); }, 1000);
-            }, 2500); // Wait 2.5s for fonts/icons to settle
+            }, 2500);
         });
     </script>
 
