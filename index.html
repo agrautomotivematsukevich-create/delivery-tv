@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Dashboard</title>
+    <title>Warehouse Dashboard</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,237 +12,424 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <style>
-        /* === 1. ORIGINAL LIQUID GLASS THEME === */
+        /* === 1. КРИТИЧЕСКИЕ СТИЛИ (ЗАГРУЗКА И ИКОНКИ) === */
+        
+        /* Скрываем текст иконок до загрузки шрифта */
+        .material-icons {
+            font-family: 'Material Icons';
+            font-weight: normal;
+            font-style: normal;
+            font-size: 24px;
+            display: inline-block;
+            line-height: 1;
+            text-transform: none;
+            letter-spacing: normal;
+            word-wrap: normal;
+            white-space: nowrap;
+            direction: ltr;
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
+            -moz-osx-font-smoothing: grayscale;
+            font-feature-settings: 'liga';
+        }
+
+        /* Экран приветствия */
+        #intro {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: #000000; /* Черный фон перекрывает всё */
+            z-index: 999999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: opacity 0.8s ease-in-out, transform 0.8s ease-in-out;
+            opacity: 1;
+        }
+        #intro.hidden { opacity: 0; pointer-events: none; transform: scale(1.1); }
+        
+        .intro-content { text-align: center; opacity: 0; animation: fadeIn 1s ease-out forwards 0.2s; }
+        .intro-logo { font-size: 6rem; margin-bottom: 1rem; color: #0A84FF; text-shadow: 0 0 30px rgba(10, 132, 255, 0.5); }
+        .intro-title { font-size: 3rem; font-weight: 900; letter-spacing: 2px; margin-bottom: 0.5rem; background: linear-gradient(90deg, #fff, #888); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .intro-subtitle { font-size: 1.2rem; color: rgba(255,255,255,0.5); letter-spacing: 4px; text-transform: uppercase; font-family: 'Roboto', sans-serif; }
+        .intro-loader { width: 200px; height: 2px; background: rgba(255,255,255,0.1); margin: 3rem auto 0; position: relative; overflow: hidden; border-radius: 2px; }
+        .intro-loader::after { content: ''; position: absolute; top: 0; left: 0; width: 50%; height: 100%; background: #0A84FF; box-shadow: 0 0 10px #0A84FF; animation: loading 2s infinite ease-in-out; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+        @keyframes loading { 0% { left: -50%; } 100% { left: 100%; } }
+
+        /* === 2. ОСНОВНЫЕ СТИЛИ (LIQUID GLASS) === */
         :root {
-            --bg-color: #050505;
-            --glass-bg: rgba(255, 255, 255, 0.03);
-            --glass-border: rgba(255, 255, 255, 0.05);
-            --text-main: #ffffff;
-            --text-muted: rgba(255, 255, 255, 0.4);
+            --ios-bg: #000000;
+            --glass-bg: rgba(30, 30, 30, 0.4);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.5);
             
-            --accent-green: #30D158; /* Apple Green */
-            --accent-yellow: #FFD60A; /* Apple Yellow */
-            --accent-red: #FF453A;    /* Apple Red */
-            --accent-blue: #0A84FF;   /* Apple Blue */
+            --accent-green: #30D158;
+            --accent-yellow: #FFD60A;
+            --accent-red: #FF453A;
+            --accent-blue: #0A84FF;
+            --accent-purple: #BF5AF2;
             --accent-gold: #FFD700;
             
-            --shadow: 0 20px 40px rgba(0,0,0,0.4);
+            --shadow-glass: 0 20px 40px rgba(0,0,0,0.6);
         }
 
         * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
-        
+        html { font-size: 1.4vh; height: 100%; } 
+        @media (min-aspect-ratio: 16/9) { html { font-size: 1.8vh; } }
+
         body { 
-            background-color: var(--bg-color); 
-            color: var(--text-main); 
-            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif; 
+            background-color: var(--ios-bg); color: var(--text-primary); 
+            font-family: 'SF Pro Display', sans-serif; 
             margin: 0; height: 100vh; width: 100vw; overflow: hidden; 
-            display: flex; flex-direction: column; padding: 2rem; 
+            display: flex; flex-direction: column; padding: 1.5rem; 
         }
 
-        .material-icons { vertical-align: middle; }
+        /* ФОН */
+        .orb { position: fixed; border-radius: 50%; filter: blur(90px); z-index: -1; animation: float 10s infinite ease-in-out; opacity: 0.6; }
+        .orb-1 { width: 60vw; height: 60vw; background: radial-gradient(circle, #1a237e 0%, transparent 70%); top: -20%; left: -20%; }
+        .orb-2 { width: 50vw; height: 50vw; background: radial-gradient(circle, #4a148c 0%, transparent 70%); bottom: -20%; right: -20%; animation-delay: -5s; }
+        @keyframes float { 0% { transform: translate(0, 0) scale(1); } 50% { transform: translate(30px, -50px) scale(1.1); } 100% { transform: translate(0, 0) scale(1); } }
 
-        /* === 2. ФОНОВЫЕ ЭФФЕКТЫ (Вернул шары) === */
-        .orb { position: fixed; border-radius: 50%; filter: blur(100px); z-index: -1; opacity: 0.4; pointer-events: none; }
-        .orb-1 { width: 60vw; height: 60vw; background: radial-gradient(circle, #1a237e 0%, transparent 70%); top: -20%; left: -20%; animation: float 15s infinite ease-in-out; }
-        .orb-2 { width: 50vw; height: 50vw; background: radial-gradient(circle, #311b92 0%, transparent 70%); bottom: -20%; right: -20%; animation: float 18s infinite ease-in-out reverse; }
-        @keyframes float { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(30px, -30px); } }
+        /* СТЕКЛО */
+        .glass-panel { background: var(--glass-bg); backdrop-filter: blur(30px) saturate(120%); border: 1px solid var(--glass-border); border-radius: 1.8rem; box-shadow: var(--shadow-glass); }
 
-        /* === 3. HEADER === */
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-shrink: 0; height: 3rem; z-index: 10; }
-        .header-left { display: flex; align-items: center; gap: 1.5rem; }
+        /* HEADER */
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-shrink: 0; height: 4rem; z-index: 100; }
+        .header-left { display: flex; align-items: center; gap: 1.5rem; position: relative; }
         
-        .header-title-wrapper { display: flex; align-items: center; gap: 10px; cursor: pointer; }
-        .header-title { font-size: 2.5rem; font-weight: 900; letter-spacing: 0.5px; }
+        .header-title-wrapper { position: relative; cursor: pointer; display: flex; align-items: center; gap: 8px; background: transparent; border: none; padding: 0.5rem 0; }
+        .header-title { font-size: 2.2rem; font-weight: 800; letter-spacing: 0.5px; text-shadow: 0 0 20px rgba(255,255,255,0.1); transition: 0.3s; color: white; }
+        .header-title-wrapper:hover .header-title { text-shadow: 0 0 30px rgba(10, 132, 255, 0.6); color: var(--accent-blue); }
         
-        /* Кнопки в хедере */
-        .glass-btn { 
-            display: flex; align-items: center; gap: 8px; 
-            background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); 
-            padding: 8px 16px; border-radius: 20px; cursor: pointer; transition: 0.3s; 
-        }
-        .glass-btn:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); }
-        .glass-btn span { font-size: 0.9rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
-        .glass-btn .material-icons { font-size: 1.1rem; color: var(--text-muted); }
+        .header-dropdown { position: absolute; top: 100%; left: 0; background: rgba(20, 20, 20, 0.95); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-radius: 12px; padding: 0.5rem; min-width: 220px; opacity: 0; transform: translateY(-10px); pointer-events: none; transition: all 0.3s; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .header-title-wrapper:hover .header-dropdown { opacity: 1; transform: translateY(0); pointer-events: auto; }
+        .dropdown-item { display: flex; align-items: center; gap: 10px; padding: 12px 15px; border-radius: 8px; color: var(--text-primary); font-weight: 600; transition: 0.2s; cursor: pointer; }
+        .dropdown-item:hover { background: var(--accent-blue); color: white; }
 
-        #driverBtn { display: none; }
-        #driverBtn.visible { display: flex; border-color: var(--accent-blue); background: rgba(10, 132, 255, 0.1); }
-        #driverBtn.visible span { color: var(--accent-blue); }
-        #driverBtn.visible .material-icons { color: var(--accent-blue); }
+        .glass-btn { display: flex; align-items: center; gap: 0.6rem; background: rgba(255,255,255,0.05); padding: 0.7rem 1.2rem; border-radius: 2rem; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); transition: all 0.2s; }
+        .glass-btn:hover { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3); }
+        .glass-btn.active { background: rgba(10, 132, 255, 0.2); border-color: var(--accent-blue); }
+        .btn-icon, .btn-text { color: var(--text-secondary); font-size: 1rem; font-weight: 600; } 
+        .glass-btn.active .btn-icon, .glass-btn.active .btn-text { color: var(--accent-blue); }
 
-        .clock-widget { text-align: right; }
-        .clock { font-size: 2.5rem; font-weight: 800; line-height: 1; font-feature-settings: "tnum"; }
-        .date { font-size: 0.9rem; color: var(--text-muted); margin-top: 5px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; }
+        .driver-btn { display: none; align-items: center; gap: 0.6rem; background: rgba(255,255,255,0.05); padding: 0.7rem 1.2rem; border-radius: 2rem; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); transition: all 0.2s; }
+        .driver-btn.visible { display: flex; }
+        .driver-btn:hover { background: rgba(10, 132, 255, 0.2); border-color: var(--accent-blue); }
+        .driver-btn:hover .btn-icon, .driver-btn:hover .btn-text { color: var(--accent-blue); }
 
-        /* === 4. ГЛАВНАЯ СЕТКА === */
-        .main-grid { display: grid; grid-template-columns: 400px 1fr; gap: 2rem; flex: 1; min-height: 0; }
-        
-        /* КАРТОЧКИ (СТЕКЛО) */
-        .card { 
-            background: var(--glass-bg); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
-            border: 1px solid var(--glass-border); border-radius: 2rem; 
-            box-shadow: var(--shadow); padding: 2rem;
-            display: flex; flex-direction: column; 
-        }
+        .clock-widget { line-height: 1; text-align: right; }
+        .clock { font-size: 2.2rem; font-weight: 800; }
+        .date { font-size: 1rem; color: var(--text-secondary); margin-top: 4px; }
+
+        /* === 3. СЕТКА (GRID) === */
+        /* На ПК левая панель фиксирована 380px, правая занимает остаток */
+        .main-grid { display: grid; grid-template-columns: 380px 1fr; gap: 2rem; flex: 1; min-height: 0; }
 
         /* ЛЕВАЯ ПАНЕЛЬ */
-        .left-panel { align-items: center; justify-content: space-between; text-align: center; }
-        .label { font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; width: 100%; text-align: left; }
-        
-        .progress-container { position: relative; width: 80%; padding-bottom: 80%; height: 0; margin: 2rem 0; }
-        .progress-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transform: rotate(-90deg); filter: drop-shadow(0 0 20px rgba(0,0,0,0.5)); }
-        circle { fill: none; stroke-width: 8; stroke-linecap: round; }
-        .bg-ring { stroke: rgba(255,255,255,0.05); } 
-        .fg-ring { stroke: var(--accent-green); transition: stroke-dashoffset 1s ease-in-out, stroke 0.5s; }
-        .percent-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 5rem; font-weight: 900; letter-spacing: -2px; }
-        
-        .count-text { font-size: 2rem; color: var(--text-muted); font-weight: 500; font-feature-settings: "tnum"; margin-bottom: 2rem; }
-        
-        .status-badge { 
-            padding: 1rem 0; width: 100%; border-radius: 1rem; 
-            font-size: 1.2rem; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; color: black; 
-            background: #333; color: white; transition: 0.3s;
-        }
-        .status-badge.active { background: var(--accent-green); color: black; box-shadow: 0 0 30px rgba(48, 209, 88, 0.4); }
-        .status-badge.wait { background: var(--accent-yellow); color: black; box-shadow: 0 0 30px rgba(255, 214, 10, 0.4); }
-        .status-badge.pause { background: rgba(255,255,255,0.1); color: var(--text-muted); }
+        .left-panel { display: flex; flex-direction: column; align-items: center; justify-content: space-between; text-align: center; padding: 2.5rem 2rem; height: 100%; box-sizing: border-box; }
+        .progress-wrapper { flex: 1; display: flex; align-items: center; justify-content: center; width: 100%; }
+        .progress-container { position: relative; width: 90%; padding-bottom: 90%; height: 0; }
+        .progress-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transform: rotate(-90deg); filter: drop-shadow(0 0 15px rgba(48, 209, 88, 0.2)); }
+        circle { fill: none; stroke-width: 10; stroke-linecap: round; }
+        .bg-ring { stroke: rgba(255,255,255,0.05); } .fg-ring { stroke: var(--accent-green); transition: stroke-dashoffset 1.5s; }
+        .percent-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 5rem; font-weight: 900; }
+        .count-text { font-size: 2rem; color: var(--text-secondary); margin-bottom: 1.5rem; font-weight: 500; }
+        .status-btn { padding: 1.2rem 0; width: 100%; border-radius: 1.2rem; font-size: 1.5rem; font-weight: 800; text-transform: uppercase; color: white; background: rgba(255,255,255,0.05); letter-spacing: 1px; transition: 0.3s; border: 1px solid rgba(255,255,255,0.1); }
+        .status-btn.active { background: var(--accent-green); color: black; box-shadow: 0 0 30px rgba(48, 209, 88, 0.4); border-color: transparent; } 
+        .status-btn.pause { background: #222; border: 1px solid #444; } 
+        .status-btn.wait { background: var(--accent-yellow); color: black; border-color: transparent; }
+        .section-label { font-size: 0.9rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 0.5rem; width: 100%; text-align: left; letter-spacing: 1px; }
 
         /* ПРАВАЯ ПАНЕЛЬ */
-        .right-panel { gap: 2rem; background: transparent; border: none; box-shadow: none; backdrop-filter: none; padding: 0; }
-        
-        .top-card { flex: 0 0 auto; height: 180px; justify-content: center; }
-        .next-id { font-size: 5rem; font-weight: 900; letter-spacing: -2px; line-height: 1; margin: 10px 0; }
-        .next-info { font-size: 1.2rem; color: var(--text-muted); font-weight: 500; display: flex; gap: 10px; align-items: center; }
-        
-        .list-card { flex: 1; min-height: 0; position: relative; overflow: hidden; }
-        .list-scroll { flex: 1; overflow-y: auto; padding-right: 5px; margin-top: 1rem; }
-        .list-scroll::-webkit-scrollbar { width: 4px; } 
-        .list-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+        .right-panel { display: flex; flex-direction: column; gap: 1.5rem; height: 100%; min-height: 0; }
+        .sub-card { background: var(--glass-bg); backdrop-filter: blur(25px); border: 1px solid var(--glass-border); border-radius: 1.5rem; padding: 1.5rem; display: flex; flex-direction: column; }
+        .next-id { font-size: 4.5rem; font-weight: 900; line-height: 1; margin: 0.5rem 0; letter-spacing: -1px; }
+        .next-info { font-size: 1.4rem; font-weight: 500; display: flex; align-items: center; gap: 1rem; color: var(--text-secondary); }
+        .list-block { flex: 1; min-height: 0; position: relative; }
+        .list-mask { flex: 1; overflow-y: auto; overflow-x: hidden; padding-right: 0.5rem; }
+        .list-mask::-webkit-scrollbar { width: 4px; } .list-mask::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
 
-        .list-item { 
-            display: flex; align-items: center; padding: 1.5rem; 
-            margin-bottom: 1rem; border-radius: 1.5rem; 
-            background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.03); 
-            transition: 0.3s; 
-        }
-        .col-icon img { width: 3.5rem; filter: drop-shadow(0 5px 10px rgba(0,0,0,0.5)); opacity: 0.8; }
-        .col-main { flex: 1; margin-left: 1.5rem; }
-        .item-id { font-size: 2.5rem; font-weight: 800; letter-spacing: -1px; line-height: 1; }
-        .item-zone { display: inline-block; background: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 6px; font-size: 0.8rem; font-weight: 700; margin-left: 10px; vertical-align: middle; }
-        
-        .col-right { text-align: right; }
-        .stat-label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1px; }
-        .stat-val { font-size: 1.8rem; font-weight: 700; font-feature-settings: "tnum"; }
-        .val-green { color: var(--accent-green); text-shadow: 0 0 15px rgba(48,209,88,0.3); }
+        .list-item { display: flex; align-items: center; padding: 1rem 1.8rem; margin-bottom: 1rem; border-radius: 1.2rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); transition: all 0.3s; flex-shrink: 0; position: relative; }
+        .col-icon { width: 5rem; flex-shrink: 0; display: flex; align-items: center; } .container-img { width: 4rem; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5)); }
+        .col-main { flex: 1; display: flex; align-items: center; gap: 1.5rem; overflow: hidden; }
+        .id-text { font-size: 2.8rem; white-space: nowrap; font-weight: 800; line-height: 1; letter-spacing: -0.5px; }
+        .badge { padding: 6px 12px; border-radius: 8px; font-size: 1.4rem; font-weight: 800; text-transform: uppercase; color: white; white-space: nowrap; }
+        .badge-bs { background: #0A84FF; box-shadow: 0 0 15px rgba(10,132,255,0.4); } 
+        .badge-as { background: #FF9F0A; color: black; box-shadow: 0 0 15px rgba(255,159,10,0.4); } 
+        .badge-ps { background: var(--accent-purple); box-shadow: 0 0 15px rgba(191,90,242,0.4); }
+        .badge-other { background: #444; }
+        .col-right { margin-left: auto; display: flex; align-items: center; gap: 2.5rem; white-space: nowrap; }
+        .stat-box { display: flex; flex-direction: column; align-items: flex-end; justify-content: center; }
+        .stat-label { font-size: 0.85rem; text-transform: uppercase; color: var(--text-secondary); font-weight: 700; letter-spacing: 1px; margin-bottom: 4px; }
+        .stat-value { font-size: 2rem; font-weight: 700; color: var(--text-primary); font-feature-settings: "tnum"; }
+        .val-dur { color: var(--accent-green); text-shadow: 0 0 10px rgba(48,209,88,0.3); }
+        .list-item.overdue { background: rgba(255, 69, 58, 0.1); border: 1px solid rgba(255, 69, 58, 0.4); }
+        .list-item.overdue span, .list-item.overdue .id-text { color: var(--accent-red) !important; }
+        .list-item.overdue .val-dur { color: var(--accent-red) !important; text-shadow: 0 0 10px rgba(255,69,58,0.4); }
+        .empty-message { text-align: center; color: var(--text-secondary); margin-top: 2rem; font-size: 1.5rem; }
+        .copyright-footer { text-align: center; font-size: 0.8rem; font-weight: 500; color: rgba(255, 255, 255, 0.2); margin-top: 0.5rem; flex-shrink: 0; letter-spacing: 0.5px; }
 
-        .empty-msg { text-align: center; color: var(--text-muted); font-size: 1.5rem; margin-top: 2rem; font-weight: 500; }
+        /* ОСОБЫЕ БЛОКИ */
+        .no-schedule-block, .victory-block, .lunch-block { display: none; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; background: var(--glass-bg); backdrop-filter: blur(25px); border-radius: 1.5rem; flex: 1; border: 1px solid var(--glass-border); }
+        body.is-noschedule .no-schedule-block { display: flex !important; }
+        body.is-noschedule .next-block, body.is-noschedule .list-block, body.is-noschedule .victory-block, body.is-noschedule .lunch-block { display: none !important; }
+        .ns-icon { font-size: 8rem; color: var(--text-secondary); margin-bottom: 1rem; opacity: 0.5; }
+        .ns-title { font-size: 3rem; font-weight: 900; color: var(--text-secondary); }
 
-        /* СПЕЦ. РЕЖИМЫ (Обед, Финиш) */
-        .special-screen { display: none; flex: 1; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; }
-        body.is-special .special-screen { display: flex !important; }
-        body.is-special .list-card, body.is-special .top-card { display: none !important; }
-        
-        .special-icon { font-size: 8rem; margin-bottom: 1rem; opacity: 0.8; color: var(--accent-gold); text-shadow: 0 0 50px rgba(255, 215, 0, 0.4); }
-        .special-title { font-size: 3rem; font-weight: 900; margin-bottom: 1rem; color: white; }
-        .special-timer { font-size: 2rem; background: rgba(255,255,255,0.1); padding: 10px 30px; border-radius: 50px; border: 1px solid rgba(255,255,255,0.2); }
+        body.is-victory .victory-block, body.is-lunch .lunch-block { display: flex !important; }
+        body.is-victory .next-block, body.is-victory .list-block, body.is-lunch .next-block, body.is-lunch .list-block { display: none !important; }
+        .victory-block { background: radial-gradient(circle at center, #2a2000 0%, #000000 80%); border: 1px solid rgba(255, 215, 0, 0.2); }
+        .victory-cup { font-size: 12rem; margin-bottom: 1rem; background: linear-gradient(135deg, #FFF7CC 0%, #FFD700 30%, #B8860B 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.5)); animation: floatCup 3s ease-in-out infinite; }
+        .victory-title { font-size: 3.5rem; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; color: #FFD700; text-shadow: 0 0 30px rgba(255, 215, 0, 0.6); }
+        .victory-stat { font-size: 2.5rem; color: white; font-weight: 700; }
+        @keyframes floatCup { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-15px) scale(1.02); } }
+        .lunch-block { background: var(--glass-bg); backdrop-filter: blur(25px); }
+        .lunch-icon { font-size: 8rem; margin-bottom: 1rem; color: var(--accent-blue); opacity: 0.8; }
+        .lunch-title { font-size: 3rem; font-weight: 900; margin-bottom: 1rem; }
+        .lunch-timer { font-size: 2.5rem; color: var(--accent-blue); background: rgba(10, 132, 255, 0.1); padding: 1rem 3rem; border-radius: 3rem; border: 1px solid rgba(10, 132, 255, 0.3); }
 
-        /* === 5. МОДАЛЬНЫЕ ОКНА (В СТИЛЕ BACKUP) === */
+        .message-bar { position: fixed; bottom: -10rem; left: 50%; transform: translateX(-50%); width: 80%; padding: 1rem 2rem; background: rgba(40, 40, 40, 0.95); backdrop-filter: blur(20px); border-radius: 3rem; display: flex; align-items: center; gap: 1.5rem; transition: bottom 0.6s; z-index: 1000; box-shadow: 0 10px 40px black; } .message-bar.visible { bottom: 2rem; } .msg-icon-box { width: 3rem; height: 3rem; background: rgba(255, 214, 10, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--accent-yellow); flex-shrink: 0; } .msg-text { font-size: 1.4rem; font-weight: 600; }
+        .admin-trigger { position: fixed; top: 1rem; right: 1rem; color: rgba(255,255,255,0.2); font-size: 1.5rem; cursor: pointer; z-index: 2000; }
+        .admin-toast { position: fixed; top: -5rem; left: 50%; transform: translateX(-50%); background: rgba(50,50,50,0.9); padding: 0.8rem 1.5rem; border-radius: 2rem; font-size: 1rem; font-weight: 600; z-index: 6000; transition: top 0.5s; display: flex; align-items: center; gap: 0.8rem; } .admin-toast.show { top: 2rem; }
+
+        /* === 4. МОДАЛЬНЫЕ ОКНА (ЦЕНТР + ФИКСАЦИЯ) === */
         .modal-overlay { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(0,0,0,0.9); backdrop-filter: blur(20px); 
-            display: none; align-items: center; justify-content: center; z-index: 5000; 
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(20px); 
+            display: none; align-items: center; justify-content: center; z-index: 3000; 
         } 
         .modal-overlay.open { display: flex; }
-        
-        .modal-glass { 
-            background: #151515; border: 1px solid var(--glass-border); 
-            padding: 2.5rem; border-radius: 2rem; width: 90%; max-width: 450px; text-align: center; 
-            box-shadow: 0 50px 100px black; display: flex; flex-direction: column; gap: 1.5rem; 
-        }
-        .modal-glass h2 { margin: 0; font-size: 2rem; font-weight: 800; letter-spacing: -0.5px; }
-        
-        .input-glass { 
-            width: 100%; padding: 18px; background: rgba(255, 255, 255, 0.05); 
-            border: 1px solid rgba(255, 255, 255, 0.1); color: white; border-radius: 14px; 
-            font-size: 1.1rem; outline: none; transition: 0.3s; 
-        }
-        .input-glass:focus { border-color: var(--accent-blue); background: rgba(10, 132, 255, 0.1); }
-        
-        .btn-primary { 
-            width: 100%; padding: 18px; background: var(--accent-blue); border: none; 
-            color: white; font-weight: 700; font-size: 1.1rem; border-radius: 14px; 
-            cursor: pointer; box-shadow: 0 10px 30px rgba(10, 132, 255, 0.3); transition: 0.2s; 
-        }
-        .btn-primary:active { transform: scale(0.98); opacity: 0.8; }
-        
-        .btn-text { background: none; border: none; color: var(--text-muted); font-size: 1rem; cursor: pointer; margin-top: 10px; }
-        .btn-text:hover { color: white; }
+        .modal-box { background: #1c1c1e; padding: 2rem; border-radius: 1.5rem; width: 90%; max-width: 400px; text-align: center; border: 1px solid rgba(255,255,255,0.15); box-shadow: 0 20px 60px rgba(0,0,0,0.7); display: flex; flex-direction: column; gap: 1rem; }
+        .modal-box h2 { margin: 0 0 0.5rem 0; font-size: 1.6rem; font-weight: 700; color: white; }
+        .modal-input { width: 100%; padding: 14px; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.1); color: white; border-radius: 12px; font-size: 1.1rem; outline: none; box-sizing: border-box; transition: 0.2s; font-family: inherit; }
+        .modal-input:focus { background: rgba(255, 255, 255, 0.12); border-color: var(--accent-blue); box-shadow: 0 0 0 4px rgba(10, 132, 255, 0.15); }
+        .modal-btn { width: 100%; padding: 14px; background: var(--accent-blue); border: none; color: white; font-weight: 700; font-size: 1.1rem; border-radius: 12px; cursor: pointer; transition: 0.2s; font-family: inherit; }
+        .modal-btn:active { transform: scale(0.98); opacity: 0.9; }
+        .modal-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem; width: 100%; }
+        .text-btn { background: transparent; border: none; color: var(--text-secondary); font-size: 0.95rem; cursor: pointer; padding: 5px; font-weight: 500; transition: 0.2s; font-family: inherit; }
+        .text-btn:hover { color: white; } .text-btn.accent { color: var(--accent-blue); } .text-btn.accent:hover { color: #409cff; }
 
-        /* ЗОНЫ И ФОТО (ДЛЯ ТЕРМИНАЛА) */
-        .zone-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px; }
-        .zone-btn { padding: 20px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; font-weight: 700; cursor: pointer; transition: 0.2s; color: var(--text-muted); }
-        .zone-btn.selected { background: var(--accent-blue); color: white; border-color: var(--accent-blue); box-shadow: 0 0 20px rgba(10,132,255,0.3); }
-        
-        .photo-btn { 
-            border: 2px dashed rgba(255,255,255,0.2); border-radius: 14px; padding: 20px; 
-            margin-bottom: 10px; cursor: pointer; transition: 0.2s; display: flex; 
-            align-items: center; justify-content: center; gap: 10px; color: var(--text-muted); 
-        }
-        .photo-btn:hover { border-color: var(--accent-blue); background: rgba(255,255,255,0.02); }
-        .photo-status { font-size: 0.9rem; font-weight: 600; }
+        /* STATS */
+        .stats-big-box { background: #121214; border-radius: 2rem; width: 95%; max-width: 1200px; height: 90vh; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 50px 100px rgba(0,0,0,1); display: flex; flex-direction: column; overflow: hidden; }
+        .stats-nav { display: flex; border-bottom: 1px solid rgba(255,255,255,0.1); padding: 0 2rem; align-items: center; justify-content: space-between; height: 70px; background: rgba(255,255,255,0.03); }
+        .nav-tabs { display: flex; gap: 20px; height: 100%; }
+        .nav-tab { height: 100%; display: flex; align-items: center; padding: 0 10px; cursor: pointer; color: var(--text-secondary); font-weight: 600; border-bottom: 3px solid transparent; transition: 0.3s; }
+        .nav-tab:hover { color: white; } .nav-tab.active { color: var(--accent-blue); border-bottom-color: var(--accent-blue); }
+        .close-stats-btn { background: none; border: none; color: white; cursor: pointer; opacity: 0.6; transition: 0.2s; }
+        .close-stats-btn:hover { opacity: 1; transform: scale(1.1); color: var(--accent-red); }
+        .tab-content { display: none; flex: 1; overflow: hidden; } .tab-content.active { display: flex; }
+        .shift-layout { display: grid; grid-template-columns: 350px 1fr; width: 100%; height: 100%; }
+        .shift-summary { background: rgba(0,0,0,0.2); padding: 2rem; border-right: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; gap: 2rem; overflow-y: auto; }
+        .chart-container { position: relative; width: 100%; aspect-ratio: 1/1; }
+        .summary-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .s-card { background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 1rem; text-align: center; }
+        .s-val { font-size: 1.8rem; font-weight: 800; } .s-lbl { font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase; }
+        .shift-lists { display: grid; grid-template-rows: 1fr 1fr; overflow: hidden; }
+        .list-header { padding: 1rem 2rem; background: rgba(255,255,255,0.02); font-weight: 700; text-transform: uppercase; display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .list-scroll { flex: 1; overflow-y: auto; padding: 1rem 2rem; }
+        .stats-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .row-id { font-size: 1.2rem; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+        .row-time { font-family: monospace; font-size: 1.1rem; color: var(--text-secondary); }
+        .mini-badge { font-size: 0.7rem; padding: 3px 8px; border-radius: 6px; font-weight: 700; }
+        .mini-badge.bs { background: rgba(10, 132, 255, 0.2); color: #6bbaff; border: 1px solid rgba(10, 132, 255, 0.3); }
+        .mini-badge.as { background: rgba(255, 159, 10, 0.2); color: #ffd60a; border: 1px solid rgba(255, 159, 10, 0.3); }
+        .mini-badge.ps { background: rgba(191, 90, 242, 0.2); color: #e09fff; border: 1px solid rgba(191, 90, 242, 0.3); }
+        .analytics-layout { padding: 2rem; display: grid; grid-template-rows: auto auto 1fr; gap: 1rem; width: 100%; overflow-y: auto; }
+        .date-filter { display: flex; gap: 10px; align-items: center; margin-bottom: 1rem; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 12px; }
+        .date-input { background: #000; color: white; border: 1px solid #444; padding: 8px; border-radius: 8px; }
+        .analytics-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+        .a-card { background: rgba(255,255,255,0.05); padding: 1.5rem; border-radius: 1.5rem; border: 1px solid rgba(255,255,255,0.05); }
+        .a-title { font-size: 0.9rem; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 0.5rem; font-weight: 700; }
+        .a-value { font-size: 2.5rem; font-weight: 900; color: white; }
+        .a-graph { background: rgba(0,0,0,0.3); border-radius: 1.5rem; padding: 1.5rem; position: relative; height: 300px; }
 
-        /* АДМИНСКИЙ ЗАМОК */
-        .admin-lock { position: fixed; bottom: 20px; left: 20px; opacity: 0.1; cursor: pointer; transition: 0.3s; font-size: 1.5rem; z-index: 9000; }
-        .admin-lock:hover { opacity: 1; }
-
-        /* МОБИЛЬНАЯ АДАПТАЦИЯ */
+        /* === 5. МОБИЛЬНАЯ АДАПТАЦИЯ (ВЕРТИКАЛЬНАЯ КОЛОНКА) === */
         @media (max-width: 768px) {
-            body { padding: 1rem; height: auto; min-height: 100vh; overflow-y: auto; }
-            .header { margin-bottom: 1rem; }
-            .header-title { font-size: 1.8rem; }
-            .main-grid { display: flex; flex-direction: column; gap: 1rem; }
-            .left-panel { order: 1; padding: 1.5rem; }
-            .progress-container { width: 60%; padding-bottom: 60%; margin: 1rem 0; }
+            body { height: auto; overflow-y: auto; padding-bottom: 5rem; }
+            .header { flex-direction: column; align-items: flex-start; gap: 0.5rem; height: auto; margin-bottom: 1.5rem; } 
+            .header-left { width: 100%; justify-content: space-between; }
+            .main-grid { display: flex; flex-direction: column; gap: 1rem; height: auto; }
+            .left-panel { order: 1; height: auto; min-height: auto; padding: 2rem 1rem; } 
+            .progress-container { width: 60%; padding-bottom: 60%; }
             .right-panel { order: 2; height: auto; overflow: visible; }
-            .list-card { height: auto; overflow: visible; }
-            .list-item { padding: 1rem; } .item-id { font-size: 1.8rem; }
-            .clock-widget { display: none; } /* Скрываем часы на мобиле для места */
+            .list-block { height: auto; overflow: visible; }
+            .list-item { padding: 0.8rem 1rem; flex-wrap: wrap; }
+            .col-icon { width: 3rem; } .container-img { width: 2.5rem; } .id-text { font-size: 1.4rem; } .badge { font-size: 0.8rem; padding: 4px 8px; }
+            .col-right { width: 100%; margin-top: 10px; justify-content: space-between; gap: 0; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px; }
+            .stat-box { align-items: flex-start; } .stat-box:last-child { align-items: flex-end; }
+            .stat-value { font-size: 1.2rem; }
+            .copyright-footer { font-size: 0.7rem; padding-bottom: 1rem; }
+            .intro-logo { font-size: 4rem; } .intro-title { font-size: 2rem; }
             
-            /* Плавающая кнопка для водителя */
-            #driverBtn.visible { 
-                position: fixed; bottom: 20px; right: 20px; 
-                background: var(--accent-blue); border: none; 
-                box-shadow: 0 10px 30px rgba(10,132,255,0.5); 
-                z-index: 8000; padding: 12px 20px;
+            /* Кнопка водителя на телефоне */
+            .driver-btn.visible { 
+                position: fixed; bottom: 20px; right: 20px; top: auto;
+                opacity: 1; background: var(--accent-blue); color: white; padding: 15px 25px; 
+                box-shadow: 0 10px 30px rgba(10,132,255,0.5); border-radius: 50px;
+                z-index: 5000; font-size: 1.1rem; border: none;
             }
-            #driverBtn.visible span { color: white; }
-            #driverBtn.visible .material-icons { color: white; }
+            .driver-btn .btn-text { color: white; display: block; }
+            
+            /* Адаптация статистики */
+            .stats-big-box { height: 95vh; width: 100%; border-radius: 20px 20px 0 0; position: fixed; bottom: 0; top: auto; max-width: none; }
+            .shift-layout { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+            .shift-summary { display: none; }
+            .analytics-cards { grid-template-columns: 1fr; }
+            .date-filter { flex-wrap: wrap; }
         }
     </style>
 </head>
 <body>
 
+    <div class="intro-overlay" id="intro">
+        <div class="intro-content">
+            <div class="intro-logo"><span class="material-icons" style="font-size: inherit;">inventory_2</span></div>
+            <div class="intro-title">AGM LOGISTICS</div>
+            <div class="intro-subtitle">Warehouse Monitoring System</div>
+            <div class="intro-loader"></div>
+        </div>
+    </div>
+
+    <script>
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const intro = document.getElementById('intro');
+                if(intro) intro.classList.add('hidden');
+                setTimeout(() => { if(intro) intro.remove(); }, 1000);
+            }, 2500);
+        });
+    </script>
+
     <div class="orb orb-1"></div>
     <div class="orb orb-2"></div>
 
-    <div class="admin-lock" onclick="openLogin()">🔒</div>
+    <div class="admin-trigger" onclick="openLogin()">
+        <span class="material-icons">lock</span>
+    </div>
+
+    <div id="adminToast" class="admin-toast">
+        <span class="material-icons toast-icon">info</span>
+        <span id="toastText">...</span>
+    </div>
+
+    <div class="modal-overlay" id="modalLogin">
+        <div class="modal-box">
+            <h2 id="txt_login_title">Вход</h2>
+            <input type="text" id="adminUser" class="modal-input" placeholder="Логин">
+            <input type="password" id="adminPass" class="modal-input" placeholder="Пароль" onkeydown="if(event.key === 'Enter') checkLogin()">
+            <button class="modal-btn" onclick="checkLogin()" id="btn_login_enter">Войти</button>
+            <div class="modal-footer">
+                <button class="text-btn" onclick="closeModals()" id="btn_cancel_1">Отмена</button>
+                <button class="text-btn accent" onclick="openRegister()" id="btn_to_reg">Регистрация</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalRegister">
+        <div class="modal-box">
+            <h2 id="txt_reg_title">Регистрация</h2>
+            <input type="text" id="regName" class="modal-input" placeholder="Имя">
+            <input type="text" id="regUser" class="modal-input" placeholder="Придумайте Логин">
+            <input type="password" id="regPass" class="modal-input" placeholder="Придумайте Пароль">
+            <button class="modal-btn" onclick="doRegister()" style="background: var(--accent-green);" id="btn_reg_send">Отправить заявку</button>
+            <div class="modal-footer" style="justify-content: center;">
+                <button class="text-btn" onclick="backToLogin()" id="btn_to_log">Вернуться ко входу</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="statsModal">
+        <div class="stats-big-box">
+            <div class="stats-nav">
+                <div class="nav-tabs">
+                    <div class="nav-tab active" onclick="switchTab('shift')" id="tab_shift">Смена</div>
+                    <div class="nav-tab" onclick="switchTab('analytics')" id="tab_analytics">Аналитика</div>
+                    <div class="nav-tab" onclick="switchTab('lots')" id="tab_lots">Лоты</div>
+                </div>
+                <button class="close-stats-btn" onclick="closeStats()"><span class="material-icons" style="font-size: 2rem;">close</span></button>
+            </div>
+            
+            <div class="tab-content active" id="content_shift">
+                <div class="shift-layout">
+                    <div class="shift-summary">
+                        <div class="chart-container"><canvas id="shiftChart"></canvas></div>
+                        <div class="summary-cards">
+                            <div class="s-card"><div class="s-val" id="sumDone">0</div><div class="s-lbl" id="txt_s_done">Выполнено</div></div>
+                            <div class="s-card"><div class="s-val" id="sumWait">0</div><div class="s-lbl" id="txt_s_wait">Очередь</div></div>
+                        </div>
+                    </div>
+                    <div class="shift-lists">
+                        <div style="display:flex; flex-direction:column; overflow:hidden; border-bottom:1px solid rgba(255,255,255,0.1);">
+                            <div class="list-header" style="color:var(--accent-green)"><span id="txt_stat_done">Выгружено</span> <span id="statDoneCount">0</span></div>
+                            <div class="list-scroll" id="statDoneList">...</div>
+                        </div>
+                        <div style="display:flex; flex-direction:column; overflow:hidden;">
+                            <div class="list-header" style="color:var(--text-secondary)"><span id="txt_stat_wait">В очереди</span> <span id="statWaitCount">0</span></div>
+                            <div class="list-scroll" id="statWaitList">...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-content" id="content_analytics">
+                <div class="analytics-layout">
+                    <div class="date-filter">
+                        <input type="date" id="dateStart" class="date-input">
+                        <span style="color:#888">-</span>
+                        <input type="date" id="dateEnd" class="date-input">
+                        <button class="text-btn accent" onclick="loadHistory()">UPDATE</button>
+                    </div>
+                    <div class="analytics-cards">
+                        <div class="a-card"><div class="a-title" id="txt_a_week">Объем</div><div class="a-value" id="val_week_total">0</div></div>
+                        <div class="a-card"><div class="a-title" id="txt_a_avg">Среднее время</div><div class="a-value" id="val_week_avg">0 <span style="font-size:1rem; opacity:0.5">min</span></div></div>
+                        <div class="a-card"><div class="a-title" id="txt_a_best">Рекорд</div><div class="a-value" style="color:var(--accent-green)" id="val_week_best">0 <span style="font-size:1rem; opacity:0.5">min</span></div></div>
+                    </div>
+                    <div class="a-graph">
+                        <canvas id="historyChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-content" id="content_lots">
+                <div style="flex:1; padding:2rem; overflow-y:auto;">
+                    <div style="margin-bottom:1rem; color:var(--text-secondary);" id="txt_lots_info">Статистика по Лотам</div>
+                    <div id="lotsList"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="driverModal">
+        <div class="stats-big-box" style="height: 90vh;">
+            <div class="stats-nav">
+                <div class="stats-title" style="display:flex; align-items:center; gap:10px;"><span class="material-icons" style="color:var(--accent-yellow);">local_shipping</span> <span id="txt_drv_title">Очередь выгрузки</span></div>
+                <button class="close-stats-btn" onclick="document.getElementById('driverModal').classList.remove('open')"><span class="material-icons" style="font-size: 2rem;">close</span></button>
+            </div>
+            <div style="flex:1; padding:1.5rem; overflow-y:auto;">
+                <div id="driverQueueList">...</div>
+            </div>
+        </div>
+    </div>
 
     <div class="header">
         <div class="header-left">
             <div class="header-title-wrapper">
-                <div class="header-title" id="txt_title">Мониторинг</div>
+                <div class="header-title" id="txt_title">Dashboard</div>
+                <span class="material-icons" style="color:var(--text-secondary); opacity:0.5;">expand_more</span>
+                <div class="header-dropdown">
+                    <div class="dropdown-item" onclick="openStats()">
+                        <span class="material-icons">analytics</span> <span id="txt_menu_stat">Статистика</span>
+                    </div>
+                </div>
             </div>
             
-            <div class="glass-btn" id="driverBtn" onclick="openDriverMode()">
-                <span class="material-icons">local_shipping</span>
-                <span id="txt_btn_driver">Терминал</span>
+            <div class="glass-btn lang-widget" id="localLangBtn" onclick="toggleLocalLang()">
+                <span class="material-icons btn-icon">language</span><span class="btn-text" id="localLangLabel">AUTO</span>
             </div>
-
-            <div class="glass-btn" id="authBtn" onclick="handleAuthClick()">
-                <span class="material-icons">person</span>
-                <span id="authBtnText">Войти</span>
+            <div class="glass-btn driver-btn" id="driverBtn" onclick="openDriverMode()">
+                <span class="material-icons btn-icon">local_shipping</span><span class="btn-text driver-text" id="txt_btn_driver">Водитель</span>
             </div>
         </div>
-        
         <div class="clock-widget">
             <div class="clock" id="clock">00:00</div>
             <div class="date" id="date">-- ---</div>
@@ -250,8 +437,8 @@
     </div>
 
     <div class="main-grid">
-        <div class="card left-panel">
-            <div class="label" id="txt_progress">ПРОГРЕСС</div>
+        <div class="card glass-panel left-panel">
+            <div class="section-label" id="txt_progress">Progress</div>
             <div class="progress-wrapper">
                 <div class="progress-container">
                     <svg class="progress-svg" viewBox="0 0 350 350"><circle cx="175" cy="175" r="150" class="bg-ring"/><circle cx="175" cy="175" r="150" class="fg-ring" id="ring" stroke-dasharray="942" stroke-dashoffset="942"/></svg>
@@ -259,105 +446,45 @@
                 </div>
             </div>
             <div class="count-text" id="cnt">-- / --</div>
-            <div class="status-badge" id="sts">...</div>
+            <div class="status-btn" id="sts">...</div>
         </div>
 
         <div class="right-panel">
-            <div class="card top-card">
-                <div class="label" id="txt_next">СЛЕДУЮЩИЙ</div>
+            <div class="sub-card next-block">
+                <div class="section-label" id="txt_next">Next Container</div>
                 <div class="next-id" id="nid">---</div>
                 <div class="next-info" id="ninfo">...</div>
             </div>
+            <div class="sub-card list-block">
+                <div class="section-label" id="txt_list">Active Tasks</div>
+                <div class="list-mask" id="mask"><div class="list-content" id="list"></div></div>
+            </div>
             
-            <div class="card list-card">
-                <div class="label" id="txt_list" style="margin-bottom: 10px;">АКТИВНЫЕ</div>
-                <div class="list-scroll" id="list">
-                    </div>
-            </div>
-
-            <div class="card special-screen victory-block">
-                <span class="material-icons special-icon">emoji_events</span>
-                <div class="special-title" id="txt_victory">ПЛАН ВЫПОЛНЕН!</div>
-            </div>
-            <div class="card special-screen lunch-block">
-                <span class="material-icons special-icon" style="color:var(--accent-blue)">coffee</span>
-                <div class="special-title" id="txt_lunch">ОБЕД</div>
-                <div class="special-timer" id="lunchTimer">--:--</div>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="modalLogin">
-        <div class="modal-glass">
-            <h2 id="txt_login_title">Вход</h2>
-            <input type="text" id="adminUser" class="input-glass" placeholder="Логин">
-            <input type="password" id="adminPass" class="input-glass" placeholder="Пароль">
-            <button class="btn-primary" onclick="checkLogin()" id="btn_login_enter">Войти</button>
-            <button class="btn-text" onclick="openRegister()" id="btn_to_reg">Регистрация</button>
-            <button class="btn-text" onclick="closeModals()">Закрыть</button>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="modalRegister">
-        <div class="modal-glass">
-            <h2 id="txt_reg_title">Регистрация</h2>
-            <input type="text" id="regName" class="input-glass" placeholder="Имя">
-            <input type="text" id="regUser" class="input-glass" placeholder="Придумайте логин">
-            <input type="password" id="regPass" class="input-glass" placeholder="Придумайте пароль">
-            <button class="btn-primary" onclick="doRegister()" id="btn_reg_send">Отправить заявку</button>
-            <button class="btn-text" onclick="backToLogin()">Назад</button>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="driverModal">
-        <div class="modal-glass" style="height: 80vh; max-width: 600px; justify-content: flex-start;">
-            <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
-                <h2 id="txt_drv_title">Очередь</h2>
-                <button class="btn-text" onclick="document.getElementById('driverModal').classList.remove('open')"><span class="material-icons">close</span></button>
-            </div>
-            <div id="driverQueueList" style="flex:1; overflow-y:auto; width:100%; text-align:left;">
-                </div>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="actionModal">
-        <div class="modal-glass" style="max-width: 500px;">
-            <h2 id="actionTitle">Контейнер</h2>
-            
-            <div id="zoneSelectBlock" style="display:none; width:100%;">
-                <p style="color:#888; margin-bottom:10px; font-size:0.9rem;">ВЫБЕРИТЕ ЗОНУ:</p>
-                <div class="zone-grid">
-                    <div class="zone-btn" onclick="selectZone(this, 'G5')">G5</div>
-                    <div class="zone-btn" onclick="selectZone(this, 'G9')">G9</div>
-                    <div class="zone-btn" onclick="selectZone(this, 'P70')">P70</div>
+            <div class="victory-block" id="victoryBlock">
+                <div class="victory-content">
+                    <span class="material-icons victory-cup">emoji_events</span>
+                    <div class="victory-title" id="txt_victory">PLAN COMPLETED!</div>
+                    <div class="victory-stat" id="victoryStat">-- / --</div>
                 </div>
             </div>
 
-            <div id="photoUploadBlock" style="width:100%;">
-                <div class="photo-btn" onclick="triggerFile(1)">
-                    <span class="material-icons">photo_camera</span> 
-                    <span id="lbl_photo1">Фото 1</span>
-                    <span class="file-status" id="status_photo1"></span>
-                </div>
-                <div class="photo-btn" id="area_photo2" onclick="triggerFile(2)">
-                    <span class="material-icons">lock</span> 
-                    <span id="lbl_photo2">Фото 2</span>
-                    <span class="file-status" id="status_photo2"></span>
-                </div>
-                <input type="file" id="fileInput" hidden onchange="handleFile(this)">
-                
-                <label style="display:flex; align-items:center; justify-content:center; gap:10px; color:#888; margin-top:10px; cursor:pointer; font-size:0.9rem;">
-                    <input type="checkbox" id="deferUpload"> Загрузить фото позже
-                </label>
+            <div class="no-schedule-block">
+                <span class="material-icons ns-icon">event_busy</span>
+                <div class="ns-title" id="txt_no_schedule">No Schedule</div>
             </div>
 
-            <button class="btn-primary" id="btnAction" onclick="submitTaskAction()">Подтвердить</button>
-            <button class="btn-text" onclick="closeActionModal()">Отмена</button>
+            <div class="lunch-block" id="lunchBlock">
+                <span class="material-icons lunch-icon">coffee</span>
+                <div class="lunch-title" id="txt_lunch">LUNCH BREAK</div>
+                <div class="lunch-timer" id="lunchTimer">--:--</div>
+            </div>
+            <div class="copyright-footer">&copy; 2026 Developed by Vladislav Matsukevich</div>
         </div>
     </div>
 
-    <div id="adminToast" style="position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:#333; padding:10px 20px; border-radius:50px; opacity:0; transition:0.3s; pointer-events:none; border:1px solid #555;">
-        <span id="toastText">Info</span>
+    <div class="message-bar" id="messageBar">
+        <div class="msg-icon-box"><span class="material-icons">campaign</span></div>
+        <div class="msg-content"><div class="msg-label">Info</div><div class="msg-text" id="messageText"></div></div>
     </div>
 
     <script src="script.js"></script>
