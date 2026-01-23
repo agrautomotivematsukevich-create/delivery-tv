@@ -12,7 +12,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <style>
-        /* === THEME: LIQUID GLASS iOS 16 (Mobile Fixed) === */
+        /* === THEME: LIQUID GLASS iOS === */
         :root {
             --bg-color: #000000;
             --glass-bg: rgba(20, 20, 20, 0.4);
@@ -62,7 +62,7 @@
         .intro-loader::after { content: ''; position: absolute; top: 0; left: 0; width: 50%; height: 100%; background: #0A84FF; animation: loading 1.5s infinite ease-in-out; }
         @keyframes loading { 0% { left: -50%; } 100% { left: 100%; } }
 
-        /* BACKGROUND ORBS - UPDATED FOR VISIBILITY */
+        /* BACKGROUND ORBS */
         .orb { position: fixed; border-radius: 50%; filter: blur(80px); z-index: -1; opacity: 0.6; pointer-events: none; }
         .orb-1 { width: 60vw; height: 60vw; background: radial-gradient(circle, #1a237e 0%, transparent 70%); top: -20%; left: -20%; animation: float 10s infinite ease-in-out; }
         .orb-2 { width: 50vw; height: 50vw; background: radial-gradient(circle, #311b92 0%, transparent 70%); bottom: -20%; right: -20%; animation: float 12s infinite ease-in-out reverse; }
@@ -78,7 +78,6 @@
         .header-title-wrapper:hover { opacity: 0.8; }
         .header-title { font-size: 2.2rem; font-weight: 800; letter-spacing: 0.5px; color: white; text-shadow: 0 0 30px rgba(0,0,0,0.5); }
         
-        /* КНОПКИ (FIXED ALIGNMENT) */
         .glass-btn { 
             display: flex; align-items: center; justify-content: center; gap: 10px; 
             background: rgba(255,255,255,0.08); border: 1px solid var(--glass-border); 
@@ -118,7 +117,7 @@
         /* RIGHT PANEL */
         .right-panel { display: flex; flex-direction: column; gap: 1.5rem; height: 100%; min-height: 0; }
         .sub-card { padding: 1.5rem; display: flex; flex-direction: column; }
-        .next-id { font-size: 2.5rem; font-weight: 900; line-height: 1; margin: 0.5rem 0; letter-spacing: -1px; }
+        .next-id { font-size: 4.5rem; font-weight: 900; line-height: 1; margin: 0.5rem 0; letter-spacing: -1px; }
         .next-info { font-size: 1.3rem; color: var(--text-muted); font-weight: 500; display: flex; align-items: center; gap: 10px; }
         .list-block { flex: 1; min-height: 0; position: relative; }
         .list-mask { flex: 1; overflow-y: auto; padding-right: 0.5rem; }
@@ -153,29 +152,12 @@
         .modal-btn { width: 100%; padding: 18px; background: var(--accent-blue); border: none; color: white; font-weight: 700; font-size: 1.1rem; border-radius: 14px; cursor: pointer; }
         .text-btn { background: none; border: none; color: var(--text-muted); font-size: 1rem; cursor: pointer; padding: 5px; }
 
-        /* OPERATOR SCREEN */
-        #operatorScreen { background: transparent; }
-        .op-header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 20px; border-bottom: 1px solid var(--glass-border); margin-bottom: 20px; }
-        .op-title { font-size: 1.5rem; font-weight: 800; display: flex; align-items: center; gap: 10px; }
-        .op-user { font-size: 1rem; color: var(--text-muted); font-weight: 600; margin-right: 10px; }
-        .task-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; }
-        .task-card { background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 15px; backdrop-filter: blur(20px); }
-        .task-top { display: flex; justify-content: space-between; align-items: center; }
-        .task-id { font-size: 2rem; font-weight: 800; letter-spacing: 0.5px; }
-        .mat-badge { padding: 6px 12px; border-radius: 8px; font-size: 0.9rem; font-weight: 700; text-transform: uppercase; border: 1px solid transparent; }
-        .mat-badge.BS { background: rgba(255, 69, 58, 0.2); color: var(--accent-red); border-color: var(--accent-red); }
-        .mat-badge.AS { background: rgba(255, 159, 10, 0.2); color: var(--accent-orange); border-color: var(--accent-orange); }
-        .mat-badge.PS { background: rgba(191, 90, 242, 0.2); color: var(--accent-purple); border-color: var(--accent-purple); }
-        .driver-info { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); padding: 12px; border-radius: 12px; }
-        .driver-phone { font-size: 1.2rem; font-weight: 600; color: white; display: flex; align-items: center; gap: 10px; }
-        .btn-call { width: 45px; height: 45px; border-radius: 50%; background: var(--accent-green); display: flex; align-items: center; justify-content: center; text-decoration: none; color: black; box-shadow: 0 5px 15px rgba(48, 209, 88, 0.3); }
-        .btn-accept { width: 100%; padding: 16px; background: var(--accent-blue); border: none; border-radius: 12px; color: white; font-weight: 700; font-size: 1.1rem; cursor: pointer; transition: 0.2s; margin-top: 5px; }
-
         /* ACTION MODAL */
         .zone-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 15px; }
         .zone-btn { padding: 15px; background: rgba(255,255,255,0.05); border-radius: 12px; font-weight: 700; cursor: pointer; color: var(--text-muted); border: 1px solid transparent; }
         .zone-btn.selected { background: var(--accent-blue); color: white; box-shadow: 0 0 20px rgba(10, 132, 255, 0.4); }
         .upload-area { border: 2px dashed rgba(255,255,255,0.2); border-radius: 14px; padding: 20px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 5px; margin-bottom: 10px; }
+        .upload-area:hover { border-color: var(--accent-blue); background: rgba(255,255,255,0.02); }
         .file-status { color: var(--accent-green); font-weight: 700; }
 
         /* STATS (NEW LAYOUT) */
@@ -201,17 +183,9 @@
         .col-body { flex: 1; overflow-y: auto; padding: 10px; }
         .col-body::-webkit-scrollbar { width: 4px; } .col-body::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
 
-        /* === КАРТОЧКИ В СТАТИСТИКЕ (НОВЫЙ ДИЗАЙН) === */
-        /* Теперь элементы списка выглядят как красивые плитки, а не сплошной текст */
-        .mini-item { 
-            display: flex; justify-content: space-between; align-items: center; 
-            padding: 14px 18px; background: rgba(255,255,255,0.04); 
-            margin-bottom: 10px; border-radius: 12px; 
-            border: 1px solid rgba(255,255,255,0.05); transition: 0.2s;
-        }
-        .mini-item:hover { background: rgba(255,255,255,0.08); }
+        .mini-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; background: rgba(255,255,255,0.03); margin-bottom: 8px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.02); }
         .mini-id { font-weight: 700; color: white; font-size: 1.1rem; }
-        .mini-time { font-family: monospace; color: var(--accent-green); font-size: 1rem; font-weight: 600; }
+        .mini-time { font-family: monospace; color: var(--text-muted); font-size: 0.9rem; }
 
         /* TOAST */
         .admin-trigger { position: fixed; bottom: 20px; left: 20px; opacity: 0.1; font-size: 1.5rem; cursor: pointer; z-index: 5000; transition: 0.3s; }
@@ -219,38 +193,37 @@
         .admin-toast { position: fixed; top: -5rem; left: 50%; transform: translateX(-50%); background: rgba(30,30,30,0.95); padding: 1rem 2rem; border-radius: 2rem; font-size: 1rem; font-weight: 600; z-index: 6000; transition: top 0.5s; display: flex; align-items: center; gap: 0.8rem; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 10px 40px black; } 
         .admin-toast.show { top: 2rem; }
 
-        /* === MOBILE ADAPTATION === */
+        /* === TERMINAL STYLES (MODAL) === */
+        /* Стили для карточек задач в терминале (модальном окне) */
+        .task-card { background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 15px; margin-bottom: 15px; }
+        .task-top { display: flex; justify-content: space-between; align-items: center; }
+        .task-id { font-size: 2rem; font-weight: 800; letter-spacing: 0.5px; }
+        
+        .mat-badge { padding: 6px 12px; border-radius: 8px; font-size: 0.9rem; font-weight: 700; text-transform: uppercase; border: 1px solid transparent; }
+        .mat-badge.BS { background: rgba(255, 69, 58, 0.2); color: var(--accent-red); border-color: var(--accent-red); }
+        .mat-badge.AS { background: rgba(255, 159, 10, 0.2); color: var(--accent-orange); border-color: var(--accent-orange); }
+        .mat-badge.PS { background: rgba(191, 90, 242, 0.2); color: var(--accent-purple); border-color: var(--accent-purple); }
+        
+        .driver-info { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); padding: 12px; border-radius: 12px; }
+        .driver-phone { font-size: 1.2rem; font-weight: 600; color: white; display: flex; align-items: center; gap: 10px; }
+        .btn-call { width: 45px; height: 45px; border-radius: 50%; background: var(--accent-green); display: flex; align-items: center; justify-content: center; text-decoration: none; color: black; box-shadow: 0 5px 15px rgba(48, 209, 88, 0.3); }
+        .btn-accept { width: 100%; padding: 16px; background: var(--accent-blue); border: none; border-radius: 12px; color: white; font-weight: 700; font-size: 1.1rem; cursor: pointer; transition: 0.2s; margin-top:5px; }
+
         @media (max-width: 768px) {
-            /* 1. РАЗРЕШАЕМ СКРОЛЛ */
-            body { 
-                height: auto; overflow-y: auto; overflow-x: hidden;
-                padding: 1.5rem; padding-bottom: 6rem; /* Место под кнопку терминала */
-            }
-            
-            /* 2. HEADER */
+            body { padding: 1rem; height: auto; overflow-y: auto; padding-bottom: 6rem; }
             .header { flex-direction: column; align-items: flex-start; gap: 1rem; height: auto; margin-bottom: 1.5rem; }
             .header-left { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-            .header-title-wrapper { grid-column: 1 / -1; margin-bottom: 5px; } /* Заголовок на всю ширину */
+            .header-title-wrapper { grid-column: 1 / -1; margin-bottom: 5px; } 
             
-            /* Кнопки на телефоне */
-            .glass-btn { 
-                width: 100%; justify-content: center; 
-                height: 44px; padding: 0 10px; font-size: 0.9rem;
-            }
+            /* КНОПКИ В МОБИЛЕ - СЕТКА */
+            .glass-btn { width: 100%; justify-content: center; height: 44px; padding: 0 10px; font-size: 0.9rem; }
             
-            /* 3. ФОНОВЫЙ ВИЗУАЛ (ФИКС) */
-            .orb { opacity: 0.5; filter: blur(70px); }
-            .orb-1 { width: 80vw; height: 80vw; top: 5%; left: -10%; }
-            .orb-2 { width: 80vw; height: 80vw; bottom: 5%; right: -10%; }
-
-            /* 4. СЕТКА */
-            .main-grid { display: flex; flex-direction: column; gap: 1.5rem; height: auto; }
+            .main-grid { display: flex; flex-direction: column; gap: 1.5rem; }
             .left-panel { order: 1; padding: 2rem; min-height: 400px; }
             .right-panel { order: 2; height: auto; overflow: visible; }
-            .list-block { height: 500px; overflow: visible; } /* Фиксированная высота списка на телефоне */
+            .list-block { height: 500px; overflow: visible; }
             .progress-container { width: 60%; padding-bottom: 60%; margin: 1rem 0; }
             
-            /* 5. КНОПКА ВОДИТЕЛЯ (FLOATING) */
             #driverBtn.visible { 
                 position: fixed; bottom: 20px; right: 20px; 
                 background: var(--accent-blue); padding: 15px 20px; 
@@ -260,12 +233,14 @@
             }
             #driverBtn.visible span, #driverBtn.visible i { color: white; }
             
-            /* 6. СТАТИСТИКА НА ТЕЛЕФОНЕ */
             .stats-big-box { height: 92vh; width: 100%; border-radius: 20px 20px 0 0; position: fixed; bottom: 0; left: 0; }
             .shift-content { grid-template-columns: 1fr; grid-template-rows: auto 1fr; overflow-y: auto; }
             .shift-summary { border-right: none; border-bottom: 1px solid var(--glass-border); padding: 1.5rem; }
-            .shift-lists { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; overflow: visible; height: auto; }
+            .shift-lists { grid-template-columns: 1fr; grid-template-rows: auto auto; overflow: visible; height: auto; }
             .list-col { height: 350px; }
+            
+            /* Фикс размера шрифта ID контейнера на телефоне */
+            .next-id { font-size: 3rem; word-break: break-word; }
         }
     </style>
 </head>
@@ -366,25 +341,6 @@
                     <div class="special-title" style="color:#555">НЕТ ПЛАНА</div>
                 </div>
             </div>
-        </div>
-    </div>
-
-    <div id="operatorScreen" class="screen">
-        <div class="op-header">
-            <div class="op-title">
-                <i class="material-icons" style="color:var(--accent-blue)">dns</i>
-                <span style="margin-left:10px;">ПРИЕМКА</span>
-            </div>
-            <div style="display:flex; align-items:center;">
-                <span id="opUsername" class="op-user">User</span>
-                <button class="glass-btn" onclick="doLogout()" style="padding: 0 15px;">
-                    <i class="material-icons">logout</i>
-                </button>
-            </div>
-        </div>
-        
-        <div class="task-list" id="operatorList">
-            <div style="text-align:center; margin-top:50px; color:#555;">Загрузка...</div>
         </div>
     </div>
 

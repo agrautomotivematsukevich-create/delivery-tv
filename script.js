@@ -13,11 +13,9 @@ let photoFiles = { 1: null, 2: null };
 let currentPhotoIdx = 0;
 let shiftChart = null;
 
-// Переменные статистики
 let globalDone = 0;
 let globalTotal = 0;
 
-// === TRANSLATIONS ===
 const TRANSLATIONS = {
     RU: {
         title: "Мониторинг Склада", progress: "ОБЩИЙ ПРОГРЕСС", next: "СЛЕДУЮЩИЙ", list: "АКТИВНЫЕ",
@@ -54,20 +52,23 @@ function formatFriendlyTime(m) { if(isNaN(m))return "0м"; if(m<60)return m+"м"
 function calculateTimeDiff(timeStr) { const match = timeStr.match(/(\d{1,2}):(\d{2})/); if (!match) return null; const targetH = parseInt(match[1]); const targetM = parseInt(match[2]); const now = new Date(); let target = new Date(); target.setHours(targetH, targetM, 0, 0); let diffMinutes = (target - now) / 60000; if (diffMinutes < -720) { target.setDate(target.getDate() + 1); diffMinutes = (target - now) / 60000; } return Math.round(diffMinutes); }
 function showToast(text, type) { const toast = document.getElementById('adminToast'); document.getElementById('toastText').innerText = text; toast.className = `admin-toast show ${type}`; setTimeout(() => toast.className = 'admin-toast', 3000); }
 
-// === INIT ===
+// === INIT (ГЛАВНАЯ ТОЧКА ВХОДА) ===
 function init() {
-    // ВСЕГДА открываем Главный экран (Dashboard) при старте
+    // Всегда показываем главный экран
     const main = document.getElementById('mainScreen');
-    const op = document.getElementById('operatorScreen');
-    
     if (main) main.classList.add('active');
-    if (op) op.classList.remove('active'); // Скрываем фулл-скрин оператора, используем модалку
 
-    // Запускаем обновление данных
+    // Если вошли - показываем кнопку и обновляем данные оператора в фоне
+    if (currentUser) {
+        checkSession();
+        // Запускаем обновление оператора в фоне, чтобы данные были свежие при открытии
+        setInterval(loadOperatorTasks, 15000); 
+    }
+
+    // Запускаем основное обновление (дашборд)
     setInterval(update, 5000);
     update();
     
-    checkSession();
     applyLanguage();
     setInterval(updateClock, 1000);
 }
@@ -117,7 +118,7 @@ async function checkLogin() {
             currentUser = { user: u, name: u }; 
             localStorage.setItem('warehouse_user', JSON.stringify(currentUser));
             closeModals(); 
-            window.location.reload(); // Перезагружаем, чтобы обновить UI
+            window.location.reload(); // Перезагрузка для применения
         } else showToast("Ошибка входа", "error");
     } catch(e) { console.error(e); }
 }
@@ -149,7 +150,7 @@ function openRegister() { closeModals(); document.getElementById('modalRegister'
 function backToLogin() { closeModals(); openLogin(); }
 function closeModals() { document.querySelectorAll('.modal-overlay').forEach(el => el.classList.remove('open')); }
 
-// === FIXED: MISSING FUNCTION ===
+// === FIXED: MISSING FUNCTIONS ===
 function closeActionModal() {
     document.getElementById('actionModal').classList.remove('open');
 }
@@ -160,23 +161,28 @@ function openStats() {
 }
 function closeStats() { document.getElementById('statsModal').classList.remove('open'); }
 
-// Открывает Терминал как МОДАЛЬНОЕ ОКНО поверх дашборда
+// Открывает Терминал как МОДАЛЬНОЕ ОКНО
 function openDriverMode() { 
     if (!currentUser) { openLogin(); return; }
     document.getElementById('driverModal').classList.add('open'); 
-    loadStatistics(true); // true = режим терминала (с кнопками действий)
+    loadStatistics(true); 
 }
 function closeDriverMode() {
     document.getElementById('driverModal').classList.remove('open');
 }
 
 // === DATA LOADING ===
+// Эта функция теперь используется только для обновления списка в фоне или при открытии модалки, но не для отрисовки страницы
+async function loadOperatorTasks() {
+    // Оставляем пустым, так как теперь используем loadStatistics(true) для терминала
+}
+
 async function loadStatistics(isDriverMode) {
+    // Выбираем правильный контейнер: если режим водителя -> модалка терминала, иначе -> модалка статистики
     const list = isDriverMode ? document.getElementById('driverQueueList') : document.getElementById('statWaitList');
     if(list) list.innerHTML = '<div style="text-align:center;color:#888;">Загрузка...</div>';
     
     try {
-        // Используем один метод получения данных для обоих режимов
         const response = await fetch(`${scriptUrl}?nocache=${Date.now()}&mode=get_operator_tasks`);
         const data = await response.json();
         
@@ -190,11 +196,11 @@ async function loadStatistics(isDriverMode) {
             let phone = task.phone;
 
             if (status === "DONE") {
-                dCount++; // Подсчет выполненных (но в список терминала их не добавляем обычно)
+                dCount++; // Подсчет выполненных
             } else {
                 wCount++;
                 
-                // Формируем элемент списка
+                // Элемент списка (общий стиль)
                 let badgeClass = "mat-badge";
                 if ((task.type || "").includes("BS")) badgeClass += " BS";
                 else if ((task.type || "").includes("AS")) badgeClass += " AS";
@@ -237,7 +243,6 @@ async function loadStatistics(isDriverMode) {
             list.innerHTML = htmlList || `<div style="text-align:center; padding:20px; color:#888;">${t('empty')}</div>`;
         } else {
             // Для окна статистики заполняем списки
-            // (В этом коде упрощено: заполняем только Очередь, так как "Выгружено" требует отдельной обработки или фильтрации массива data)
             if(document.getElementById('statWaitList')) document.getElementById('statWaitList').innerHTML = htmlList;
             
             // Обновляем цифры из глобальных переменных (с дашборда)
@@ -296,13 +301,15 @@ function handleFile(input) {
             img.onload = function() {
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
-                const scale = 800 / img.width;
-                canvas.width = 800;
+                // УВЕЛИЧЕНО КАЧЕСТВО ФОТО
+                const scale = 1600 / img.width; 
+                canvas.width = 1600;
                 canvas.height = img.height * scale;
                 ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                
                 let fileNameSuffix = currentTaskAction.type === 'start' ? (currentPhotoIdx == 1 ? "_General" : "_Seal") : "_Empty";
                 photoFiles[currentPhotoIdx] = {
-                    data: canvas.toDataURL('image/jpeg', 0.6), 
+                    data: canvas.toDataURL('image/jpeg', 0.9), // Качество 90%
                     mime: 'image/jpeg',
                     name: `${currentTaskAction.id}${fileNameSuffix}.jpg`
                 };
