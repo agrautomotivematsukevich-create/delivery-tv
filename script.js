@@ -48,29 +48,49 @@ const TRANSLATIONS = {
 };
 
 function t(key) { return TRANSLATIONS[localLang][key] || key; }
-function formatFriendlyTime(m) { if(isNaN(m))return "0м"; if(m<60)return m+"м"; return Math.floor(m/60)+"ч "+(m%60)+"м"; }
+function formatFriendlyTime(m) { if(isNaN(m))return "0м"; if(m<60)return m+"м"; return Math.floor(m/60)+"ч "+(m%60)+"m"; }
 function calculateTimeDiff(timeStr) { const match = timeStr.match(/(\d{1,2}):(\d{2})/); if (!match) return null; const targetH = parseInt(match[1]); const targetM = parseInt(match[2]); const now = new Date(); let target = new Date(); target.setHours(targetH, targetM, 0, 0); let diffMinutes = (target - now) / 60000; if (diffMinutes < -720) { target.setDate(target.getDate() + 1); diffMinutes = (target - now) / 60000; } return Math.round(diffMinutes); }
 function showToast(text, type) { const toast = document.getElementById('adminToast'); document.getElementById('toastText').innerText = text; toast.className = `admin-toast show ${type}`; setTimeout(() => toast.className = 'admin-toast', 3000); }
 
 // === INIT (ГЛАВНАЯ ТОЧКА ВХОДА) ===
 function init() {
-    // Всегда показываем главный экран
+    // ВАЖНО: Всегда показываем главный экран (Дашборд) при загрузке
     const main = document.getElementById('mainScreen');
-    if (main) main.classList.add('active');
+    const op = document.getElementById('operatorScreen'); // Этот блок мы теперь не используем как основной экран
+    
+    // Сбрас классов: Главный активен, Оператор скрыт (так как терминал теперь в модалке)
+    if(main) main.classList.add('active');
+    if(op) op.classList.remove('active');
 
-    // Если вошли - показываем кнопку и обновляем данные оператора в фоне
+    // Если авторизован - просто обновляем UI кнопки входа
     if (currentUser) {
         checkSession();
-        // Запускаем обновление оператора в фоне, чтобы данные были свежие при открытии
-        setInterval(loadOperatorTasks, 15000); 
+        // В фоне подгружаем задачи, чтобы при открытии модалки они были готовы
+        loadStatistics(true); // true = режим водителя (для кэширования)
     }
 
-    // Запускаем основное обновление (дашборд)
+    // Запускаем обновление главного экрана
     setInterval(update, 5000);
     update();
     
     applyLanguage();
     setInterval(updateClock, 1000);
+}
+
+// === УПРАВЛЕНИЕ ТЕРМИНАЛОМ (МОДАЛКА) ===
+function openDriverMode() { 
+    if (!currentUser) { openLogin(); return; }
+    // Открываем МОДАЛЬНОЕ ОКНО терминала поверх дашборда
+    document.getElementById('driverModal').classList.add('open'); 
+    loadStatistics(true); // Загружаем список с кнопками
+}
+
+function closeDriverMode() {
+    document.getElementById('driverModal').classList.remove('open');
+}
+
+function closeActionModal() {
+    document.getElementById('actionModal').classList.remove('open');
 }
 
 // === AUTH ===
@@ -118,7 +138,7 @@ async function checkLogin() {
             currentUser = { user: u, name: u }; 
             localStorage.setItem('warehouse_user', JSON.stringify(currentUser));
             closeModals(); 
-            window.location.reload(); // Перезагрузка для применения
+            window.location.reload(); 
         } else showToast("Ошибка входа", "error");
     } catch(e) { console.error(e); }
 }
@@ -150,35 +170,15 @@ function openRegister() { closeModals(); document.getElementById('modalRegister'
 function backToLogin() { closeModals(); openLogin(); }
 function closeModals() { document.querySelectorAll('.modal-overlay').forEach(el => el.classList.remove('open')); }
 
-// === FIXED: MISSING FUNCTIONS ===
-function closeActionModal() {
-    document.getElementById('actionModal').classList.remove('open');
-}
-
 function openStats() {
     document.getElementById('statsModal').classList.add('open');
-    loadStatistics(false); 
+    loadStatistics(false); // false = обычная статистика (без кнопок)
 }
 function closeStats() { document.getElementById('statsModal').classList.remove('open'); }
 
-// Открывает Терминал как МОДАЛЬНОЕ ОКНО
-function openDriverMode() { 
-    if (!currentUser) { openLogin(); return; }
-    document.getElementById('driverModal').classList.add('open'); 
-    loadStatistics(true); 
-}
-function closeDriverMode() {
-    document.getElementById('driverModal').classList.remove('open');
-}
-
-// === DATA LOADING ===
-// Эта функция теперь используется только для обновления списка в фоне или при открытии модалки, но не для отрисовки страницы
-async function loadOperatorTasks() {
-    // Оставляем пустым, так как теперь используем loadStatistics(true) для терминала
-}
-
+// === DATA LOADING (Загрузка списка задач) ===
 async function loadStatistics(isDriverMode) {
-    // Выбираем правильный контейнер: если режим водителя -> модалка терминала, иначе -> модалка статистики
+    // Выбираем контейнер: Терминал (модалка) или Статистика (модалка)
     const list = isDriverMode ? document.getElementById('driverQueueList') : document.getElementById('statWaitList');
     if(list) list.innerHTML = '<div style="text-align:center;color:#888;">Загрузка...</div>';
     
@@ -197,18 +197,20 @@ async function loadStatistics(isDriverMode) {
 
             if (status === "DONE") {
                 dCount++; // Подсчет выполненных
+                // В список терминала (очередь) выполненные обычно не добавляются
             } else {
                 wCount++;
                 
-                // Элемент списка (общий стиль)
+                // Бейджи (BS/AS/PS)
                 let badgeClass = "mat-badge";
-                if ((task.type || "").includes("BS")) badgeClass += " BS";
-                else if ((task.type || "").includes("AS")) badgeClass += " AS";
-                else if ((task.type || "").includes("PS")) badgeClass += " PS";
-                let typeHtml = `<span class="${badgeClass}" style="margin-left:10px; font-size:0.7rem;">${task.type||""}</span>`;
+                let tStr = task.type || "";
+                if (tStr.includes("BS")) badgeClass += " BS";
+                else if (tStr.includes("AS")) badgeClass += " AS";
+                else if (tStr.includes("PS")) badgeClass += " PS";
+                let typeHtml = `<span class="${badgeClass}" style="margin-left:10px; font-size:0.7rem;">${tStr}</span>`;
 
                 if (isDriverMode) {
-                    // ТЕРМИНАЛ: С кнопками действий и телефоном
+                    // === РЕЖИМ ТЕРМИНАЛА (С КНОПКАМИ И ТЕЛЕФОНОМ) ===
                     let phoneBtn = phone ? `<a href="tel:${phone}" class="btn-call" style="width:36px; height:36px; margin-right:10px;"><i class="material-icons" style="font-size:1rem;">call</i></a>` : "";
                     
                     let actionBtn = "";
@@ -233,8 +235,15 @@ async function loadStatistics(isDriverMode) {
                         </div>
                     </div>`;
                 } else {
-                    // СТАТИСТИКА (Очередь): Просто список
-                    htmlList += `<div class="mini-item"><span class="mini-id">${id}</span><span class="mini-time">${time}</span></div>`;
+                    // === РЕЖИМ СТАТИСТИКИ (ПРОСТО СПИСОК) ===
+                    htmlList += `
+                    <div class="mini-item">
+                        <div style="display:flex; align-items:center;">
+                            <span class="mini-id">${id}</span>
+                            ${typeHtml}
+                        </div>
+                        <span class="mini-time">${time}</span>
+                    </div>`;
                 }
             }
         });
@@ -242,10 +251,10 @@ async function loadStatistics(isDriverMode) {
         if (isDriverMode) {
             list.innerHTML = htmlList || `<div style="text-align:center; padding:20px; color:#888;">${t('empty')}</div>`;
         } else {
-            // Для окна статистики заполняем списки
+            // Заполняем "В очереди" в окне статистики
             if(document.getElementById('statWaitList')) document.getElementById('statWaitList').innerHTML = htmlList;
             
-            // Обновляем цифры из глобальных переменных (с дашборда)
+            // Обновляем цифры из глобальных переменных (с главного экрана)
             const elDC = document.getElementById('statDoneCount'); if(elDC) elDC.innerText = globalDone;
             const elWC = document.getElementById('statWaitCount'); if(elWC) elWC.innerText = (globalTotal - globalDone);
             const elSD = document.getElementById('sumDone'); if(elSD) elSD.innerText = globalDone;
@@ -262,7 +271,6 @@ function handleTaskClick(id, status, type) {
     currentTaskAction = { id: id, type: isStart ? 'start' : 'finish' };
     document.getElementById('actionTitle').innerText = `${id} (${isStart ? t('btn_start') : t('btn_finish')})`;
     
-    // Сброс и показ модалки
     document.querySelectorAll('.zone-btn').forEach(b => b.classList.remove('selected'));
     currentTaskAction.zone = null;
     photoFiles = {1:null, 2:null};
@@ -301,7 +309,6 @@ function handleFile(input) {
             img.onload = function() {
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
-                // УВЕЛИЧЕНО КАЧЕСТВО ФОТО
                 const scale = 1600 / img.width; 
                 canvas.width = 1600;
                 canvas.height = img.height * scale;
@@ -309,7 +316,7 @@ function handleFile(input) {
                 
                 let fileNameSuffix = currentTaskAction.type === 'start' ? (currentPhotoIdx == 1 ? "_General" : "_Seal") : "_Empty";
                 photoFiles[currentPhotoIdx] = {
-                    data: canvas.toDataURL('image/jpeg', 0.9), // Качество 90%
+                    data: canvas.toDataURL('image/jpeg', 0.9), // 90% качество
                     mime: 'image/jpeg',
                     name: `${currentTaskAction.id}${fileNameSuffix}.jpg`
                 };
@@ -418,7 +425,6 @@ async function update() {
             }
 
             const listEl = document.getElementById('list');
-            // Простая очистка и заполнение
             if(listEl) {
                 let newData = [];
                 for (let i = 1; i < lines.length; i++) {
