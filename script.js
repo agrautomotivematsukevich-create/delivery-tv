@@ -1,583 +1,435 @@
 // ================================================================
-// ВСТАВЬТЕ ВАШУ ССЫЛКУ НИЖЕ:
-const scriptUrl = 'https://script.google.com/macros/s/AKfycbwDT5Jb-duRBA9Wyi9KSKq7xSt5Cz36c-CMN3gCvT33HnLl_eRT5uaV-5rkOy-PhqTNiw/exec'; 
+// ВАЖНО: Вставьте сюда актуальную ссылку Web App
+const scriptUrl = 'https://script.google.com/macros/s/AKfycbwHlxk0aI3HeCPqA9pZDvh1UqMfJpvHZ42OQsHPxKOgQ2VKxVd_jvuEKuO_ar6DSZOlxQ/exec'; 
 // ================================================================
 
 const CONTAINER_IMG_SRC = 'container.svg'; 
 
-let lunchStartStr = "11:30";
-let lunchEndStr = "12:00";
 let serverLang = "RU"; 
-let localLang = localStorage.getItem('warehouse_lang');
+let localLang = localStorage.getItem('warehouse_lang') || "RU";
+let currentUser = JSON.parse(localStorage.getItem('warehouse_user'));
+let currentTaskAction = null; 
+let photoFiles = { 1: null, 2: null };
+let currentPhotoIdx = 0;
 let shiftChart = null;
-let historyChart = null;
 
+// Переменные статистики
+let globalDone = 0;
+let globalTotal = 0;
+
+// === TRANSLATIONS ===
 const TRANSLATIONS = {
     RU: {
-        title: "Мониторинг Склада", progress: "Общий прогресс", next: "Следующий контейнер", list: "Активные разгрузки",
-        lunch: "ОБЕДЕННЫЙ ПЕРЕРЫВ", victory: "ПЛАН ВЫПОЛНЕН!", status_active: "В РАБОТЕ", status_pause: "ПАУЗА", status_wait: "ОЖИДАНИЕ",
-        lunch_left: "До конца:", lunch_soon: "Скоро работа", empty: "Нет активных разгрузок", min: "мин.", locale: "ru-RU", 
-        eta_prefix: "ПРИБУДЕТ ЧЕРЕЗ: ", delay_prefix: "ОПОЗДАНИЕ: ",
+        title: "Мониторинг Склада", progress: "ОБЩИЙ ПРОГРЕСС", next: "СЛЕДУЮЩИЙ", list: "АКТИВНЫЕ",
+        lunch: "ОБЕД", victory: "ПЛАН ВЫПОЛНЕН!", 
+        status_active: "В РАБОТЕ", status_pause: "ПАУЗА", status_wait: "ОЖИДАНИЕ",
+        eta_prefix: "ЧЕРЕЗ: ", delay_prefix: "ОПОЗДАНИЕ: ",
         lbl_start: "НАЧАЛО", lbl_dur: "В РАБОТЕ",
-        // STATS
-        tab_shift: "Смена", tab_analytics: "Аналитика", tab_lots: "Лоты",
-        stat_done: "Выгружено", stat_wait: "В очереди",
-        a_week: "Объем", a_avg: "Среднее время", a_best: "Рекорд",
-        type_bs: "КУЗОВНОЙ", type_as: "СБОРКА", type_ps: "ПОКРАСКА",
-        btn_driver: "Водитель", drv_title: "Очередь выгрузки",
-        s_done: "ВЫПОЛНЕНО", s_wait: "ОСТАЛОСЬ",
-        no_schedule: "На сегодня нет расписания",
-        lots_info: "Статистика по Лотам",
-        // MODALS
-        login_title: "Вход", reg_title: "Регистрация", 
-        btn_login: "Войти", btn_reg: "Отправить", btn_cancel: "Отмена",
-        btn_to_reg: "Регистрация", btn_to_log: "Вернуться ко входу"
+        stats_title: "СТАТИСТИКА", stat_done: "ГОТОВО", stat_queue: "ОЧЕРЕДЬ",
+        list_done: "ВЫГРУЖЕНО", list_wait: "В ОЧЕРЕДИ",
+        drv_title: "Терминал", btn_login: "Войти", btn_start: "НАЧАТЬ", btn_finish: "ЗАВЕРШИТЬ",
+        lbl_photo1: "Общее фото (Сзади)", lbl_photo2: "Фото пломбы", lbl_photo_empty: "Фото пустого",
+        msg_uploading: "Загрузка...", msg_success: "Успешно!",
+        login_title: "Вход", reg_title: "Регистрация", empty: "Нет задач",
+        btn_reg: "Отправить", btn_cancel: "Отмена"
     },
     EN_CN: {
-        title: "Warehouse / 仓库监控", progress: "Progress / 总体进度", next: "Next / 下一个集装箱", list: "Active / 正在卸货",
-        lunch: "LUNCH / 午休时间", victory: "COMPLETED / 计划完成", status_active: "ACTIVE / 进行中", status_pause: "PAUSED / 暂停", status_wait: "WAITING / 等待中",
-        lunch_left: "Left / 剩余:", lunch_soon: "Back soon / 即将开始", empty: "No Tasks / 无活动任务", min: "min / 分", locale: "zh-CN", 
+        title: "Warehouse Monitor / 仓库监控", progress: "PROGRESS / 进度", next: "NEXT / 下一个", list: "ACTIVE TASKS / 任务",
+        lunch: "LUNCH BREAK / 午休", victory: "COMPLETED! / 完成", 
+        status_active: "ACTIVE / 运行", status_pause: "PAUSED / 暂停", status_wait: "WAITING / 等待",
         eta_prefix: "ETA / 预计: ", delay_prefix: "DELAY / 延迟: ",
         lbl_start: "START / 开始", lbl_dur: "DURATION / 持续",
-        // STATS
-        tab_shift: "Shift / 班次", tab_analytics: "Analytics / 分析", tab_lots: "Lots / 批次",
-        stat_done: "Unloaded / 已卸载", stat_wait: "Queue / 排队",
-        a_week: "Volume / 数量", a_avg: "Avg Time / 平均时间", a_best: "Best / 最佳",
-        type_bs: "BODY SHOP", type_as: "ASSEMBLY", type_ps: "PAINT SHOP",
-        btn_driver: "Driver / 司机", drv_title: "Queue / 排队",
-        s_done: "DONE", s_wait: "LEFT",
-        no_schedule: "No Schedule for Today / 今日无排程",
-        lots_info: "Lot Statistics / 批次统计",
-        // MODALS
-        login_title: "Login / 登录", reg_title: "Register / 注册",
-        btn_login: "Enter / 进入", btn_reg: "Send / 发送", btn_cancel: "Cancel / 取消",
-        btn_to_reg: "Registration / 注册", btn_to_log: "Back to Login / 返回"
+        stats_title: "STATISTICS / 统计", stat_done: "DONE / 完成", stat_queue: "QUEUE / 排队",
+        list_done: "UNLOADED / 已卸载", list_wait: "QUEUE / 等待中",
+        drv_title: "Terminal / 终端", btn_login: "Login / 登录", btn_start: "START / 开始", btn_finish: "FINISH / 完成",
+        lbl_photo1: "General Photo / 照片", lbl_photo2: "Seal Photo / 封条", lbl_photo_empty: "Empty Photo / 空箱",
+        msg_uploading: "Uploading... / 上传中", msg_success: "Success! / 成功",
+        login_title: "Login / 登录", reg_title: "Register / 注册", empty: "No tasks / 无任务",
+        btn_reg: "Send / 发送", btn_cancel: "Cancel / 取消"
     }
 };
 
-function formatFriendlyTime(minutes) {
-    if (isNaN(minutes)) return "0 мин";
-    if (minutes < 60) return `${minutes} мин`;
-    const h = Math.floor(minutes / 60);
-    const m = minutes % 60;
-    return `${h}ч ${m}м`;
+function t(key) { return TRANSLATIONS[localLang][key] || key; }
+function formatFriendlyTime(m) { if(isNaN(m))return "0м"; if(m<60)return m+"м"; return Math.floor(m/60)+"ч "+(m%60)+"м"; }
+function calculateTimeDiff(timeStr) { const match = timeStr.match(/(\d{1,2}):(\d{2})/); if (!match) return null; const targetH = parseInt(match[1]); const targetM = parseInt(match[2]); const now = new Date(); let target = new Date(); target.setHours(targetH, targetM, 0, 0); let diffMinutes = (target - now) / 60000; if (diffMinutes < -720) { target.setDate(target.getDate() + 1); diffMinutes = (target - now) / 60000; } return Math.round(diffMinutes); }
+function showToast(text, type) { const toast = document.getElementById('adminToast'); document.getElementById('toastText').innerText = text; toast.className = `admin-toast show ${type}`; setTimeout(() => toast.className = 'admin-toast', 3000); }
+
+// === INIT ===
+function init() {
+    // ВСЕГДА открываем Главный экран (Dashboard) при старте
+    const main = document.getElementById('mainScreen');
+    const op = document.getElementById('operatorScreen');
+    
+    if (main) main.classList.add('active');
+    if (op) op.classList.remove('active'); // Скрываем фулл-скрин оператора, используем модалку
+
+    // Запускаем обновление данных
+    setInterval(update, 5000);
+    update();
+    
+    checkSession();
+    applyLanguage();
+    setInterval(updateClock, 1000);
 }
 
-function calculateTimeDiff(timeStr) {
-    const match = timeStr.match(/(\d{1,2}):(\d{2})/);
-    if (!match) return null;
-    const targetH = parseInt(match[1]);
-    const targetM = parseInt(match[2]);
-    const now = new Date();
-    let target = new Date();
-    target.setHours(targetH, targetM, 0, 0);
-    let diffMinutes = (target - now) / 60000;
-    if (diffMinutes < -720) { target.setDate(target.getDate() + 1); diffMinutes = (target - now) / 60000; }
-    return Math.round(diffMinutes);
-}
-
-async function sha256(message) {
-    const msgBuffer = new TextEncoder().encode(message);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
-function determineEffectiveLang() { return localLang ? localLang : serverLang; }
-
-function toggleLocalLang() {
-    if (!localLang) localLang = 'RU';
-    else if (localLang === 'RU') localLang = 'EN_CN';
-    else localLang = null;
-    if (localLang) localStorage.setItem('warehouse_lang', localLang);
-    else localStorage.removeItem('warehouse_lang');
-    applyLanguage(determineEffectiveLang());
-    updateLocalLangBtn();
-}
-
-function updateLocalLangBtn() {
-    const btn = document.getElementById('localLangBtn');
-    const label = document.getElementById('localLangLabel');
-    if(!btn) return;
-    if (localLang) {
-        btn.classList.add('active');
-        label.innerText = localLang === 'RU' ? 'RU' : 'EN/CN';
-        btn.style.borderColor = '#007bff';
-        const icon = btn.querySelector('.lang-icon');
-        if(icon) icon.style.color = '#007bff';
-        label.style.color = '#007bff';
+// === AUTH ===
+function checkSession() {
+    const txt = document.getElementById('authBtnText');
+    const drvBtn = document.getElementById('driverBtn');
+    const icon = document.querySelector('#authBtn .material-icons');
+    
+    if (currentUser) {
+        if(txt) txt.innerText = currentUser.name;
+        if(drvBtn) drvBtn.classList.add('visible'); 
+        if(icon) icon.style.display = 'none'; 
     } else {
-        btn.classList.remove('active');
-        label.innerText = 'AUTO';
-        btn.style.borderColor = '#444';
-        const icon = btn.querySelector('.lang-icon');
-        if(icon) icon.style.color = '#a0a0a0';
-        label.style.color = '#a0a0a0';
+        if(txt) txt.innerText = t('btn_login');
+        if(drvBtn) drvBtn.classList.remove('visible');
+        if(icon) icon.style.display = 'inline-block';
     }
 }
 
-function applyLanguage(lang) {
-    if (!TRANSLATIONS[lang]) return;
-    const t = TRANSLATIONS[lang];
-    const safeSet = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val; };
-    safeSet('txt_title', t.title); safeSet('txt_progress', t.progress); safeSet('txt_next', t.next);
-    safeSet('txt_list', t.list); safeSet('txt_lunch', t.lunch); safeSet('txt_victory', t.victory);
-    safeSet('txt_no_schedule', t.no_schedule);
-    
-    // Stats & Tabs
-    safeSet('tab_shift', t.tab_shift); safeSet('tab_analytics', t.tab_analytics); safeSet('tab_lots', t.tab_lots);
-    safeSet('txt_stat_done', t.stat_done); safeSet('txt_stat_wait', t.stat_wait);
-    safeSet('txt_a_week', t.a_week); safeSet('txt_a_avg', t.a_avg); safeSet('txt_a_best', t.a_best);
-    safeSet('txt_s_done', t.s_done); safeSet('txt_s_wait', t.s_wait);
-    safeSet('txt_lots_info', t.lots_info);
-    
-    // Driver
-    safeSet('txt_btn_driver', t.btn_driver); safeSet('txt_drv_title', t.drv_title);
-
-    // Modals
-    safeSet('txt_login_title', t.login_title); safeSet('btn_login_enter', t.btn_login);
-    safeSet('txt_reg_title', t.reg_title); safeSet('btn_reg_send', t.btn_reg);
-    safeSet('btn_cancel_1', t.btn_cancel); safeSet('btn_cancel_2', t.btn_cancel);
-    safeSet('btn_to_reg', t.btn_to_reg); safeSet('btn_to_log', t.btn_to_log);
-
-    const emptyMsg = document.querySelector('.empty-message');
-    if (emptyMsg) emptyMsg.innerText = t.empty;
+function handleAuthClick() { 
+    if (currentUser) {
+        document.getElementById('profileModal').classList.add('open');
+        document.getElementById('profName').innerText = currentUser.name;
+    } else openLogin(); 
 }
 
-function showToast(text, type) {
-    const toast = document.getElementById('adminToast');
-    const txt = document.getElementById('toastText');
-    const icon = toast.querySelector('.toast-icon');
-    if (txt) txt.innerText = text;
-    if (icon) icon.innerText = type === 'success' ? 'check_circle' : 'error';
-    if (toast) {
-        toast.className = `admin-toast show ${type}`; 
-        setTimeout(() => { toast.className = 'admin-toast'; }, 6000);
-    }
-}
-
-function openLogin() { 
-    document.getElementById('modalLogin').classList.add('open'); 
-    setTimeout(() => document.getElementById('adminUser').focus(), 100); 
-}
-function closeModals() { 
-    document.getElementById('modalLogin').classList.remove('open'); 
-    document.getElementById('modalRegister').classList.remove('open');
-    document.getElementById('adminPass').value = "";
-}
-function openRegister() {
-    document.getElementById('modalLogin').classList.remove('open');
-    document.getElementById('modalRegister').classList.add('open');
-    setTimeout(() => document.getElementById('regName').focus(), 100);
-}
-function backToLogin() {
-    document.getElementById('modalRegister').classList.remove('open');
-    document.getElementById('modalLogin').classList.add('open');
-}
-
-// === TABS & STATS LOGIC ===
-function switchTab(tabName) {
-    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-    document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
-    document.getElementById('content_' + tabName).classList.add('active');
-    document.getElementById('tab_' + tabName).classList.add('active');
-}
-
-function openStats() {
-    document.getElementById('statsModal').classList.add('open');
-    loadStatistics(false); // Mode normal
-}
-function openDriverMode() {
-    document.getElementById('driverModal').classList.add('open');
-    loadStatistics(true); // Mode driver
-}
-function closeStats() {
-    document.getElementById('statsModal').classList.remove('open');
-}
-
-async function loadStatistics(isDriverMode) {
-    const doneList = document.getElementById('statDoneList');
-    const waitList = isDriverMode ? document.getElementById('driverQueueList') : document.getElementById('statWaitList');
-    
-    if(!isDriverMode) doneList.innerHTML = '<div style="color:#777;text-align:center;">Loading...</div>';
-    waitList.innerHTML = '<div style="color:#777;text-align:center;">Loading...</div>';
-    
-    try {
-        const t = TRANSLATIONS[determineEffectiveLang()] || TRANSLATIONS["RU"];
-        
-        // 1. Текущая смена
-        const response = await fetch(`${scriptUrl}?nocache=${Date.now()}&mode=get_stats`);
-        const data = await response.json();
-        
-        let doneHtml = "", waitHtml = "", dCount = 0, wCount = 0;
-        data.forEach(item => {
-            let typeBadge = "";
-            if (!isDriverMode) {
-                let rt = item.type ? item.type.trim() : "";
-                if (rt === "BS") typeBadge = `<span class="mini-badge bs">${t.type_bs}</span>`;
-                else if (rt === "AS") typeBadge = `<span class="mini-badge as">${t.type_as}</span>`;
-                else if (rt === "PS") typeBadge = `<span class="mini-badge ps">${t.type_ps}</span>`;
-            }
-            
-            if (item.status === "DONE") {
-                dCount++;
-                doneHtml += `<div class="stats-row"><div class="row-id"><span class="material-icons" style="color:#30D158;font-size:1rem;">check_circle</span> ${item.id} ${typeBadge}</div><div class="row-time">${item.time}</div></div>`;
-            } else if (item.status === "WAIT") {
-                wCount++;
-                let style = isDriverMode ? 'padding:15px 0; border-bottom:1px solid rgba(255,255,255,0.1); font-size:1.2rem;' : '';
-                waitHtml += `<div class="stats-row" style="${style}"><div class="row-id"><span class="material-icons" style="color:#777;font-size:1rem;">schedule</span> ${item.id} ${typeBadge}</div><div class="row-time">${item.time}</div></div>`;
-            }
-        });
-        
-        if (!isDriverMode) {
-            document.getElementById('statDoneCount').innerText = dCount;
-            document.getElementById('statWaitCount').innerText = wCount;
-            document.getElementById('sumDone').innerText = dCount;
-            document.getElementById('sumWait').innerText = wCount;
-            
-            doneList.innerHTML = dCount > 0 ? doneHtml : '<div style="color:#555;text-align:center;padding:20px;">-</div>';
-            updateShiftChart(dCount, wCount);
-            loadHistory();
-        }
-        waitList.innerHTML = wCount > 0 ? waitHtml : '<div style="color:#555;text-align:center;padding:20px;">-</div>';
-        
-    } catch(e) { console.error(e); }
-}
-
-async function loadHistory() {
-    try {
-        const start = document.getElementById('dateStart').value;
-        const end = document.getElementById('dateEnd').value;
-        const url = `${scriptUrl}?nocache=${Date.now()}&mode=get_history${start ? '&start='+start : ''}${end ? '&end='+end : ''}`;
-        
-        const response = await fetch(url);
-        const data = await response.json();
-        const historyData = data.days;
-        const lotsData = data.lots;
-        
-        // 1. График
-        let totalVol = 0, totalAvg = 0, daysWithData = 0, bestTime = 999;
-        let labels = [], values = [];
-        // Сортировка по дате (backend может вернуть как попало)
-        historyData.sort((a, b) => a.date.localeCompare(b.date));
-        
-        historyData.forEach(day => {
-            labels.push(day.date); values.push(day.done); totalVol += day.done;
-            if (day.avgTime > 0) { totalAvg += day.avgTime; daysWithData++; if (day.avgTime < bestTime) bestTime = day.avgTime; }
-        });
-        
-        let finalAvg = daysWithData > 0 ? Math.round(totalAvg / daysWithData) : 0;
-        if (bestTime === 999) bestTime = 0;
-        
-        document.getElementById('val_week_total').innerText = totalVol;
-        document.getElementById('val_week_avg').innerHTML = `${finalAvg} <span style="font-size:1rem;opacity:0.5">min</span>`;
-        document.getElementById('val_week_best').innerHTML = `${bestTime} <span style="font-size:1rem;opacity:0.5">min</span>`;
-        updateHistoryChart(labels, values);
-
-        // 2. Лоты
-        let lotsHtml = "";
-        lotsData.forEach(lot => {
-            lotsHtml += `<div class="stats-row"><div class="row-id">${lot.name}</div><div class="row-time" style="color:white;font-weight:700;">${lot.count}</div></div>`;
-        });
-        document.getElementById('lotsList').innerHTML = lotsHtml || '<div style="color:#555;text-align:center;">No Data</div>';
-
-    } catch(e) { console.error("History Error", e); }
-}
-
-function updateShiftChart(done, wait) {
-    const ctx = document.getElementById('shiftChart').getContext('2d');
-    if (shiftChart) shiftChart.destroy();
-    shiftChart = new Chart(ctx, {
-        type: 'doughnut',
-        data: { labels: ['Done', 'Queue'], datasets: [{ data: [done, wait], backgroundColor: ['#30D158', '#333'], borderWidth: 0 }] },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, cutout: '75%' }
-    });
-}
-
-function updateHistoryChart(labels, data) {
-    const ctx = document.getElementById('historyChart').getContext('2d');
-    if (historyChart) historyChart.destroy();
-    historyChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: [{ label: 'Containers', data: data, borderColor: '#0A84FF', backgroundColor: 'rgba(10, 132, 255, 0.1)', fill: true, tension: 0.4 }]
-        },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#888' } }, x: { grid: { display: false }, ticks: { color: '#888' } } } }
-    });
+function doLogout() { 
+    localStorage.removeItem('warehouse_user'); 
+    currentUser = null; 
+    closeModals(); 
+    window.location.reload(); 
 }
 
 async function checkLogin() {
     const u = document.getElementById('adminUser').value.trim();
     const p = document.getElementById('adminPass').value.trim();
-    if (!u || !p) { showToast("Введите данные", "error"); return; }
-    showToast("Проверка...", "success");
-    const hash = await sha256(p); 
+    if (!u || !p) return;
+    const msgBuffer = new TextEncoder().encode(p);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+    const hashHex = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
     try {
-        const r = await fetch(`${scriptUrl}?nocache=${Date.now()}&mode=login&user=${encodeURIComponent(u)}&hash=${hash}`);
+        const r = await fetch(`${scriptUrl}?nocache=${Date.now()}&mode=login&user=${encodeURIComponent(u)}&hash=${hashHex}`);
         const txt = await r.text();
         if (txt.includes("CORRECT")) {
-            sessionStorage.setItem('warehouse_auth', JSON.stringify({ user: u, pass: hash }));
-            window.location.href = "admin.html";
-        } else if (txt.includes("PENDING")) {
-            showToast("Аккаунт ожидает подтверждения", "error");
-        } else if (txt.includes("WRONG")) {
-            showToast("Неверный логин или пароль", "error");
-        } else {
-            showToast("Ошибка: " + txt, "error");
-        }
-    } catch(e) { showToast("Сбой сети", "error"); console.error(e); }
+            currentUser = { user: u, name: u }; 
+            localStorage.setItem('warehouse_user', JSON.stringify(currentUser));
+            closeModals(); 
+            window.location.reload(); // Перезагружаем, чтобы обновить UI
+        } else showToast("Ошибка входа", "error");
+    } catch(e) { console.error(e); }
 }
 
 async function doRegister() {
     const name = document.getElementById('regName').value.trim();
     const u = document.getElementById('regUser').value.trim();
     const p = document.getElementById('regPass').value.trim();
-    if (!name || !u || !p) { showToast("Заполните все поля", "error"); return; }
-    showToast("Отправка...", "success");
-    const hash = await sha256(p);
+    if (!name || !u || !p) return;
+    const msgBuffer = new TextEncoder().encode(p);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+    const hashHex = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
     try {
-        const url = `${scriptUrl}?nocache=${Date.now()}&mode=register&user=${encodeURIComponent(u)}&hash=${hash}&name=${encodeURIComponent(name)}`;
-        const r = await fetch(url);
-        const txt = await r.text();
-        if (txt.includes("REGISTERED")) {
-            showToast("Отправлено! Ждите одобрения.", "success");
-            setTimeout(backToLogin, 2000);
-        } else if (txt.includes("EXISTS")) {
-            showToast("Логин занят", "error");
-        } else {
-            showToast("Ошибка: " + txt, "error");
-        }
-    } catch(e) { showToast("Сбой сети", "error"); console.error(e); }
+        await fetch(`${scriptUrl}?nocache=${Date.now()}&mode=register&user=${encodeURIComponent(u)}&hash=${hashHex}&name=${encodeURIComponent(name)}`);
+        showToast("Заявка отправлена", "success"); backToLogin();
+    } catch(e) { console.error(e); }
 }
 
-updateLocalLangBtn();
-setInterval(() => {
-    const d = new Date();
-    document.getElementById('clock').innerText = d.toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'});
-    const t = TRANSLATIONS[determineEffectiveLang()] || TRANSLATIONS["RU"];
-    document.getElementById('date').innerText = d.toLocaleDateString(t.locale, {weekday:'long', day:'numeric', month:'long'});
-    checkLunchTime(d);
-}, 1000);
+// === UI FUNCTIONS ===
+function toggleLocalLang() { localLang = (localLang === 'RU') ? 'EN_CN' : 'RU'; localStorage.setItem('warehouse_lang', localLang); applyLanguage(); }
+function applyLanguage() { 
+    const lbl = document.getElementById('localLangLabel');
+    if(lbl) lbl.innerText = localLang === 'RU' ? 'RU' : 'EN';
+    checkSession();
+}
 
-function checkLunchTime(now) {
-    const [startH, startM] = lunchStartStr.split(':').map(Number);
-    const [endH, endM] = lunchEndStr.split(':').map(Number);
-    const cur = now.getHours() * 60 + now.getMinutes();
-    const start = startH * 60 + startM;
-    const end = endH * 60 + endM; 
-    const testUntil = localStorage.getItem('lunch_test_until');
-    const isTest = testUntil && parseInt(testUntil) > Date.now();
-    const isLunch = (cur >= start && cur < end) || isTest;
-    const t = TRANSLATIONS[determineEffectiveLang()];
+function openLogin() { document.getElementById('modalLogin').classList.add('open'); }
+function openRegister() { closeModals(); document.getElementById('modalRegister').classList.add('open'); }
+function backToLogin() { closeModals(); openLogin(); }
+function closeModals() { document.querySelectorAll('.modal-overlay').forEach(el => el.classList.remove('open')); }
+
+// === FIXED: MISSING FUNCTION ===
+function closeActionModal() {
+    document.getElementById('actionModal').classList.remove('open');
+}
+
+function openStats() {
+    document.getElementById('statsModal').classList.add('open');
+    loadStatistics(false); 
+}
+function closeStats() { document.getElementById('statsModal').classList.remove('open'); }
+
+// Открывает Терминал как МОДАЛЬНОЕ ОКНО поверх дашборда
+function openDriverMode() { 
+    if (!currentUser) { openLogin(); return; }
+    document.getElementById('driverModal').classList.add('open'); 
+    loadStatistics(true); // true = режим терминала (с кнопками действий)
+}
+function closeDriverMode() {
+    document.getElementById('driverModal').classList.remove('open');
+}
+
+// === DATA LOADING ===
+async function loadStatistics(isDriverMode) {
+    const list = isDriverMode ? document.getElementById('driverQueueList') : document.getElementById('statWaitList');
+    if(list) list.innerHTML = '<div style="text-align:center;color:#888;">Загрузка...</div>';
     
-    if (isLunch) {
-        if (!document.body.classList.contains('is-lunch')) document.body.classList.add('is-lunch');
-        let target = new Date(); target.setHours(endH, endM, 0, 0);
-        if (isTest) target = new Date(parseInt(testUntil));
-        let diff = target - now;
-        document.getElementById('lunchTimer').innerText = diff > 0 ? `${t.lunch_left} ${Math.ceil(diff/60000)} ${t.min}` : t.lunch_soon;
-    } else {
-        if (document.body.classList.contains('is-lunch')) document.body.classList.remove('is-lunch');
-    }
+    try {
+        // Используем один метод получения данных для обоих режимов
+        const response = await fetch(`${scriptUrl}?nocache=${Date.now()}&mode=get_operator_tasks`);
+        const data = await response.json();
+        
+        let htmlList = "";
+        let dCount = 0, wCount = 0;
+
+        data.forEach(task => {
+            let id = task.id;
+            let time = task.start_time || task.eta || "";
+            let status = task.status;
+            let phone = task.phone;
+
+            if (status === "DONE") {
+                dCount++; // Подсчет выполненных (но в список терминала их не добавляем обычно)
+            } else {
+                wCount++;
+                
+                // Формируем элемент списка
+                let badgeClass = "mat-badge";
+                if ((task.type || "").includes("BS")) badgeClass += " BS";
+                else if ((task.type || "").includes("AS")) badgeClass += " AS";
+                else if ((task.type || "").includes("PS")) badgeClass += " PS";
+                let typeHtml = `<span class="${badgeClass}" style="margin-left:10px; font-size:0.7rem;">${task.type||""}</span>`;
+
+                if (isDriverMode) {
+                    // ТЕРМИНАЛ: С кнопками действий и телефоном
+                    let phoneBtn = phone ? `<a href="tel:${phone}" class="btn-call" style="width:36px; height:36px; margin-right:10px;"><i class="material-icons" style="font-size:1rem;">call</i></a>` : "";
+                    
+                    let actionBtn = "";
+                    if (status === "WAIT") {
+                        actionBtn = `<button onclick="handleTaskClick('${id}', 'WAIT', '${task.type}')" style="background:var(--accent-blue); border:none; padding:8px 15px; border-radius:8px; color:white; font-weight:700;">НАЧАТЬ</button>`;
+                    } else {
+                        actionBtn = `<button onclick="handleTaskClick('${id}', 'ACTIVE', '${task.type}')" style="background:var(--accent-green); border:none; padding:8px 15px; border-radius:8px; color:black; font-weight:700;">ЗАВЕРШИТЬ</button>`;
+                    }
+
+                    htmlList += `
+                    <div class="mini-item" style="padding:15px; display:flex; justify-content:space-between; align-items:center;">
+                        <div style="display:flex; flex-direction:column;">
+                            <div style="display:flex; align-items:center;">
+                                <span class="mini-id" style="font-size:1.4rem">${id}</span>
+                                ${typeHtml}
+                            </div>
+                            <span class="mini-time" style="opacity:0.5">${time}</span>
+                        </div>
+                        <div style="display:flex; align-items:center;">
+                            ${phoneBtn}
+                            ${actionBtn}
+                        </div>
+                    </div>`;
+                } else {
+                    // СТАТИСТИКА (Очередь): Просто список
+                    htmlList += `<div class="mini-item"><span class="mini-id">${id}</span><span class="mini-time">${time}</span></div>`;
+                }
+            }
+        });
+
+        if (isDriverMode) {
+            list.innerHTML = htmlList || `<div style="text-align:center; padding:20px; color:#888;">${t('empty')}</div>`;
+        } else {
+            // Для окна статистики заполняем списки
+            // (В этом коде упрощено: заполняем только Очередь, так как "Выгружено" требует отдельной обработки или фильтрации массива data)
+            if(document.getElementById('statWaitList')) document.getElementById('statWaitList').innerHTML = htmlList;
+            
+            // Обновляем цифры из глобальных переменных (с дашборда)
+            const elDC = document.getElementById('statDoneCount'); if(elDC) elDC.innerText = globalDone;
+            const elWC = document.getElementById('statWaitCount'); if(elWC) elWC.innerText = (globalTotal - globalDone);
+            const elSD = document.getElementById('sumDone'); if(elSD) elSD.innerText = globalDone;
+            const elSW = document.getElementById('sumWait'); if(elSW) elSW.innerText = (globalTotal - globalDone);
+            
+            updateShiftChart(globalDone, (globalTotal - globalDone));
+        }
+    } catch(e) { console.error("StatsLoad Error:", e); }
 }
+
+// === ACTION LOGIC ===
+function handleTaskClick(id, status, type) {
+    const isStart = (status === 'WAIT');
+    currentTaskAction = { id: id, type: isStart ? 'start' : 'finish' };
+    document.getElementById('actionTitle').innerText = `${id} (${isStart ? t('btn_start') : t('btn_finish')})`;
+    
+    // Сброс и показ модалки
+    document.querySelectorAll('.zone-btn').forEach(b => b.classList.remove('selected'));
+    currentTaskAction.zone = null;
+    photoFiles = {1:null, 2:null};
+    document.getElementById('status_photo1').innerText = "";
+    document.getElementById('status_photo2').innerText = "";
+    document.getElementById('deferUpload').checked = false;
+
+    if (isStart) {
+        document.getElementById('zoneSelectBlock').style.display = 'block';
+        document.getElementById('area_photo2').style.display = 'flex';
+        document.getElementById('lbl_photo1').innerText = t('lbl_photo1');
+        document.getElementById('btnAction').innerText = t('btn_start');
+    } else {
+        document.getElementById('zoneSelectBlock').style.display = 'none';
+        document.getElementById('area_photo2').style.display = 'none';
+        document.getElementById('lbl_photo1').innerText = t('lbl_photo_empty');
+        document.getElementById('btnAction').innerText = t('btn_finish');
+    }
+    document.getElementById('actionModal').classList.add('open');
+}
+
+function selectZone(el, zone) {
+    document.querySelectorAll('.zone-btn').forEach(b => b.classList.remove('selected'));
+    el.classList.add('selected');
+    currentTaskAction.zone = zone;
+}
+
+function triggerFile(idx) { currentPhotoIdx = idx; document.getElementById('fileInput').click(); }
+function handleFile(input) {
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        const reader = new FileReader();
+        document.getElementById(`status_photo${currentPhotoIdx}`).innerText = '...';
+        reader.onload = function(e) {
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                const scale = 800 / img.width;
+                canvas.width = 800;
+                canvas.height = img.height * scale;
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                let fileNameSuffix = currentTaskAction.type === 'start' ? (currentPhotoIdx == 1 ? "_General" : "_Seal") : "_Empty";
+                photoFiles[currentPhotoIdx] = {
+                    data: canvas.toDataURL('image/jpeg', 0.6), 
+                    mime: 'image/jpeg',
+                    name: `${currentTaskAction.id}${fileNameSuffix}.jpg`
+                };
+                document.getElementById(`status_photo${currentPhotoIdx}`).innerText = '✓';
+            }
+            img.src = e.target.result;
+        }
+        reader.readAsDataURL(file);
+    }
+    input.value = '';
+}
+
+async function submitTaskAction() {
+    const act = currentTaskAction;
+    const btn = document.getElementById('btnAction');
+    if (act.type === 'start' && !act.zone) { showToast("Выберите зону", "error"); return; }
+    const defer = document.getElementById('deferUpload').checked;
+    let urlGen = "", urlSeal = "", urlEmpty = "";
+
+    if (!defer) {
+        btn.innerText = t('msg_uploading');
+        for (let k in photoFiles) {
+            if (photoFiles[k]) {
+                try {
+                    const res = await fetch(scriptUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify({ mode: 'upload_photo', image: photoFiles[k].data, mimeType: photoFiles[k].mime, filename: photoFiles[k].name })
+                    });
+                    const resData = await res.json();
+                    if(resData.status === "SUCCESS") {
+                        if (act.type === 'start') { if (k == 1) urlGen = resData.url; if (k == 2) urlSeal = resData.url; } 
+                        else urlEmpty = resData.url;
+                    }
+                } catch(e) {}
+            }
+        }
+    }
+    
+    btn.innerText = "...";
+    const url = `${scriptUrl}?mode=task_action&id=${act.id}&act=${act.type}&op=${encodeURIComponent(currentUser.name)}&zone=${act.zone || ''}&pGen=${encodeURIComponent(urlGen)}&pSeal=${encodeURIComponent(urlSeal)}&pEmpty=${encodeURIComponent(urlEmpty)}`;
+    await fetch(url);
+    showToast(t('msg_success'), "success");
+    closeActionModal();
+    if (currentUser) loadStatistics(true); // Обновляем список терминала
+}
+
+// === MAIN SCREEN LOGIC ===
+function updateShiftChart(done, wait) { 
+    const canvas = document.getElementById('shiftChart');
+    if(!canvas) return;
+    const ctx = canvas.getContext('2d'); 
+    if (shiftChart) shiftChart.destroy(); 
+    shiftChart = new Chart(ctx, { 
+        type: 'doughnut', 
+        data: { labels: ['Done', 'Queue'], datasets: [{ data: [done, wait], backgroundColor: ['#30D158', '#333'], borderWidth: 0 }] }, 
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, cutout: '85%' } 
+    }); 
+}
+
+function updateClock() { const d = new Date(); document.getElementById('clock').innerText = d.toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'}); document.getElementById('date').innerText = d.toLocaleDateString('ru-RU', {weekday:'long', day:'numeric', month:'long'}); }
 
 async function update() {
     try {
-        const res = await fetch(scriptUrl + '?nocache=' + new Date().getTime());
-        const fullText = await res.text();
-        if (!fullText || fullText.includes("DOCTYPE")) return;
-
-        let csvData = fullText;
-        let adminMessage = "";
-        let driverState = "SHOW"; // Default
+        const res = await fetch(scriptUrl + '?nocache=' + Date.now());
+        const text = await res.text();
         
-        if (fullText.includes("###LANG###")) {
-            const parts = fullText.split("###LANG###");
-            const afterLang = parts[1].split("###DRIVER###");
-            const sLang = afterLang[0].trim();
-            if (sLang && TRANSLATIONS[sLang]) serverLang = sLang;
-            if (afterLang.length > 1) driverState = afterLang[1].trim();
-            csvData = parts[0];
-        } else { if (!serverLang) serverLang = "RU"; }
-        applyLanguage(determineEffectiveLang());
-
-        const drvBtn = document.getElementById('driverBtn');
-        if (driverState === "SHOW") drvBtn.classList.add('visible'); else drvBtn.classList.remove('visible');
-
-        if (csvData.includes("###LUNCH###")) {
-            const parts = csvData.split("###LUNCH###");
-            const times = parts[1].trim().split('|');
-            if (times.length == 2) { lunchStartStr = times[0]; lunchEndStr = times[1]; }
-            csvData = parts[0];
+        const intro = document.getElementById('intro');
+        if(intro && !intro.classList.contains('hidden')) {
+            intro.style.opacity = '0';
+            setTimeout(() => { if(intro) intro.remove(); }, 800);
         }
 
-        if (csvData.includes("###MSG###")) {
-            const parts = csvData.split("###MSG###");
-            csvData = parts[0];
-            adminMessage = parts[1] ? parts[1].trim() : "";
-        }
+        if(!text.includes("DOCTYPE")) {
+            const parts = text.split("###MSG###");
+            const lines = parts[0].split('\n');
+            const r1 = lines[0].split(';'); 
 
-        const msgBar = document.getElementById('messageBar');
-        const msgText = document.getElementById('messageText');
-        if (adminMessage.length > 0) {
-            msgText.innerText = adminMessage;
-            msgBar.classList.add('visible');
-            document.body.classList.add('has-message');
-        } else {
-            msgBar.classList.remove('visible');
-            document.body.classList.remove('has-message');
-        }
+            if (r1.length > 2) {
+                const st = r1[0].trim();
+                const counts = r1[1].split('|');
+                const done = parseInt(counts[0]) || 0;
+                const total = parseInt(counts[1]) || 0;
+                
+                globalDone = done;
+                globalTotal = total;
 
-        const rows = csvData.split('\n').map(r => r.split(';')); 
-        const r1 = rows[0]; 
-        const t = TRANSLATIONS[determineEffectiveLang()] || TRANSLATIONS["RU"]; 
-
-        if (r1 && r1[2] === "NO_SCHEDULE") {
-            document.body.classList.add('is-noschedule');
-            return;
-        } else {
-            document.body.classList.remove('is-noschedule');
-        }
-
-        if (r1 && r1.length > 2) {
-            const st = r1[0].trim();
-            const btn = document.getElementById('sts');
-            btn.className = 'status-btn ' + (st==="ACTIVE"?"active":(st==="PAUSE"?"pause":"wait"));
-            btn.innerText = st==="ACTIVE"?t.status_active:(st==="PAUSE"?t.status_pause:t.status_wait);
-
-            const counts = r1[1].split('|');
-            const done = parseInt(counts[0]) || 0;
-            const total = parseInt(counts[1]) || 0;
-            document.getElementById('cnt').innerText = `${done} / ${total}`;
-            const p = total > 0 ? Math.round((done/total)*100) : 0;
-            document.getElementById('pct').innerText = p + '%';
-            document.getElementById('ring').style.strokeDashoffset = 942 - (942 * p / 100);
-            if (!document.body.classList.contains('is-lunch')) {
-                document.getElementById('ring').style.stroke = st === "ACTIVE" ? "var(--accent-green)" : (st === "PAUSE" ? "#555" : "var(--accent-yellow)");
-            }
-            if (total > 0 && done === total && !document.body.classList.contains('is-lunch')) {
-                if (!document.body.classList.contains('is-victory')) {
-                    document.body.classList.add('is-victory'); 
-                    document.getElementById('victoryStat').innerText = `${done} / ${total}`;
+                document.getElementById('cnt').innerText = `${done} / ${total}`;
+                const p = total > 0 ? Math.round((done/total)*100) : 0;
+                document.getElementById('pct').innerText = p + '%';
+                
+                const ring = document.getElementById('ring');
+                if(ring) ring.style.strokeDashoffset = 942 - (942 * p / 100);
+                
+                const stsBtn = document.getElementById('sts');
+                if(stsBtn) {
+                    stsBtn.className = "status-badge " + (st==="ACTIVE"?"active":(st==="PAUSE"?"pause":"wait"));
+                    stsBtn.innerText = st === "ACTIVE" ? t('status_active') : (st === "PAUSE" ? t('status_pause') : t('status_wait'));
                 }
-            } else {
-                if (document.body.classList.contains('is-victory')) document.body.classList.remove('is-victory'); 
+
+                document.getElementById('nid').innerText = r1[2].trim();
+                document.getElementById('ninfo').innerText = r1[3].trim();
+                
+                if (total > 0 && done === total) document.body.classList.add('is-special');
+                else document.body.classList.remove('is-special');
             }
-            document.getElementById('nid').innerText = r1[2].trim();
-            
-            const ninf = r1[3] ? r1[3].trim() : "";
-            const idiv = document.getElementById('ninfo');
-            
-            const diffMinutes = calculateTimeDiff(ninf);
-            if (diffMinutes !== null) {
-                const prettyTime = formatFriendlyTime(Math.abs(diffMinutes));
-                if (diffMinutes >= 0) idiv.innerHTML = `⏱ <span class="time-text">${t.eta_prefix} ${prettyTime}</span>`;
-                else idiv.innerHTML = `⚠️ <span class="warn-text">${t.delay_prefix} ${prettyTime}</span>`;
-            } else { 
-                idiv.innerHTML = ninf; 
+
+            const listEl = document.getElementById('list');
+            // Простая очистка и заполнение
+            if(listEl) {
+                let newData = [];
+                for (let i = 1; i < lines.length; i++) {
+                    if (lines[i].includes('|')) {
+                         let parts = lines[i].split('|');
+                         newData.push({id: parts[0], start: parts[1], zone: parts[4] });
+                    }
+                }
+                
+                let html = "";
+                newData.forEach(d => {
+                    let zoneHtml = d.zone ? `<span class="badge" style="background:#555;">${d.zone}</span>` : '';
+                    html += '<div class="list-item"><div class="col-icon"><img src="' + CONTAINER_IMG_SRC + '" class="container-img"></div><div class="col-main"><span class="id-text">' + d.id + '</span> ' + zoneHtml + '</div><div class="col-right"><div class="stat-box"><div class="stat-label">' + t('lbl_start') + '</div><div class="stat-value">' + d.start + '</div></div></div></div>';
+                });
+                listEl.innerHTML = html;
             }
         }
-
-        const listEl = document.getElementById('list');
-        let newDataMap = new Map();
-        
-        for (let i = 1; i < rows.length; i++) {
-            if (rows[i][0] && rows[i][0].includes('|')) {
-                 let parts = rows[i][0].split('|');
-                 let id = parts[0].trim();
-                 let time = parts[1].trim();
-                 let dur = 0;
-                 if (parts[2]) {
-                     let drRaw = parts[2].trim().replace(/[,"]/g, '');
-                     dur = parseInt(drRaw); if (isNaN(dur)) dur = 0;
-                 }
-                 let ws = parts[3] ? parts[3].trim() : ""; 
-                 newDataMap.set(id, { time, dur, ws });
-            }
-        }
-        
-        if (newDataMap.size > 0) {
-            const emptyMsg = listEl.querySelector('.empty-message');
-            if (emptyMsg) emptyMsg.remove();
-        }
-
-        const currentChildren = Array.from(listEl.querySelectorAll('.list-item:not(.remove-item)'));
-        currentChildren.forEach(el => {
-            if (!newDataMap.has(el.getAttribute('data-id'))) {
-                el.classList.add('remove-item');
-                setTimeout(() => { if (el.parentNode) el.remove(); checkEmpty(); }, 1000);
-            }
-        });
-        
-        newDataMap.forEach((data, id) => {
-            let existingEl = listEl.querySelector(`.list-item[data-id="${id}"]:not(.remove-item)`);
-            let isOverdue = data.dur > 30;
-            let overdueClass = isOverdue ? 'overdue' : '';
-            let iconHtml = isOverdue ? '<span style="font-size:30px">⚠️</span>' : `<img src="${CONTAINER_IMG_SRC}" class="container-img" alt="box">`;
-            
-            let badgeClass = 'badge-other';
-            if (data.ws === 'BS') badgeClass = 'badge-bs';
-            if (data.ws === 'AS') badgeClass = 'badge-as';
-            if (data.ws === 'PS') badgeClass = 'badge-ps';
-            let wsHtml = data.ws ? `<span class="badge ${badgeClass}">${data.ws}</span>` : '';
-
-            let innerHTML = `
-                <div class="col-icon">${iconHtml}</div>
-                <div class="col-main">
-                    <span class="id-text">${id}</span>
-                    ${wsHtml}
-                </div>
-                <div class="col-right">
-                    <div class="stat-box">
-                        <div class="stat-label">${t.lbl_start}</div>
-                        <div class="stat-value">${data.time}</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="stat-label">${t.lbl_dur}</div>
-                        <div class="stat-value val-dur">${formatFriendlyTime(data.dur)}</div>
-                    </div>
-                </div>
-            `;
-            
-            if (existingEl) {
-                if (existingEl.innerHTML !== innerHTML) existingEl.innerHTML = innerHTML;
-                if (isOverdue) existingEl.classList.add('overdue'); else existingEl.classList.remove('overdue');
-            } else {
-                let newEl = document.createElement('div');
-                newEl.className = `list-item ${overdueClass} slide-in`;
-                newEl.setAttribute('data-id', id);
-                newEl.innerHTML = innerHTML;
-                listEl.prepend(newEl);
-            }
-        });
-        
-        if (newDataMap.size === 0) checkEmpty();
-        function checkEmpty() {
-             const alive = listEl.querySelectorAll('.list-item:not(.remove-item)');
-             const em = listEl.querySelector('.empty-message');
-             if (alive.length === 0 && !em) listEl.innerHTML = `<div class="empty-message">${t.empty}</div>`;
-             else if (alive.length > 0 && em) em.remove();
-        }
-
-    } catch(e) { console.log("Update error:", e); }
+    } catch(e) { console.error(e); }
 }
 
-async function logVisit() {
-    const ua = navigator.userAgent; 
-    let ip = "Не определен";
-    try {
-        const response = await fetch('https://api.ipify.org?format=json');
-        const data = await response.json();
-        if (data && data.ip) ip = data.ip;
-    } catch (e) { console.warn("IP fail", e); }
-
-    try {
-        const url = `${scriptUrl}?mode=log_visit&ua=${encodeURIComponent(ua)}&ip=${encodeURIComponent(ip)}`;
-        await fetch(url);
-    } catch (e) { console.error("Log error", e); }
-}
-
-logVisit();
-setInterval(update, 3000);
-update();
+init();
