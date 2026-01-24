@@ -1,6 +1,6 @@
 // ================================================================
 // ВАЖНО: Вставьте сюда актуальную ссылку Web App
-const scriptUrl = 'https://script.google.com/macros/s/AKfycbwmg9VnP2knf82q5RdvsZ-2fq4ZsrJN-U3cJy3WbMX07zt6xSkYT3HiJOjJvSKIA9lMoA/exec'; 
+const scriptUrl = 'https://script.google.com/macros/s/AKfycbwQuXaRfQXgZ1s3OBkj72oIcLWDES2JdhzMYOXFiW0GnlusNoxqtuIbabsNdu4vava2xw/exec'; 
 // ================================================================
 
 const CONTAINER_IMG_SRC = 'container.svg'; 
@@ -131,18 +131,32 @@ async function checkLogin() {
     const u = document.getElementById('adminUser').value.trim();
     const p = document.getElementById('adminPass').value.trim();
     if (!u || !p) return;
+    
     const msgBuffer = new TextEncoder().encode(p);
     const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
     const hashHex = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+    
     try {
         const r = await fetch(`${scriptUrl}?nocache=${Date.now()}&mode=login&user=${encodeURIComponent(u)}&hash=${hashHex}`);
         const txt = await r.text();
+        
+        // === ИЗМЕНЕНИЯ ЗДЕСЬ ===
         if (txt.includes("CORRECT")) {
-            currentUser = { user: u, name: u }; 
+            // Разбиваем ответ "CORRECT|Имя" по черте
+            const parts = txt.split('|');
+            // Если имя пришло, берем его. Если нет - берем логин.
+            const realName = parts.length > 1 ? parts[1] : u; 
+
+            currentUser = { user: u, name: realName }; 
             localStorage.setItem('warehouse_user', JSON.stringify(currentUser));
+            
             closeModals(); 
             window.location.reload(); 
-        } else showToast("Ошибка входа", "error");
+        } else {
+            showToast("Ошибка входа", "error");
+        }
+        // =======================
+        
     } catch(e) { console.error(e); }
 }
 

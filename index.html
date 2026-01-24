@@ -229,9 +229,17 @@
         .stat-value { font-family: var(--font-mono); font-size: 1.6rem; font-weight: 700; }
         .val-dur { color: var(--accent-green); text-shadow: 0 0 10px rgba(0, 230, 118, 0.3); }
 
+        /* === SPECIAL STATES (ИСПРАВЛЕНО) === */
         .special-screen { display: none; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; }
-        body.is-special .special-screen { display: flex !important; }
-        body.is-special .list-block, body.is-special .sub-card.next { display: none !important; }
+        
+        /* Если план выполнен (зеленый экран) */
+        body.state-victory .victory-block { display: flex !important; }
+        body.state-victory .list-block, body.state-victory .sub-card.next { display: none !important; }
+        
+        /* Если плана нет (серый экран) */
+        body.state-empty .no-schedule-block { display: flex !important; }
+        body.state-empty .list-block, body.state-empty .sub-card.next { display: none !important; }
+
         .special-icon { font-size: 8rem; margin-bottom: 1.5rem; color: var(--accent-gold); text-shadow: 0 0 50px rgba(255, 215, 0, 0.3); }
         .special-title { font-size: 3.5rem; font-weight: 900; color: white; letter-spacing: -1px; }
 
@@ -339,8 +347,16 @@
             .percent-text { font-size: 6rem; }
         }
 
+        /* === ADAPTATION: MOBILE (PHONES) === */
         @media (max-width: 768px) {
-            body { padding: 1.5rem; height: auto; overflow-y: auto; overflow-x: hidden; padding-bottom: 6rem; }
+            body { 
+                padding: 1.5rem; 
+                height: auto; 
+                overflow-y: auto; 
+                overflow-x: hidden;
+                padding-bottom: 6rem;
+            }
+
             .header { height: auto; margin-bottom: 2rem; flex-direction: column; align-items: flex-start; gap: 1rem; }
             .header-left { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
             .header-title-wrapper { grid-column: 1 / -1; margin-bottom: 5px; } 
@@ -364,7 +380,19 @@
             }
             #driverBtn.visible span, #driverBtn.visible i { color: white; }
             
-            .stats-big-box { height: 95vh; width: 100%; border-radius: 30px 30px 0 0; position: fixed; bottom: 0; left: 0; border: none; }
+            /* ИСПРАВЛЕНО ЗДЕСЬ: */
+            .stats-big-box { 
+                height: 85vh; /* Уменьшили высоту, чтобы видеть верх */
+                width: 100%; 
+                border-radius: 30px 30px 0 0; 
+                position: fixed; 
+                bottom: 0; 
+                left: 0; 
+                border: none;
+                z-index: 7000;
+                padding-bottom: env(safe-area-inset-bottom);
+            }
+            
             .shift-content { grid-template-columns: 1fr; grid-template-rows: auto 1fr; overflow-y: auto; }
             .shift-summary { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.1); padding: 2rem; }
             .shift-lists { grid-template-columns: 1fr; grid-template-rows: auto auto; overflow: visible; height: auto; }
