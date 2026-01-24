@@ -1,6 +1,6 @@
 // ================================================================
-// ВАЖНО: Вставьте сюда актуальную ссылку Web App
-const scriptUrl = 'https://script.google.com/macros/s/AKfycbwHlxk0aI3HeCPqA9pZDvh1UqMfJpvHZ42OQsHPxKOgQ2VKxVd_jvuEKuO_ar6DSZOlxQ/exec'; 
+// ВАЖНО: Вставьте сюда НОВУЮ ссылку (Deploy -> New Deployment)
+const scriptUrl = 'https://script.google.com/macros/s/AKfycbwmg9VnP2knf82q5RdvsZ-2fq4ZsrJN-U3cJy3WbMX07zt6xSkYT3HiJOjJvSKIA9lMoA/exec'; 
 // ================================================================
 
 const CONTAINER_IMG_SRC = 'container.svg'; 
@@ -48,7 +48,7 @@ const TRANSLATIONS = {
 };
 
 function t(key) { return TRANSLATIONS[localLang][key] || key; }
-function formatFriendlyTime(m) { if(isNaN(m))return "0м"; if(m<60)return m+"м"; return Math.floor(m/60)+"ч "+(m%60)+"m"; }
+function formatFriendlyTime(m) { if(isNaN(m))return "0м"; if(m<60)return m+"м"; return Math.floor(m/60)+"ч "+(m%60)+"м"; }
 function calculateTimeDiff(timeStr) { const match = timeStr.match(/(\d{1,2}):(\d{2})/); if (!match) return null; const targetH = parseInt(match[1]); const targetM = parseInt(match[2]); const now = new Date(); let target = new Date(); target.setHours(targetH, targetM, 0, 0); let diffMinutes = (target - now) / 60000; if (diffMinutes < -720) { target.setDate(target.getDate() + 1); diffMinutes = (target - now) / 60000; } return Math.round(diffMinutes); }
 function showToast(text, type) { const toast = document.getElementById('adminToast'); document.getElementById('toastText').innerText = text; toast.className = `admin-toast show ${type}`; setTimeout(() => toast.className = 'admin-toast', 3000); }
 
@@ -56,20 +56,18 @@ function showToast(text, type) { const toast = document.getElementById('adminToa
 function init() {
     // ВАЖНО: Всегда показываем главный экран (Дашборд) при загрузке
     const main = document.getElementById('mainScreen');
-    const op = document.getElementById('operatorScreen'); // Этот блок мы теперь не используем как основной экран
+    const op = document.getElementById('operatorScreen'); 
     
-    // Сбрас классов: Главный активен, Оператор скрыт (так как терминал теперь в модалке)
     if(main) main.classList.add('active');
     if(op) op.classList.remove('active');
 
-    // Если авторизован - просто обновляем UI кнопки входа
     if (currentUser) {
         checkSession();
-        // В фоне подгружаем задачи, чтобы при открытии модалки они были готовы
-        loadStatistics(true); // true = режим водителя (для кэширования)
+        // В фоне подгружаем задачи
+        loadStatistics(true); 
     }
 
-    // Запускаем обновление главного экрана
+    // Запускаем обновление дашборда
     setInterval(update, 5000);
     update();
     
@@ -80,25 +78,19 @@ function init() {
 // === УПРАВЛЕНИЕ ТЕРМИНАЛОМ (МОДАЛКА) ===
 function openDriverMode() { 
     if (!currentUser) { openLogin(); return; }
-    // Открываем МОДАЛЬНОЕ ОКНО терминала поверх дашборда
     document.getElementById('driverModal').classList.add('open'); 
-    loadStatistics(true); // Загружаем список с кнопками
+    loadStatistics(true); 
 }
-
-function closeDriverMode() {
-    document.getElementById('driverModal').classList.remove('open');
-}
-
-function closeActionModal() {
-    document.getElementById('actionModal').classList.remove('open');
-}
+function closeDriverMode() { document.getElementById('driverModal').classList.remove('open'); }
+function closeActionModal() { document.getElementById('actionModal').classList.remove('open'); }
+function openStats() { document.getElementById('statsModal').classList.add('open'); loadStatistics(false); }
+function closeStats() { document.getElementById('statsModal').classList.remove('open'); }
 
 // === AUTH ===
 function checkSession() {
     const txt = document.getElementById('authBtnText');
     const drvBtn = document.getElementById('driverBtn');
     const icon = document.querySelector('#authBtn .material-icons');
-    
     if (currentUser) {
         if(txt) txt.innerText = currentUser.name;
         if(drvBtn) drvBtn.classList.add('visible'); 
@@ -109,20 +101,13 @@ function checkSession() {
         if(icon) icon.style.display = 'inline-block';
     }
 }
-
 function handleAuthClick() { 
     if (currentUser) {
         document.getElementById('profileModal').classList.add('open');
         document.getElementById('profName').innerText = currentUser.name;
     } else openLogin(); 
 }
-
-function doLogout() { 
-    localStorage.removeItem('warehouse_user'); 
-    currentUser = null; 
-    closeModals(); 
-    window.location.reload(); 
-}
+function doLogout() { localStorage.removeItem('warehouse_user'); currentUser = null; closeModals(); window.location.reload(); }
 
 async function checkLogin() {
     const u = document.getElementById('adminUser').value.trim();
@@ -164,21 +149,13 @@ function applyLanguage() {
     if(lbl) lbl.innerText = localLang === 'RU' ? 'RU' : 'EN';
     checkSession();
 }
-
 function openLogin() { document.getElementById('modalLogin').classList.add('open'); }
 function openRegister() { closeModals(); document.getElementById('modalRegister').classList.add('open'); }
 function backToLogin() { closeModals(); openLogin(); }
 function closeModals() { document.querySelectorAll('.modal-overlay').forEach(el => el.classList.remove('open')); }
 
-function openStats() {
-    document.getElementById('statsModal').classList.add('open');
-    loadStatistics(false); // false = обычная статистика (без кнопок)
-}
-function closeStats() { document.getElementById('statsModal').classList.remove('open'); }
-
-// === DATA LOADING (Загрузка списка задач) ===
+// === DATA LOADING ===
 async function loadStatistics(isDriverMode) {
-    // Выбираем контейнер: Терминал (модалка) или Статистика (модалка)
     const list = isDriverMode ? document.getElementById('driverQueueList') : document.getElementById('statWaitList');
     if(list) list.innerHTML = '<div style="text-align:center;color:#888;">Загрузка...</div>';
     
@@ -194,14 +171,14 @@ async function loadStatistics(isDriverMode) {
             let time = task.start_time || task.eta || "";
             let status = task.status;
             let phone = task.phone;
+            let pallets = task.pallets || "-"; // Паллеты из столбца D
 
             if (status === "DONE") {
-                dCount++; // Подсчет выполненных
-                // В список терминала (очередь) выполненные обычно не добавляются
+                dCount++;
             } else {
                 wCount++;
                 
-                // Бейджи (BS/AS/PS)
+                // БЕЙДЖИ
                 let badgeClass = "mat-badge";
                 let tStr = task.type || "";
                 if (tStr.includes("BS")) badgeClass += " BS";
@@ -210,7 +187,7 @@ async function loadStatistics(isDriverMode) {
                 let typeHtml = `<span class="${badgeClass}" style="margin-left:10px; font-size:0.7rem;">${tStr}</span>`;
 
                 if (isDriverMode) {
-                    // === РЕЖИМ ТЕРМИНАЛА (С КНОПКАМИ И ТЕЛЕФОНОМ) ===
+                    // === ТЕРМИНАЛ (С КНОПКАМИ И ПАЛЛЕТАМИ) ===
                     let phoneBtn = phone ? `<a href="tel:${phone}" class="btn-call" style="width:36px; height:36px; margin-right:10px;"><i class="material-icons" style="font-size:1rem;">call</i></a>` : "";
                     
                     let actionBtn = "";
@@ -220,27 +197,41 @@ async function loadStatistics(isDriverMode) {
                         actionBtn = `<button onclick="handleTaskClick('${id}', 'ACTIVE', '${task.type}')" style="background:var(--accent-green); border:none; padding:8px 15px; border-radius:8px; color:black; font-weight:700;">ЗАВЕРШИТЬ</button>`;
                     }
 
+                    // АДАПТИВНЫЙ БЛОК (flex-wrap)
                     htmlList += `
-                    <div class="mini-item" style="padding:15px; display:flex; justify-content:space-between; align-items:center;">
-                        <div style="display:flex; flex-direction:column;">
+                    <div class="mini-item" style="padding:15px; display:flex; flex-wrap:wrap; gap:10px; justify-content:space-between; align-items:center;">
+                        
+                        <div style="display:flex; flex-direction:column; min-width: 140px;">
                             <div style="display:flex; align-items:center;">
-                                <span class="mini-id" style="font-size:1.4rem">${id}</span>
+                                <span class="mini-id" style="font-size:1.4rem; white-space:nowrap;">${id}</span>
                                 ${typeHtml}
                             </div>
-                            <span class="mini-time" style="opacity:0.5">${time}</span>
+                            <span class="mini-time" style="opacity:0.5; margin-top:2px;">${time}</span>
+                            
+                            <div style="display:flex; align-items:center; gap:6px; margin-top:6px; color:#ccc; font-size:0.9rem;">
+                                <i class="material-icons" style="font-size:1rem; opacity:0.7;">layers</i>
+                                <span style="font-weight:600;">${pallets}</span>
+                            </div>
                         </div>
-                        <div style="display:flex; align-items:center;">
+
+                        <div style="display:flex; align-items:center; justify-content:flex-end; flex-grow:1;">
                             ${phoneBtn}
                             ${actionBtn}
                         </div>
                     </div>`;
                 } else {
-                    // === РЕЖИМ СТАТИСТИКИ (ПРОСТО СПИСОК) ===
+                    // === СТАТИСТИКА (ПРОСТО СПИСОК) ===
+                    // Тут тоже добавляем бейджик для красоты
+                    let statBadgeHtml = "";
+                    if (tStr.includes("BS")) statBadgeHtml = '<span class="mat-badge BS" style="margin-left:10px; font-size:0.6rem; padding:2px 6px;">BS</span>';
+                    else if (tStr.includes("AS")) statBadgeHtml = '<span class="mat-badge AS" style="margin-left:10px; font-size:0.6rem; padding:2px 6px;">AS</span>';
+                    else if (tStr.includes("PS")) statBadgeHtml = '<span class="mat-badge PS" style="margin-left:10px; font-size:0.6rem; padding:2px 6px;">PS</span>';
+
                     htmlList += `
                     <div class="mini-item">
                         <div style="display:flex; align-items:center;">
                             <span class="mini-id">${id}</span>
-                            ${typeHtml}
+                            ${statBadgeHtml}
                         </div>
                         <span class="mini-time">${time}</span>
                     </div>`;
@@ -251,10 +242,10 @@ async function loadStatistics(isDriverMode) {
         if (isDriverMode) {
             list.innerHTML = htmlList || `<div style="text-align:center; padding:20px; color:#888;">${t('empty')}</div>`;
         } else {
-            // Заполняем "В очереди" в окне статистики
+            // В статистике показываем очередь
             if(document.getElementById('statWaitList')) document.getElementById('statWaitList').innerHTML = htmlList;
             
-            // Обновляем цифры из глобальных переменных (с главного экрана)
+            // Обновляем счетчики
             const elDC = document.getElementById('statDoneCount'); if(elDC) elDC.innerText = globalDone;
             const elWC = document.getElementById('statWaitCount'); if(elWC) elWC.innerText = (globalTotal - globalDone);
             const elSD = document.getElementById('sumDone'); if(elSD) elSD.innerText = globalDone;
@@ -309,6 +300,7 @@ function handleFile(input) {
             img.onload = function() {
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
+                // ФОТО: 1600px + 90% качество
                 const scale = 1600 / img.width; 
                 canvas.width = 1600;
                 canvas.height = img.height * scale;
@@ -316,7 +308,7 @@ function handleFile(input) {
                 
                 let fileNameSuffix = currentTaskAction.type === 'start' ? (currentPhotoIdx == 1 ? "_General" : "_Seal") : "_Empty";
                 photoFiles[currentPhotoIdx] = {
-                    data: canvas.toDataURL('image/jpeg', 0.9), // 90% качество
+                    data: canvas.toDataURL('image/jpeg', 0.9), 
                     mime: 'image/jpeg',
                     name: `${currentTaskAction.id}${fileNameSuffix}.jpg`
                 };
@@ -361,10 +353,9 @@ async function submitTaskAction() {
     await fetch(url);
     showToast(t('msg_success'), "success");
     closeActionModal();
-    if (currentUser) loadStatistics(true); // Обновляем список терминала
+    if (currentUser) loadStatistics(true); 
 }
 
-// === MAIN SCREEN LOGIC ===
 function updateShiftChart(done, wait) { 
     const canvas = document.getElementById('shiftChart');
     if(!canvas) return;
@@ -442,7 +433,7 @@ async function update() {
                 listEl.innerHTML = html;
             }
         }
-    } catch(e) { console.error(e); }
+    } catch(e) {}
 }
 
 init();
