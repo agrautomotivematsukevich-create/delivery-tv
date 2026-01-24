@@ -1,5 +1,5 @@
 // ================================================================
-// ВАЖНО: Вставьте сюда НОВУЮ ссылку (Deploy -> New Deployment)
+// ВАЖНО: Вставьте сюда актуальную ссылку Web App
 const scriptUrl = 'https://script.google.com/macros/s/AKfycbwmg9VnP2knf82q5RdvsZ-2fq4ZsrJN-U3cJy3WbMX07zt6xSkYT3HiJOjJvSKIA9lMoA/exec'; 
 // ================================================================
 
@@ -49,12 +49,32 @@ const TRANSLATIONS = {
 
 function t(key) { return TRANSLATIONS[localLang][key] || key; }
 function formatFriendlyTime(m) { if(isNaN(m))return "0м"; if(m<60)return m+"м"; return Math.floor(m/60)+"ч "+(m%60)+"м"; }
-function calculateTimeDiff(timeStr) { const match = timeStr.match(/(\d{1,2}):(\d{2})/); if (!match) return null; const targetH = parseInt(match[1]); const targetM = parseInt(match[2]); const now = new Date(); let target = new Date(); target.setHours(targetH, targetM, 0, 0); let diffMinutes = (target - now) / 60000; if (diffMinutes < -720) { target.setDate(target.getDate() + 1); diffMinutes = (target - now) / 60000; } return Math.round(diffMinutes); }
+
+// === РАСЧЕТ ВРЕМЕНИ ===
+function calculateTimeDiff(timeStr) { 
+    if(!timeStr || !timeStr.includes(':')) return null;
+    const match = timeStr.match(/(\d{1,2}):(\d{2})/); 
+    if (!match) return null; 
+    
+    const targetH = parseInt(match[1]); 
+    const targetM = parseInt(match[2]); 
+    const now = new Date(); 
+    let target = new Date(); 
+    
+    target.setHours(targetH, targetM, 0, 0); 
+    
+    let diffMinutes = Math.round((target - now) / 60000); 
+    
+    // Если разница слишком большая (например, сейчас 23:00, а цель 01:00 следующего дня)
+    if (diffMinutes < -720) diffMinutes += 1440; 
+    
+    return diffMinutes; 
+}
+
 function showToast(text, type) { const toast = document.getElementById('adminToast'); document.getElementById('toastText').innerText = text; toast.className = `admin-toast show ${type}`; setTimeout(() => toast.className = 'admin-toast', 3000); }
 
 // === INIT (ГЛАВНАЯ ТОЧКА ВХОДА) ===
 function init() {
-    // ВАЖНО: Всегда показываем главный экран (Дашборд) при загрузке
     const main = document.getElementById('mainScreen');
     const op = document.getElementById('operatorScreen'); 
     
@@ -63,11 +83,9 @@ function init() {
 
     if (currentUser) {
         checkSession();
-        // В фоне подгружаем задачи
         loadStatistics(true); 
     }
 
-    // Запускаем обновление дашборда
     setInterval(update, 5000);
     update();
     
@@ -171,14 +189,13 @@ async function loadStatistics(isDriverMode) {
             let time = task.start_time || task.eta || "";
             let status = task.status;
             let phone = task.phone;
-            let pallets = task.pallets || "-"; // Паллеты из столбца D
+            let pallets = task.pallets || "-"; 
 
             if (status === "DONE") {
                 dCount++;
             } else {
                 wCount++;
                 
-                // БЕЙДЖИ
                 let badgeClass = "mat-badge";
                 let tStr = task.type || "";
                 if (tStr.includes("BS")) badgeClass += " BS";
@@ -187,7 +204,6 @@ async function loadStatistics(isDriverMode) {
                 let typeHtml = `<span class="${badgeClass}" style="margin-left:10px; font-size:0.7rem;">${tStr}</span>`;
 
                 if (isDriverMode) {
-                    // === ТЕРМИНАЛ (С КНОПКАМИ И ПАЛЛЕТАМИ) ===
                     let phoneBtn = phone ? `<a href="tel:${phone}" class="btn-call" style="width:36px; height:36px; margin-right:10px;"><i class="material-icons" style="font-size:1rem;">call</i></a>` : "";
                     
                     let actionBtn = "";
@@ -197,35 +213,29 @@ async function loadStatistics(isDriverMode) {
                         actionBtn = `<button onclick="handleTaskClick('${id}', 'ACTIVE', '${task.type}')" style="background:var(--accent-green); border:none; padding:8px 15px; border-radius:8px; color:black; font-weight:700;">ЗАВЕРШИТЬ</button>`;
                     }
 
-                    // АДАПТИВНЫЙ БЛОК (flex-wrap)
                     htmlList += `
                     <div class="mini-item" style="padding:15px; display:flex; flex-wrap:wrap; gap:10px; justify-content:space-between; align-items:center;">
-                        
                         <div style="display:flex; flex-direction:column; min-width: 140px;">
                             <div style="display:flex; align-items:center;">
                                 <span class="mini-id" style="font-size:1.4rem; white-space:nowrap;">${id}</span>
                                 ${typeHtml}
                             </div>
                             <span class="mini-time" style="opacity:0.5; margin-top:2px;">${time}</span>
-                            
                             <div style="display:flex; align-items:center; gap:6px; margin-top:6px; color:#ccc; font-size:0.9rem;">
                                 <i class="material-icons" style="font-size:1rem; opacity:0.7;">layers</i>
                                 <span style="font-weight:600;">${pallets}</span>
                             </div>
                         </div>
-
                         <div style="display:flex; align-items:center; justify-content:flex-end; flex-grow:1;">
                             ${phoneBtn}
                             ${actionBtn}
                         </div>
                     </div>`;
                 } else {
-                    // === СТАТИСТИКА (ПРОСТО СПИСОК) ===
-                    // Тут тоже добавляем бейджик для красоты
                     let statBadgeHtml = "";
-                    if (tStr.includes("BS")) statBadgeHtml = '<span class="mat-badge BS" style="margin-left:10px; font-size:0.6rem; padding:2px 6px;">BS</span>';
-                    else if (tStr.includes("AS")) statBadgeHtml = '<span class="mat-badge AS" style="margin-left:10px; font-size:0.6rem; padding:2px 6px;">AS</span>';
-                    else if (tStr.includes("PS")) statBadgeHtml = '<span class="mat-badge PS" style="margin-left:10px; font-size:0.6rem; padding:2px 6px;">PS</span>';
+                    if (tStr.includes("BS")) statBadgeHtml = '<span class="mini-badge bs">BS</span>';
+                    else if (tStr.includes("AS")) statBadgeHtml = '<span class="mini-badge as">AS</span>';
+                    else if (tStr.includes("PS")) statBadgeHtml = '<span class="mini-badge ps">PS</span>';
 
                     htmlList += `
                     <div class="mini-item">
@@ -242,10 +252,8 @@ async function loadStatistics(isDriverMode) {
         if (isDriverMode) {
             list.innerHTML = htmlList || `<div style="text-align:center; padding:20px; color:#888;">${t('empty')}</div>`;
         } else {
-            // В статистике показываем очередь
             if(document.getElementById('statWaitList')) document.getElementById('statWaitList').innerHTML = htmlList;
             
-            // Обновляем счетчики
             const elDC = document.getElementById('statDoneCount'); if(elDC) elDC.innerText = globalDone;
             const elWC = document.getElementById('statWaitCount'); if(elWC) elWC.innerText = (globalTotal - globalDone);
             const elSD = document.getElementById('sumDone'); if(elSD) elSD.innerText = globalDone;
@@ -300,7 +308,6 @@ function handleFile(input) {
             img.onload = function() {
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
-                // ФОТО: 1600px + 90% качество
                 const scale = 1600 / img.width; 
                 canvas.width = 1600;
                 canvas.height = img.height * scale;
@@ -408,8 +415,19 @@ async function update() {
                     stsBtn.innerText = st === "ACTIVE" ? t('status_active') : (st === "PAUSE" ? t('status_pause') : t('status_wait'));
                 }
 
+                // === ИЗМЕНЕНИЯ ТУТ: РАСЧЕТ ВРЕМЕНИ ===
+                let nextTimeStr = r1[3].trim();
+                let diff = calculateTimeDiff(nextTimeStr);
+                let infoText = nextTimeStr;
+                
+                if (diff !== null) {
+                    if (diff > 0) infoText = `${t('eta_prefix')}${diff} мин`;
+                    else if (diff < 0) infoText = `${t('delay_prefix')}${Math.abs(diff)} мин`;
+                    else infoText = "СЕЙЧАС";
+                }
+                
                 document.getElementById('nid').innerText = r1[2].trim();
-                document.getElementById('ninfo').innerText = r1[3].trim();
+                document.getElementById('ninfo').innerText = infoText;
                 
                 if (total > 0 && done === total) document.body.classList.add('is-special');
                 else document.body.classList.remove('is-special');
