@@ -5,7 +5,7 @@ import react from '@vitejs/plugin-react';
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
     return {
-      // Указываем базовый путь, равный названию вашего репозитория
+      // ОБЯЗАТЕЛЬНО: название вашего репозитория со слэшами
       base: '/delivery-tv/', 
       server: {
         port: 3000,
