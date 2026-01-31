@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --accent: #3b82f6; --border: #334155; }
+        body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+        .admin-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 24px; width: 100%; max-width: 600px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        h2 { margin: 0 0 16px 0; font-size: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 10px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+        .input-group { display: flex; gap: 10px; margin-bottom: 10px; }
+        input, select { flex: 1; padding: 12px; background: #0f172a; border: 1px solid var(--border); color: white; border-radius: 8px; outline: none; font-size: 1rem; }
+        button { padding: 12px 20px; background: var(--accent); border: none; color: white; font-weight: 600; border-radius: 8px; cursor: pointer; transition: 0.2s; }
+        button:hover { filter: brightness(1.1); }
+        button.danger { background: #ef4444; }
+        button.logout { background: transparent; color: #94a3b8; padding: 5px; font-size: 0.9rem; }
+        button.logout:hover { color: white; }
+        .log-list { max-height: 300px; overflow-y: auto; font-family: monospace; font-size: 0.9rem; }
+        .log-item { padding: 8px; border-bottom: 1px solid var(--border); color: #94a3b8; }
+        .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #10b981; color: white; padding: 10px 20px; border-radius: 50px; opacity: 0; transition: 0.3s; pointer-events: none; }
+        .toast.show { opacity: 1; bottom: 40px; }
+        .toggle-row { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid var(--border); }
+        .switch { position: relative; display: inline-block; width: 50px; height: 28px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #334155; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--accent); }
+        input:checked + .slider:before { transform: translateX(22px); }
+    </style>
+</head>
+<body>
+
+    <div class="admin-card">
+        <h2>
+            <span><span class="material-icons" style="vertical-align:middle">settings</span> Управление</span>
+            <button class="logout" onclick="logout()">Выход <span class="material-icons" style="vertical-align:middle; font-size:1rem;">logout</span></button>
+        </h2>
+        
+        <div class="toggle-row">
+            <span>Кнопка водителей</span>
+            <label class="switch"><input type="checkbox" id="driverToggle" onchange="toggleDriver(this)"><span class="slider"></span></label>
+        </div>
+
+        <div style="margin-top: 15px;">
+            <label style="display:block; margin-bottom:5px; color:#94a3b8;">Сообщение (На экран)</label>
+            <div class="input-group">
+                <input type="text" id="msgText" placeholder="Текст...">
+                <input type="number" id="msgDur" placeholder="Мин" style="max-width: 80px;" value="60">
+                <button onclick="sendMsg()">Отправить</button>
+            </div>
+            <button class="danger" style="width:100%" onclick="clearMsg()">Удалить сообщение</button>
+        </div>
+
+        <div style="margin-top: 15px;">
+            <label style="display:block; margin-bottom:5px; color:#94a3b8;">Обед (Start - End)</label>
+            <div class="input-group">
+                <input type="time" id="lunchStart">
+                <input type="time" id="lunchEnd">
+                <button onclick="setLunch()">Set</button>
+            </div>
+        </div>
+        
+        <div style="margin-top: 15px;">
+            <label style="display:block; margin-bottom:5px; color:#94a3b8;">Язык системы</label>
+            <div class="input-group">
+                <select id="langSelect">
+                    <option value="RU">Русский</option>
+                    <option value="EN_CN">Англ/Кит</option>
+                </select>
+                <button onclick="setLang()">Set</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="admin-card">
+        <h2><span class="material-icons" style="vertical-align:middle">history</span> Логи</h2>
+        <button onclick="loadLogs()" style="width:100%; background:#334155; margin-bottom:10px;">Обновить</button>
+        <div class="log-list" id="logList">Загрузка...</div>
+    </div>
+
+    <div class="toast" id="toast">Готово!</div>
+
+    <script>
+        // ВСТАВЬТЕ ССЫЛКУ СЮДА
+        const scriptUrl = 'https://script.google.com/macros/s/AKfycbwXh4-Jta3YgC_NKUcxxrkwAmdVFqXf2VlslwXug1wQO0infKHufvLPpCSysqmO1ntZRQ/exec';
+        
+        const auth = JSON.parse(sessionStorage.getItem('warehouse_auth'));
+        if (!auth) window.location.href = "index.html";
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.innerText = msg; t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 3000);
+        }
+
+        function logout() {
+            sessionStorage.removeItem('warehouse_auth');
+            window.location.href = "index.html";
+        }
+
+        async function api(params) {
+            const qs = new URLSearchParams({ ...params, user: auth.user, pass: auth.pass, nocache: Date.now() });
+            const res = await fetch(`${scriptUrl}?${qs}`);
+            return await res.text();
+        }
+
+        async function toggleDriver(el) {
+            const state = el.checked ? "SHOW" : "HIDE";
+            await api({ mode: 'toggle_driver', state: state });
+            showToast("Кнопка водителя: " + state);
+        }
+
+        async function sendMsg() {
+            const text = document.getElementById('msgText').value;
+            const dur = document.getElementById('msgDur').value;
+            await api({ mode: 'write', text: text, dur: dur });
+            showToast("Отправлено");
+        }
+
+        async function clearMsg() {
+            await api({ mode: 'clear_msg' });
+            document.getElementById('msgText').value = "";
+            showToast("Удалено");
+        }
+
+        async function setLunch() {
+            const s = document.getElementById('lunchStart').value;
+            const e = document.getElementById('lunchEnd').value;
+            await api({ mode: 'set_lunch', start: s, end: e });
+            showToast("Обед обновлен");
+        }
+
+        async function setLang() {
+            const l = document.getElementById('langSelect').value;
+            await api({ mode: 'set_lang', lang: l });
+            showToast("Язык обновлен");
+        }
+
+        async function loadLogs() {
+            const data = await api({ mode: 'get_logs' });
+            const list = document.getElementById('logList');
+            if (data === "ACCESS_DENIED") { list.innerHTML = "Нет доступа"; return; }
+            list.innerHTML = data.split('\n').map(l => `<div class="log-item">${l}</div>`).join('');
+        }
+
+        loadLogs();
+    </script>
+</body>
+</html>
