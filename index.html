@@ -1,86 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Delivery TV - Тестовый сайт</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: Arial, sans-serif;
-            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            text-align: center;
-            padding: 20px;
-        }
-        
-        .container {
-            background: rgba(255, 255, 255, 0.15);
-            padding: 40px;
-            border-radius: 20px;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            max-width: 600px;
-            animation: fadeIn 1s ease;
-        }
-        
-        h1 {
-            font-size: 2.5em;
-            margin-bottom: 20px;
-            color: #fff;
-        }
-        
-        p {
-            font-size: 1.2em;
-            margin-bottom: 15px;
-            line-height: 1.5;
-        }
-        
-        .status {
-            display: inline-block;
-            background: #4CAF50;
-            padding: 8px 20px;
-            border-radius: 50px;
-            font-weight: bold;
-            margin-top: 20px;
-            animation: pulse 2s infinite;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>🚀 Delivery TV работает на GitHub Pages!</h1>
-        <p>✅ Базовая настройка успешно завершена</p>
-        <p>✅ Статический сайт загружен корректно</p>
-        <p>✅ Домен: agrautomotivematsukevich-create.github.io/delivery-tv</p>
-        <p>📌 Следующий шаг: добавить React приложение</p>
-        <p>⏱️ Дата: 31 января 2026 года</p>
-        <div class="status">СТАТУС: АКТИВЕН</div>
-    </div>
-    
-    <script>
-        console.log('Delivery TV тестовый сайт загружен');
-        console.log('URL:', window.location.href);
-    </script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Delivery TV - React App</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="./index.tsx"></script>
+  </body>
 </html>
