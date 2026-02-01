@@ -7,19 +7,16 @@ interface OperatorTerminalProps {
   onClose: () => void;
   onTaskAction: (task: Task, action: 'start' | 'finish') => void;
   t: TranslationSet;
-  refreshTrigger: number;
 }
 
-const OperatorTerminal: React.FC<OperatorTerminalProps> = ({ onClose, onTaskAction, t, refreshTrigger }) => {
+const OperatorTerminal: React.FC<OperatorTerminalProps> = ({ onClose, onTaskAction, t }) => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchQueue = async () => {
-    // Fetch all operator tasks
+    // Do not set loading(true) here to avoid flickering on refresh
     const data = await api.fetchTasks('get_operator_tasks');
-    // Filter out DONE tasks so they disappear from the terminal
-    const activeTasks = data.filter(t => t.status !== 'DONE');
-    setTasks(activeTasks);
+    setTasks(data);
     setLoading(false);
   };
 
@@ -28,7 +25,7 @@ const OperatorTerminal: React.FC<OperatorTerminalProps> = ({ onClose, onTaskActi
     // Refresh every 5s while open to be more responsive
     const interval = setInterval(fetchQueue, 5000);
     return () => clearInterval(interval);
-  }, [refreshTrigger]);
+  }, []);
 
   const getTypeBadge = (type?: string) => {
     if (!type) return null;

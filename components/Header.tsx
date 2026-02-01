@@ -1,26 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { User, Lang, TranslationSet } from '../types';
-import { Globe, User as UserIcon, LogOut, ChevronDown, ScanBarcode, LogIn, TriangleAlert, History, LayoutDashboard, Archive, Truck, ShieldCheck, MessageSquare } from 'lucide-react';
+import { Globe, User as UserIcon, LogOut, ChevronDown, ScanBarcode, LogIn, TriangleAlert, History, LayoutDashboard, Archive, Truck } from 'lucide-react';
 
 interface HeaderProps {
   user: User | null;
   lang: Lang;
   t: TranslationSet;
-  view: 'dashboard' | 'history' | 'logistics' | 'admin';
-  setView: (view: 'dashboard' | 'history' | 'logistics' | 'admin') => void;
+  view: 'dashboard' | 'history' | 'logistics';
+  setView: (view: 'dashboard' | 'history' | 'logistics') => void;
   onToggleLang: () => void;
   onLoginClick: () => void;
   onLogoutClick: () => void;
   onTerminalClick: () => void;
   onStatsClick: () => void;
   onIssueClick: () => void;
-  onHistoryClick: () => void;
-  onMessengerClick: () => void;
+  onHistoryClick: () => void; 
   title: string;
 }
 
 const Header: React.FC<HeaderProps> = ({ 
-  user, lang, t, view, setView, onToggleLang, onLoginClick, onLogoutClick, onTerminalClick, onStatsClick, onIssueClick, onHistoryClick, onMessengerClick, title
+  user, lang, t, view, setView, onToggleLang, onLoginClick, onLogoutClick, onTerminalClick, onStatsClick, onIssueClick, onHistoryClick, title
 }) => {
   const [time, setTime] = useState(new Date());
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -79,18 +78,6 @@ const Header: React.FC<HeaderProps> = ({
                  </button>
                </>
              )}
-             {user.role === 'ADMIN' && (
-               <>
-                 <div className="w-px h-4 bg-white/5 mx-1"></div>
-                 <button 
-                   onClick={() => setView('admin')}
-                   className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${view === 'admin' ? 'bg-white/10 text-white shadow-sm' : 'text-white/40 hover:text-white hover:bg-white/5'}`}
-                 >
-                   <ShieldCheck size={14} />
-                   <span className="hidden lg:inline">{t.nav_admin}</span>
-                 </button>
-               </>
-             )}
           </div>
         )}
 
@@ -142,7 +129,7 @@ const Header: React.FC<HeaderProps> = ({
                 {isDropdownOpen && (
                   <>
                     <div className="fixed inset-0 z-40" onClick={() => setIsDropdownOpen(false)}></div>
-                    <div className="absolute top-full right-0 mt-2 w-56 bg-[#1A1A1F] border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-100 p-1">
+                    <div className="absolute top-full right-0 mt-2 w-48 bg-[#1A1A1F] border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-100 p-1">
                       <button 
                         onClick={() => { onHistoryClick(); setIsDropdownOpen(false); }}
                         className="w-full flex items-center gap-3 px-3 py-3 text-sm font-bold text-white/70 hover:text-white hover:bg-white/5 rounded-lg transition-colors text-left"
@@ -150,16 +137,6 @@ const Header: React.FC<HeaderProps> = ({
                         <History size={16} />
                         <span>{t.menu_history}</span>
                       </button>
-                      
-                      {/* NEW: Messenger Item */}
-                      <button 
-                        onClick={() => { onMessengerClick(); setIsDropdownOpen(false); }}
-                        className="w-full flex items-center gap-3 px-3 py-3 text-sm font-bold text-white/70 hover:text-white hover:bg-white/5 rounded-lg transition-colors text-left"
-                      >
-                        <MessageSquare size={16} />
-                        <span>{t.menu_messenger}</span>
-                      </button>
-                      
                       <div className="h-px bg-white/5 my-1"></div>
                       <button 
                         onClick={() => { onLogoutClick(); setIsDropdownOpen(false); }}
