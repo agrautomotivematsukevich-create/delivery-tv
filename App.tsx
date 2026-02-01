@@ -9,6 +9,8 @@ import IssueModal from './components/IssueModal';
 import HistoryModal from './components/HistoryModal';
 import HistoryView from './components/HistoryView';
 import LogisticsView from './components/LogisticsView';
+import AdminPanel from './components/AdminPanel';
+import Messenger from './components/Messenger';
 import { api } from './services/api';
 import { TRANSLATIONS } from './constants';
 import { DashboardData, Lang, User, Task, TaskAction } from './types';
@@ -22,7 +24,7 @@ function App() {
   });
   
   // Navigation View State
-  const [view, setView] = useState<'dashboard' | 'history' | 'logistics'>('dashboard');
+  const [view, setView] = useState<'dashboard' | 'history' | 'logistics' | 'admin'>('dashboard');
 
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   
@@ -31,8 +33,12 @@ function App() {
   const [showTerminal, setShowTerminal] = useState(false);
   const [showStats, setShowStats] = useState(false);
   const [showIssue, setShowIssue] = useState(false);
-  const [showIssueHistory, setShowIssueHistory] = useState(false); // Renamed from showHistory to avoid confusion with new View
+  const [showIssueHistory, setShowIssueHistory] = useState(false);
+  const [showMessenger, setShowMessenger] = useState(false);
   const [currentAction, setCurrentAction] = useState<TaskAction | null>(null);
+  
+  // Trigger to force components to refresh data
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Constants
   const t = TRANSLATIONS[lang];
@@ -70,6 +76,7 @@ function App() {
     localStorage.removeItem('warehouse_user');
     setView('dashboard'); // Reset view on logout
     setShowTerminal(false);
+    setShowMessenger(false);
   };
 
   const handleTaskActionRequest = (task: Task, actionType: 'start' | 'finish') => {
@@ -78,6 +85,8 @@ function App() {
 
   const handleActionSuccess = () => {
     setCurrentAction(null);
+    // Force refresh of terminal data
+    setRefreshTrigger(prev => prev + 1);
     refreshDashboard();
   };
 
@@ -85,6 +94,7 @@ function App() {
   const renderContent = () => {
     if (view === 'history') return <HistoryView t={t} />;
     if (view === 'logistics') return <LogisticsView t={t} />;
+    if (view === 'admin' && user?.role === 'ADMIN') return <AdminPanel t={t} currentUser={user} />;
     return <Dashboard data={dashboardData} t={t} />;
   };
 
@@ -106,6 +116,7 @@ function App() {
           onStatsClick={() => setShowStats(true)}
           onIssueClick={() => setShowIssue(true)}
           onHistoryClick={() => setShowIssueHistory(true)}
+          onMessengerClick={() => setShowMessenger(true)}
         />
 
         {renderContent()}
@@ -125,6 +136,7 @@ function App() {
           t={t} 
           onClose={() => setShowTerminal(false)} 
           onTaskAction={handleTaskActionRequest}
+          refreshTrigger={refreshTrigger}
         />
       )}
 
@@ -147,6 +159,14 @@ function App() {
         <HistoryModal 
           t={t}
           onClose={() => setShowIssueHistory(false)}
+        />
+      )}
+
+      {showMessenger && user && (
+        <Messenger
+          t={t}
+          user={user}
+          onClose={() => setShowMessenger(false)}
         />
       )}
 

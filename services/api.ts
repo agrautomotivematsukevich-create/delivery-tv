@@ -1,5 +1,5 @@
 import { SCRIPT_URL } from "../constants";
-import { DashboardData, Task, Issue, TaskInput, PlanRow } from "../types";
+import { DashboardData, Task, Issue, TaskInput, PlanRow, UserAccount, Message } from "../types";
 
 export const hashPassword = async (p: string): Promise<string> => {
   const msgBuffer = new TextEncoder().encode(p);
@@ -184,8 +184,8 @@ export const api = {
     }
   },
 
-  taskAction: async (id: string, act: string, user: string, zone: string = '', pGen: string = '', pSeal: string = '', pEmpty: string = ''): Promise<void> => {
-    const url = `${SCRIPT_URL}?mode=task_action&id=${id}&act=${act}&op=${encodeURIComponent(user)}&zone=${zone}&pGen=${encodeURIComponent(pGen)}&pSeal=${encodeURIComponent(pSeal)}&pEmpty=${encodeURIComponent(pEmpty)}`;
+  taskAction: async (id: string, act: string, user: string, zone: string = '', pGen: string = '', pSeal: string = '', pEmpty: string = '', pInspect: string = ''): Promise<void> => {
+    const url = `${SCRIPT_URL}?mode=task_action&id=${id}&act=${act}&op=${encodeURIComponent(user)}&zone=${zone}&pGen=${encodeURIComponent(pGen)}&pSeal=${encodeURIComponent(pSeal)}&pEmpty=${encodeURIComponent(pEmpty)}&pInspect=${encodeURIComponent(pInspect)}`;
     await fetch(url);
   },
 
@@ -195,5 +195,47 @@ export const api = {
     const p3 = photos[2] ? encodeURIComponent(photos[2]) : "";
     const url = `${SCRIPT_URL}?mode=report_issue&id=${encodeURIComponent(id)}&desc=${encodeURIComponent(desc)}&p1=${p1}&p2=${p2}&p3=${p3}&author=${encodeURIComponent(author)}`;
     await fetch(url);
+  },
+
+  // --- ADMIN & MESSENGER ---
+
+  fetchUsers: async (): Promise<UserAccount[]> => {
+    try {
+      const res = await fetch(`${SCRIPT_URL}?nocache=${Date.now()}&mode=get_users`);
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    } catch (e) {
+      console.error(e);
+      return [];
+    }
+  },
+
+  updateUser: async (row: number, role: string, status: string): Promise<boolean> => {
+    try {
+       await fetch(`${SCRIPT_URL}?mode=update_user&row=${row}&role=${encodeURIComponent(role)}&status=${encodeURIComponent(status)}`);
+       return true;
+    } catch (e) { return false; }
+  },
+
+  deleteUser: async (row: number): Promise<boolean> => {
+    try {
+      await fetch(`${SCRIPT_URL}?mode=delete_user&row=${row}`);
+      return true;
+    } catch (e) { return false; }
+  },
+
+  fetchMessages: async (): Promise<Message[]> => {
+    try {
+      const res = await fetch(`${SCRIPT_URL}?nocache=${Date.now()}&mode=get_messages`);
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    } catch (e) { return []; }
+  },
+
+  sendMessage: async (user: string, text: string): Promise<boolean> => {
+    try {
+      await fetch(`${SCRIPT_URL}?mode=send_message&user=${encodeURIComponent(user)}&text=${encodeURIComponent(text)}`);
+      return true;
+    } catch (e) { return false; }
   }
 };
