@@ -40,7 +40,8 @@ const ZoneDowntimeView: React.FC<ZoneDowntimeViewProps> = ({ t }) => {
   const [loading, setLoading] = useState(false);
   const [selectedZone, setSelectedZone] = useState<string | null>(null);
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
-  const [isPlanCompleted, setIsPlanCompleted] = useState(false); // ✅ НОВОЕ
+  const [isPlanCompleted, setIsPlanCompleted] = useState(false);
+  const [lastCompletionTime, setLastCompletionTime] = useState<string>(''); // ✅ НОВОЕ
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -74,11 +75,29 @@ const ZoneDowntimeView: React.FC<ZoneDowntimeViewProps> = ({ t }) => {
     
     const tasks = await api.fetchHistory(formattedDate);
     
-    // ✅ НОВОЕ: Проверяем выполнен ли план
     const totalTasks = tasks.length;
     const doneTasks = tasks.filter(t => t.status === 'DONE').length;
     const planCompleted = totalTasks > 0 && totalTasks === doneTasks;
     setIsPlanCompleted(planCompleted);
+    
+    // ✅ ИСПРАВЛЕНИЕ: Находим время завершения последнего контейнера
+    if (planCompleted && totalTasks > 0) {
+      // Находим все завершённые контейнеры с end_time
+      const completedWithTime = tasks.filter(t => t.end_time);
+      
+      if (completedWithTime.length > 0) {
+        // Сортируем по времени и берём последний
+        const sorted = completedWithTime.sort((a, b) => {
+          const timeA = parseTime(a.end_time!);
+          const timeB = parseTime(b.end_time!);
+          return timeB - timeA; // от последнего к первому
+        });
+        
+        setLastCompletionTime(sorted[0].end_time!);
+      }
+    } else {
+      setLastCompletionTime('');
+    }
     
     const zoneMap = new Map<string, DowntimeRecord[]>();
     
@@ -122,7 +141,6 @@ const ZoneDowntimeView: React.FC<ZoneDowntimeViewProps> = ({ t }) => {
         }
       }
       
-      // ✅ ИСПРАВЛЕНО: Показываем активные простои ТОЛЬКО если план НЕ выполнен
       if (isToday(date) && zoneTasks.length > 0 && !planCompleted) {
         const lastTask = zoneTasks[zoneTasks.length - 1];
         
@@ -274,7 +292,7 @@ const ZoneDowntimeView: React.FC<ZoneDowntimeViewProps> = ({ t }) => {
         </div>
       </div>
 
-      {/* ✅ НОВОЕ: Баннер "План выполнен" */}
+      {/* ✅ ИСПРАВЛЕНО: Показываем время последнего контейнера */}
       {!loading && isToday(date) && isPlanCompleted && (
         <div className="bg-gradient-to-r from-green-500/20 to-blue-500/20 backdrop-blur-xl border-2 border-green-500/30 rounded-3xl p-6 shadow-2xl animate-in slide-in-from-top duration-500">
           <div className="flex items-center gap-4">
@@ -287,13 +305,16 @@ const ZoneDowntimeView: React.FC<ZoneDowntimeViewProps> = ({ t }) => {
             </div>
             <div className="text-right hidden md:block">
               <div className="text-xs text-white/40 uppercase tracking-wider mb-1">Завершено</div>
-              <div className="text-3xl font-black text-green-400">{currentTime.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}</div>
+              {/* ✅ ИСПРАВЛЕНИЕ: Показываем lastCompletionTime вместо currentTime */}
+              <div className="text-3xl font-black text-green-400 font-mono">
+                {lastCompletionTime || '--:--'}
+              </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Активные простои - показываем ТОЛЬКО если план НЕ выполнен */}
+      {/* Активные простои */}
       {!loading && isToday(date) && !isPlanCompleted && activeIdles.length > 0 && (
         <div className="bg-card-bg backdrop-blur-xl border border-red-500/20 rounded-3xl p-6 shadow-2xl animate-in slide-in-from-top duration-500">
           <div className="flex items-center gap-3 mb-4">
