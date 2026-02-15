@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import { TranslationSet } from '../types';
-import { Clock, TrendingDown, BarChart3, Calendar, Download, AlertTriangle, Activity } from 'lucide-react';
+import { Clock, TrendingDown, BarChart3, Calendar, Download, AlertTriangle, Activity, CheckCircle } from 'lucide-react';
 
 interface ZoneDowntimeViewProps {
   t: TranslationSet;
@@ -24,7 +24,6 @@ interface ZoneStats {
   records: DowntimeRecord[];
 }
 
-// НОВОЕ: Интерфейс для активных простоев
 interface ActiveIdleZone {
   zone: string;
   lastContainerId: string;
@@ -41,8 +40,8 @@ const ZoneDowntimeView: React.FC<ZoneDowntimeViewProps> = ({ t }) => {
   const [loading, setLoading] = useState(false);
   const [selectedZone, setSelectedZone] = useState<string | null>(null);
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
+  const [isPlanCompleted, setIsPlanCompleted] = useState(false); // ✅ НОВОЕ
 
-  // Обновление текущего времени каждую секунду для live таймера
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
@@ -54,13 +53,12 @@ const ZoneDowntimeView: React.FC<ZoneDowntimeViewProps> = ({ t }) => {
     loadDowntimeData();
   }, [date]);
 
-  // Обновление активных простоев каждую минуту
   useEffect(() => {
     const interval = setInterval(() => {
       if (isToday(date)) {
         loadDowntimeData();
       }
-    }, 60000); // каждую минуту
+    }, 60000);
     return () => clearInterval(interval);
   }, [date]);
 
@@ -74,13 +72,16 @@ const ZoneDowntimeView: React.FC<ZoneDowntimeViewProps> = ({ t }) => {
     const [y, m, day] = date.split('-');
     const formattedDate = `${day}.${m}`;
     
-    // Получаем все задачи за день
     const tasks = await api.fetchHistory(formattedDate);
     
-    // Группируем по зонам и рассчитываем простои
+    // ✅ НОВОЕ: Проверяем выполнен ли план
+    const totalTasks = tasks.length;
+    const doneTasks = tasks.filter(t => t.status === 'DONE').length;
+    const planCompleted = totalTasks > 0 && totalTasks === doneTasks;
+    setIsPlanCompleted(planCompleted);
+    
     const zoneMap = new Map<string, DowntimeRecord[]>();
     
-    // Сортируем задачи по времени завершения
     const completedTasks = tasks
       .filter(t => t.end_time && t.zone)
       .sort((a, b) => {
@@ -89,10 +90,8 @@ const ZoneDowntimeView: React.FC<ZoneDowntimeViewProps> = ({ t }) => {
         return timeA - timeB;
       });
     
-    // Для каждой зоны находим простои
     const zones = [...new Set(completedTasks.map(t => t.zone!))];
     
-    // === НОВОЕ: Отслеживание активных простоев ===
     const activeIdleZones: ActiveIdleZone[] = [];
     const now = new Date();
     
@@ -108,10 +107,8 @@ const ZoneDowntimeView: React.FC<ZoneDowntimeViewProps> = ({ t }) => {
           const endTime = parseTime(current.end_time);
           const startTime = parseTime(next.start_time);
           
-          // Простой = время между концом текущей и началом следующей
           const downtimeMinutes = (startTime - endTime) / (1000 * 60);
           
-          // Учитываем только положительные простои (больше 1 минуты)
           if (downtimeMinutes > 1) {
             downtimes.push({
               zone,
@@ -125,24 +122,20 @@ const ZoneDowntimeView: React.FC<ZoneDowntimeViewProps> = ({ t }) => {
         }
       }
       
-      // === НОВОЕ: Проверяем активный простой ===
-      // Если это сегодняшняя дата и последний контейнер в зоне завершён
-      if (isToday(date) && zoneTasks.length > 0) {
+      // ✅ ИСПРАВЛЕНО: Показываем активные простои ТОЛЬКО если план НЕ выполнен
+      if (isToday(date) && zoneTasks.length > 0 && !planCompleted) {
         const lastTask = zoneTasks[zoneTasks.length - 1];
         
-        // Проверяем: есть ли следующий контейнер в очереди для этой зоны?
         const allTasksInZone = tasks.filter(t => t.zone === zone);
         const hasActiveOrWaiting = allTasksInZone.some(t => 
           (t.status === 'ACTIVE' && !t.end_time) || 
           (t.status === 'WAIT')
         );
         
-        // Если последний завершён и нет активных/ожидающих → зона простаивает
         if (lastTask.end_time && !hasActiveOrWaiting) {
           const idleStartTime = parseTime(lastTask.end_time);
           const idleMinutes = Math.round((now.getTime() - idleStartTime) / (1000 * 60));
           
-          // Учитываем только если простой > 5 минут
           if (idleMinutes > 5) {
             let status: 'warning' | 'critical' | 'normal' = 'normal';
             if (idleMinutes > 60) status = 'critical';
@@ -165,7 +158,6 @@ const ZoneDowntimeView: React.FC<ZoneDowntimeViewProps> = ({ t }) => {
       }
     });
     
-    // Формируем статистику
     const stats: ZoneStats[] = [];
     zoneMap.forEach((records, zone) => {
       const totalDowntime = records.reduce((sum, r) => sum + r.downtimeMinutes, 0);
@@ -178,10 +170,7 @@ const ZoneDowntimeView: React.FC<ZoneDowntimeViewProps> = ({ t }) => {
       });
     });
     
-    // Сортируем по общему времени простоя (худшие зоны сверху)
     stats.sort((a, b) => b.totalDowntimeMinutes - a.totalDowntimeMinutes);
-    
-    // Сортируем активные простои по длительности (самые долгие сверху)
     activeIdleZones.sort((a, b) => b.idleMinutes - a.idleMinutes);
     
     setZoneStats(stats);
@@ -205,7 +194,6 @@ const ZoneDowntimeView: React.FC<ZoneDowntimeViewProps> = ({ t }) => {
     return `${mins}мин`;
   };
 
-  // НОВОЕ: Форматирование live времени простоя
   const formatLiveIdleTime = (idleStartTime: Date): string => {
     const diffMs = currentTime.getTime() - idleStartTime.getTime();
     const minutes = Math.floor(diffMs / (1000 * 60));
@@ -230,7 +218,6 @@ const ZoneDowntimeView: React.FC<ZoneDowntimeViewProps> = ({ t }) => {
       });
     });
     
-    // Добавляем активные простои
     if (activeIdles.length > 0) {
       csv += '\n\nАКТИВНЫЕ ПРОСТОИ\n';
       csv += 'Зона,Последний контейнер,Время завершения,Простаивает (мин)\n';
@@ -287,8 +274,27 @@ const ZoneDowntimeView: React.FC<ZoneDowntimeViewProps> = ({ t }) => {
         </div>
       </div>
 
-      {/* === НОВОЕ: Активные простои (Live) === */}
-      {!loading && isToday(date) && activeIdles.length > 0 && (
+      {/* ✅ НОВОЕ: Баннер "План выполнен" */}
+      {!loading && isToday(date) && isPlanCompleted && (
+        <div className="bg-gradient-to-r from-green-500/20 to-blue-500/20 backdrop-blur-xl border-2 border-green-500/30 rounded-3xl p-6 shadow-2xl animate-in slide-in-from-top duration-500">
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center border-2 border-green-500/50">
+              <CheckCircle className="text-green-400 w-10 h-10" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-2xl font-black text-white mb-1">План выполнен! 🎉</h3>
+              <p className="text-white/70 text-sm">Все контейнеры выгружены. Зоны свободны и ожидают следующего плана.</p>
+            </div>
+            <div className="text-right hidden md:block">
+              <div className="text-xs text-white/40 uppercase tracking-wider mb-1">Завершено</div>
+              <div className="text-3xl font-black text-green-400">{currentTime.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Активные простои - показываем ТОЛЬКО если план НЕ выполнен */}
+      {!loading && isToday(date) && !isPlanCompleted && activeIdles.length > 0 && (
         <div className="bg-card-bg backdrop-blur-xl border border-red-500/20 rounded-3xl p-6 shadow-2xl animate-in slide-in-from-top duration-500">
           <div className="flex items-center gap-3 mb-4">
             <Activity className="text-red-400 w-6 h-6 animate-pulse" />
@@ -308,7 +314,6 @@ const ZoneDowntimeView: React.FC<ZoneDowntimeViewProps> = ({ t }) => {
                     : 'bg-white/5 border-white/10'
                 }`}
               >
-                {/* Пульсирующий индикатор */}
                 <div className={`absolute top-3 right-3 w-3 h-3 rounded-full animate-pulse ${
                   idle.status === 'critical' ? 'bg-red-500' : 
                   idle.status === 'warning' ? 'bg-yellow-500' : 'bg-blue-500'
@@ -339,7 +344,7 @@ const ZoneDowntimeView: React.FC<ZoneDowntimeViewProps> = ({ t }) => {
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-white/50">Последний контейнер:</span>
-                    <span className="font-mono font-bold text-white">{idle.lastContainerId}</span>
+                    <span className="font-mono font-bold text-white truncate ml-2 max-w-[150px]" title={idle.lastContainerId}>{idle.lastContainerId}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-white/50">Завершён в:</span>
@@ -353,7 +358,6 @@ const ZoneDowntimeView: React.FC<ZoneDowntimeViewProps> = ({ t }) => {
                   </div>
                 </div>
                 
-                {/* Статус алерт */}
                 {idle.status !== 'normal' && (
                   <div className={`mt-3 flex items-center gap-2 px-3 py-2 rounded-lg ${
                     idle.status === 'critical' 
@@ -423,14 +427,12 @@ const ZoneDowntimeView: React.FC<ZoneDowntimeViewProps> = ({ t }) => {
               </h3>
             </div>
             
-            {/* Zone List */}
             <div className="px-6 pb-6 space-y-4">
               {zoneStats.map((stat, idx) => (
                 <div 
                   key={stat.zone}
                   className="bg-white/5 border border-white/5 rounded-2xl overflow-hidden hover:bg-white/10 transition-all"
                 >
-                  {/* Zone Header */}
                   <div 
                     className="p-5 flex items-center justify-between cursor-pointer"
                     onClick={() => setSelectedZone(selectedZone === stat.zone ? null : stat.zone)}
@@ -466,7 +468,6 @@ const ZoneDowntimeView: React.FC<ZoneDowntimeViewProps> = ({ t }) => {
                     </div>
                   </div>
 
-                  {/* Expanded Details */}
                   {selectedZone === stat.zone && (
                     <div className="border-t border-white/5 bg-black/20 p-5 animate-in slide-in-from-top-2 duration-200">
                       <div className="space-y-3">
