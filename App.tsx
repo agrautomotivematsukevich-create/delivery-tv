@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Analytics } from '@vercel/analytics/react'; // Добавлена библиотека аналитики
+import { Analytics } from '@vercel/analytics/react';
 import Header from './components/Header';
 import Dashboard from './components/Dashboard';
 import AuthModal from './components/AuthModal';
@@ -10,6 +10,7 @@ import IssueModal from './components/IssueModal';
 import HistoryModal from './components/HistoryModal';
 import HistoryView from './components/HistoryView';
 import LogisticsView from './components/LogisticsView';
+import ZoneDowntimeView from './components/ZoneDowntimeView'; // НОВЫЙ ИМПОРТ
 import { api } from './services/api';
 import { TRANSLATIONS } from './constants';
 import { DashboardData, Lang, User, Task, TaskAction } from './types';
@@ -21,7 +22,8 @@ function App() {
     return saved ? JSON.parse(saved) : null;
   });
   
-  const [view, setView] = useState<'dashboard' | 'history' | 'logistics'>('dashboard');
+  // ОБНОВЛЕНО: добавлен 'downtime' view
+  const [view, setView] = useState<'dashboard' | 'history' | 'logistics' | 'downtime'>('dashboard');
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [isAppReady, setIsAppReady] = useState(false);
 
@@ -80,9 +82,11 @@ function App() {
     refreshDashboard();
   };
 
+  // ОБНОВЛЕНО: добавлен case для 'downtime'
   const renderContent = () => {
     if (view === 'history') return <HistoryView t={t} />;
     if (view === 'logistics') return <LogisticsView t={t} />;
+    if (view === 'downtime') return <ZoneDowntimeView t={t} />; // НОВОЕ
     return <Dashboard data={dashboardData} t={t} />;
   };
 
@@ -94,7 +98,6 @@ function App() {
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-blue-600/10 blur-[120px] rounded-full"></div>
           
           <div className="relative flex flex-col items-center z-10 text-center">
-            {/* Логотип */}
             <div className="relative w-24 h-24 mb-10 mx-auto">
               <div className="absolute inset-0 border-[3px] border-white/5 rounded-2xl rotate-45"></div>
               <div className="absolute inset-0 border-[3px] border-blue-500 rounded-2xl rotate-45 animate-spin shadow-[0_0_20px_rgba(59,130,246,0.5)]"></div>
@@ -103,18 +106,15 @@ function App() {
               </div>
             </div>
 
-            {/* Заголовок */}
             <h1 className="text-4xl md:text-5xl font-black tracking-[0.2em] mb-4 bg-gradient-to-b from-white via-white to-white/20 bg-clip-text text-transparent">
               WAREHOUSE
               <span className="block text-center text-lg tracking-[0.6em] text-blue-500 mt-2 font-light">DASHBOARD</span>
             </h1>
 
-            {/* Прогресс-бар */}
             <div className="w-48 h-[2px] bg-white/5 rounded-full mt-6 overflow-hidden mx-auto">
               <div className="h-full bg-blue-500 animate-[loading-bar_1.5s_ease-in-out_forwards]"></div>
             </div>
 
-            {/* Блок авторства (тот самый Developer) */}
             <div className="mt-12 flex flex-col items-center gap-2 transition-opacity duration-1000 opacity-60">
               <span className="text-[8px] font-bold uppercase tracking-[0.4em] text-white/50">System Initializing</span>
               <p className="text-[10px] font-medium tracking-[0.2em] text-white">
@@ -186,7 +186,6 @@ function App() {
         </footer>
       </div>
 
-      {/* Интеграция аналитики в DOM */}
       <Analytics />
     </>
   );
