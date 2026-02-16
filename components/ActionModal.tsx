@@ -371,7 +371,6 @@ const ActionModal: React.FC<ActionModalProps> = ({ action, user, t, onClose, onS
               ref={fileInputRef} 
               hidden 
               accept="image/*" 
-              capture="environment" 
               onChange={handleFileChange}
               disabled={isSubmitting}
             />
