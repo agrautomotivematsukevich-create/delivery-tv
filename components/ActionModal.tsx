@@ -30,14 +30,27 @@ const ActionModal: React.FC<ActionModalProps> = ({ action, user, t, onClose, onS
   const [manualTime, setManualTime] = useState(new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }));
   
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const currentPhotoTarget = useRef<1 | 2>(1);
+  const [showPhotoMenu, setShowPhotoMenu] = useState<{ target: 1 | 2 } | null>(null);
 
   const isStart = action.type === 'start';
   const AVAILABLE_ZONES = ['G4', 'G5', 'G7', 'G8', 'G9', 'P70'];
 
   const triggerFile = (target: 1 | 2) => {
     currentPhotoTarget.current = target;
-    fileInputRef.current?.click();
+    setShowPhotoMenu({ target });
+  };
+
+  const triggerGallery = () => {
+    setShowPhotoMenu(null);
+    // небольшая задержка чтобы меню успело закрыться до открытия пикера
+    setTimeout(() => fileInputRef.current?.click(), 50);
+  };
+
+  const triggerCamera = () => {
+    setShowPhotoMenu(null);
+    setTimeout(() => cameraInputRef.current?.click(), 50);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -374,6 +387,16 @@ const ActionModal: React.FC<ActionModalProps> = ({ action, user, t, onClose, onS
               onChange={handleFileChange}
               disabled={isSubmitting}
             />
+            {/* Отдельный input для камеры (работает на Android) */}
+            <input 
+              type="file" 
+              ref={cameraInputRef} 
+              hidden 
+              accept="image/*"
+              capture="environment"
+              onChange={handleFileChange}
+              disabled={isSubmitting}
+            />
           </div>
         )}
 
@@ -397,6 +420,49 @@ const ActionModal: React.FC<ActionModalProps> = ({ action, user, t, onClose, onS
           </button>
         </div>
       </div>
+
+      {/* Кастомное меню выбора фото — работает одинаково на iOS и Android */}
+      {showPhotoMenu && (
+        <div 
+          className="fixed inset-0 z-[80] flex items-end justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-150"
+          onClick={() => setShowPhotoMenu(null)}
+        >
+          <div 
+            className="w-full max-w-sm bg-[#1c1c1e] rounded-3xl overflow-hidden animate-in slide-in-from-bottom-4 duration-200"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="px-4 pt-4 pb-1 text-center">
+              <p className="text-white/40 text-xs font-semibold uppercase tracking-widest">
+                Фото {showPhotoMenu.target}
+              </p>
+            </div>
+            <div className="flex flex-col divide-y divide-white/5">
+              <button
+                onClick={triggerCamera}
+                className="flex items-center gap-4 px-6 py-5 text-white hover:bg-white/5 transition-colors active:bg-white/10"
+              >
+                <Camera className="w-6 h-6 text-blue-400" />
+                <span className="font-semibold text-base">Камера</span>
+              </button>
+              <button
+                onClick={triggerGallery}
+                className="flex items-center gap-4 px-6 py-5 text-white hover:bg-white/5 transition-colors active:bg-white/10"
+              >
+                <Upload className="w-6 h-6 text-blue-400" />
+                <span className="font-semibold text-base">Галерея</span>
+              </button>
+            </div>
+            <div className="p-3 pt-1">
+              <button
+                onClick={() => setShowPhotoMenu(null)}
+                className="w-full py-4 rounded-2xl bg-white/5 text-white/50 font-bold text-sm hover:bg-white/10 transition-colors active:bg-white/15"
+              >
+                Отмена
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
