@@ -62,7 +62,7 @@ export const api = {
       return Array.isArray(data) ? data : [];
     } catch (e) {
       console.error(e);
-      return [];
+      throw e;
     }
   },
 
@@ -185,8 +185,13 @@ export const api = {
   },
 
   taskAction: async (id: string, act: string, user: string, zone: string = '', pGen: string = '', pSeal: string = '', pEmpty: string = ''): Promise<void> => {
-    const url = `${SCRIPT_URL}?mode=task_action&id=${id}&act=${act}&op=${encodeURIComponent(user)}&zone=${zone}&pGen=${encodeURIComponent(pGen)}&pSeal=${encodeURIComponent(pSeal)}&pEmpty=${encodeURIComponent(pEmpty)}`;
-    await fetch(url);
+    try {
+      const url = `${SCRIPT_URL}?mode=task_action&id=${id}&act=${act}&op=${encodeURIComponent(user)}&zone=${zone}&pGen=${encodeURIComponent(pGen)}&pSeal=${encodeURIComponent(pSeal)}&pEmpty=${encodeURIComponent(pEmpty)}`;
+      await fetch(url);
+    } catch (e) {
+      console.error(e);
+      throw e;
+    }
   },
 
   reportIssue: async (id: string, desc: string, photos: string[], author: string): Promise<void> => {

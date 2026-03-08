@@ -5,26 +5,61 @@ import { Phone, Check, Play, Layers } from 'lucide-react';
 
 interface OperatorTerminalProps {
   onClose: () => void;
-  onTaskAction: (task: Task, action: 'start' | 'finish') => void;
+  onTaskAction: (task: Task, action: 'start' | 'finish') => Promise<void>;
   t: TranslationSet;
 }
 
 const OperatorTerminal: React.FC<OperatorTerminalProps> = ({ onClose, onTaskAction, t }) => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
+  const [processingIds, setProcessingIds] = useState<string[]>([]);
+  const intervalRef = React.useRef<NodeJS.Timeout | null>(null);
 
   const fetchQueue = async () => {
-    // Получаем задачи
-    const data = await api.fetchTasks('get_operator_tasks');
-    setTasks(data);
-    setLoading(false);
+    try {
+      const data = await api.fetchTasks('get_operator_tasks');
+      setTasks(data);
+    } catch (error) {
+      console.error("Failed to fetch queue", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const startInterval = () => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    intervalRef.current = setInterval(fetchQueue, 5000);
+  };
+
+  const stopInterval = () => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
   };
 
   useEffect(() => {
     fetchQueue();
-    const interval = setInterval(fetchQueue, 5000);
-    return () => clearInterval(interval);
+    startInterval();
+    return () => stopInterval();
   }, []);
+
+  const handleAction = async (task: Task, actionType: 'start' | 'finish') => {
+    if (processingIds.includes(task.id)) return;
+    
+    try {
+      stopInterval();
+      setProcessingIds(prev => [...prev, task.id]);
+      await onTaskAction(task, actionType);
+      await fetchQueue();
+    } catch (error) {
+      console.error("Action failed:", error);
+      alert("Ошибка сети. Пожалуйста, попробуйте еще раз.");
+    } finally {
+      setProcessingIds(prev => prev.filter(id => id !== task.id));
+      startInterval();
+    }
+  };
 
   const getTypeBadge = (type?: string) => {
     if (!type) return null;
@@ -38,14 +73,16 @@ const OperatorTerminal: React.FC<OperatorTerminalProps> = ({ onClose, onTaskActi
 
   // --- ИСПРАВЛЕНИЕ НИЖЕ ---
   // Фильтруем задачи перед рендером
-  const activeTasks = tasks.filter(task => {
-    // 1. Если есть время завершения - скрываем (Критическая логика)
-    if (task.end_time) return false;
-    // 2. Если статус DONE - скрываем
-    if (task.status === 'DONE') return false;
-    // Иначе показываем
-    return true;
-  });
+  const activeTasks = React.useMemo(() => {
+    return tasks.filter(task => {
+      // 1. Если есть время завершения - скрываем (Критическая логика)
+      if (task.end_time) return false;
+      // 2. Если статус DONE - скрываем
+      if (task.status === 'DONE') return false;
+      // Иначе показываем
+      return true;
+    });
+  }, [tasks]);
 
   return (
     <div className="terminal-root fixed inset-0 z-[60] flex items-end md:items-center justify-center bg-black/80 backdrop-blur-xl p-0 md:p-8 animate-in fade-in duration-200">
@@ -56,7 +93,7 @@ const OperatorTerminal: React.FC<OperatorTerminalProps> = ({ onClose, onTaskActi
           <div className="text-2xl font-extrabold uppercase tracking-widest text-white">{t.drv_title}</div>
           <button 
             onClick={onClose}
-            className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/20 flex items-center justify-center transition-colors"
+            className="w-10 h-10 rounded-full bg-white/5 active:bg-white/20 flex items-center justify-center transition-colors"
           >
             <span className="text-2xl leading-none mb-1">&times;</span>
           </button>
@@ -75,7 +112,7 @@ const OperatorTerminal: React.FC<OperatorTerminalProps> = ({ onClose, onTaskActi
             activeTasks.map(task => {
               const isWait = task.status === 'WAIT';
               return (
-                <div key={task.id} className="bg-white/5 border border-white/5 rounded-2xl p-5 flex flex-wrap items-center justify-between gap-4 hover:bg-white/10 transition-colors">
+                <div key={task.id} className="bg-white/5 border border-white/5 rounded-2xl p-5 flex flex-wrap items-center justify-between gap-4 active:bg-white/10 transition-colors">
                   <div className="flex flex-col">
                     <div className="flex items-center">
                        <span className="font-mono text-2xl font-bold text-white">{task.id}</span>
@@ -90,20 +127,23 @@ const OperatorTerminal: React.FC<OperatorTerminalProps> = ({ onClose, onTaskActi
                   
                   <div className="flex items-center gap-3 ml-auto">
                     {task.phone && (
-                      <a href={`tel:${task.phone}`} className="w-12 h-12 flex items-center justify-center rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-colors">
+                      <a href={`tel:${task.phone}`} className="w-12 h-12 flex items-center justify-center rounded-xl bg-white/5 active:bg-white/10 border border-white/10 transition-colors">
                         <Phone size={20} className="text-accent-green" />
                       </a>
                     )}
                     
                     <button
-                      onClick={() => onTaskAction(task, isWait ? 'start' : 'finish')}
+                      disabled={processingIds.includes(task.id)}
+                      onClick={() => handleAction(task, isWait ? 'start' : 'finish')}
                       className={`h-12 px-6 rounded-xl font-bold text-sm tracking-wide shadow-lg transition-transform active:scale-95 flex items-center gap-2
                         ${isWait 
-                          ? 'bg-accent-blue text-white shadow-accent-blue/20 hover:bg-accent-blue/90' 
-                          : 'bg-accent-green text-black shadow-accent-green/20 hover:bg-accent-green/90'
-                        }`}
+                          ? 'bg-accent-blue text-white shadow-accent-blue/20 active:bg-accent-blue/90' 
+                          : 'bg-accent-green text-black shadow-accent-green/20 active:bg-accent-green/90'
+                        } ${processingIds.includes(task.id) ? 'opacity-80 pointer-events-none' : ''}`}
                     >
-                      {isWait ? (
+                      {processingIds.includes(task.id) ? (
+                        <><div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div></>
+                      ) : isWait ? (
                         <><Play size={16} fill="currentColor" /> {t.btn_start}</>
                       ) : (
                         <><Check size={18} /> {t.btn_finish}</>

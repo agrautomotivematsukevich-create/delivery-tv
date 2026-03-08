@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Analytics } from '@vercel/analytics/react';
 import Header from './components/Header';
 import Dashboard from './components/Dashboard';
@@ -73,13 +73,30 @@ function App() {
     setShowTerminal(false);
   };
 
+  const actionPromiseRef = useRef<{resolve: () => void, reject: (e: Error) => void} | null>(null);
+
   const handleTaskActionRequest = (task: Task, actionType: 'start' | 'finish') => {
-    setCurrentAction({ id: task.id, type: actionType });
+    return new Promise<void>((resolve, reject) => {
+      actionPromiseRef.current = { resolve, reject };
+      setCurrentAction({ id: task.id, type: actionType });
+    });
   };
 
   const handleActionSuccess = () => {
     setCurrentAction(null);
+    if (actionPromiseRef.current) {
+      actionPromiseRef.current.resolve();
+      actionPromiseRef.current = null;
+    }
     refreshDashboard();
+  };
+
+  const handleActionClose = () => {
+    setCurrentAction(null);
+    if (actionPromiseRef.current) {
+      actionPromiseRef.current.resolve();
+      actionPromiseRef.current = null;
+    }
   };
 
   // ОБНОВЛЕНО: добавлен case для 'downtime'
@@ -173,7 +190,7 @@ function App() {
           <HistoryModal t={t} onClose={() => setShowIssueHistory(false)} />
         )}
         {currentAction && user && (
-          <ActionModal action={currentAction} user={user} t={t} onClose={() => setCurrentAction(null)} onSuccess={handleActionSuccess} />
+          <ActionModal action={currentAction} user={user} t={t} onClose={handleActionClose} onSuccess={handleActionSuccess} />
         )}
 
         <footer className="mt-8 z-[5] flex justify-center items-center opacity-30 hover:opacity-100 transition-all duration-700">
